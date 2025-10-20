@@ -1,4 +1,4 @@
-import { Heart } from "lucide-react";
+import { HandHeart } from "lucide-react";
 import Link from "next/link";
 
 const navItems = [
@@ -12,7 +12,9 @@ export default function Navbar() {
     <div className="fixed top-0 left-0 w-full flex justify-center mt-3.5 z-50">
       <nav className="w-[80%] flex items-center justify-between px-6 py-3 backdrop-blur-lg border border-border rounded-2xl bg-background/80 shadow-lg">
         <div className=" flex gap-2 items-center">
-          <Heart />
+          <div className=" rounded-sm bg-accent">
+          <HandHeart width={30} height={30}/>
+          </div>
           <h1 className="text-2xl font-bold text-primary tracking-tight">
             PawBit
           </h1>
