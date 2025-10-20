@@ -1,50 +1,36 @@
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu"
-import Link from "next/link"
+import { Heart } from "lucide-react";
+import Link from "next/link";
 
-export default function NavBar() {
+const navItems = [
+  { href: "/", label: "Начало" },
+  { href: "/about", label: "За нас" },
+  { href: "/donate", label: "Дари" },
+];
+
+export default function Navbar() {
   return (
-    <header className="w-full border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
-        {/* Logo / Brand */}
-        <Link href="/" className="text-xl font-bold text-primary">
-          PawBit
-        </Link>
-
-        {/* Navigation */}
-        <NavigationMenu>
-          <NavigationMenuList className="flex flex-row gap-6">
-            <NavigationMenuItem>
-              <NavigationMenuLink
-                href="/"
-                className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+    <div className="fixed top-0 left-0 w-full flex justify-center mt-3.5 z-50">
+      <nav className="w-[80%] flex items-center justify-between px-6 py-3 backdrop-blur-lg border border-border rounded-2xl bg-background/80 shadow-lg">
+        <div className=" flex gap-2 items-center">
+          <Heart />
+          <h1 className="text-2xl font-bold text-primary tracking-tight">
+            PawBit
+          </h1>
+        </div>
+        {/* Navigation Links */}
+        <ul className="flex gap-6">
+          {navItems.map((item) => (
+            <li key={item.label}>
+              <Link
+                href={item.href}
+                className="px-3 py-2 rounded-md text-lg font-medium text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
               >
-                Начало
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuLink
-                href="/about"
-                className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
-              >
-                За нас
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuLink
-                href="/donate"
-                className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
-              >
-                Дари
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
-      </div>
-    </header>
-  )
+                {item.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  );
 }
