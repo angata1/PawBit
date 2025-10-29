@@ -10,14 +10,14 @@ const navItems = [
 
 export default function Navbar() {
   return (
-    <div className="sticky top-0 left-0 w-full flex justify-center mt-3.5 z-50">
+    <div className="sticky top-2 left-0 w-full flex justify-center mt-3.5 z-50">
       <nav className="w-[80%] flex items-center justify-between px-6 py-3 backdrop-blur-lg border border-border rounded-2xl bg-background/80 shadow-lg">
         <div className=" flex gap-2 items-center">
           <div className=" rounded-sm bg-accent">
           <HandHeart width={30} height={30}/>
           </div>
           <h1 className="text-2xl font-bold text-primary tracking-tight">
-            PawBit
+            <Link href="/">PawBit</Link>
           </h1>
         </div>
         {/* Navigation Links */}

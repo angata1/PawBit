@@ -159,27 +159,4 @@
 
 /* Button box-shadow animation used across the site. */
 @layer components {
-  .btn-shadow-animate {
-    /* smooth transition for both shadow and a small lift */
-    transition-property: box-shadow, transform;
-    transition-duration: 200ms;
-    transition-timing-function: cubic-bezier(.2,.8,.2,1);
-    box-shadow: none;
-    will-change: box-shadow, transform;
-  }
-
-  .btn-shadow-animate:hover {
-    /* Requested shadow and a subtle lift */
-    box-shadow: 6.5px 8.5px 0px 0px var(--accent);
-    transform: translateY(-3px);
-  }
-
-  .btn-shadow-animate:active {
-    transform: translateY(-1px);
-  }
-
-  .btn-shadow-animate:focus-visible {
-    outline: 2px solid var(--color-ring);
-    outline-offset: 2px;
-  }
 }
