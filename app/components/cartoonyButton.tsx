@@ -34,7 +34,7 @@ export default function CartoonyButton({
       scale: 1.05,
       boxShadow: `6px 6px 0px 0px ${shadowColor}`,
       ease: "power1.out",
-      rotate: () => gsap.utils.random(-6, 6),
+      rotate: () => gsap.utils.random(-3, 3),
     });
   });
 
@@ -50,17 +50,26 @@ export default function CartoonyButton({
     });
   });
 
-  const handleClick = contextSafe(() => {
-    if (!btnRef.current) return;
-    gsap.to(btnRef.current, {
-      duration: 0.2,
-      y: -4,
-      scale: 1.05,
-      boxShadow: `inset 0px 0px 0px 0px ${shadowColor}`,
-      ease: "power1.out",
-    });
-    onClick?.(); // ✅ properly call callback
+const handleClick = contextSafe(() => {
+  if (!btnRef.current) return;
+
+  const tl = gsap.timeline();
+
+  tl.to(btnRef.current, {
+    duration: 0.15,
+    scale: 1.1,
+    y: -4,
+    ease: "sine",
+  }).to(btnRef.current, {
+    duration: 0.15,
+    scale: 1,
+    y: 0,
+    ease: "sine",
   });
+
+  onClick?.();
+});
+
 
   return (
     <div ref={container}>
