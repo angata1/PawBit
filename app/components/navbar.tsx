@@ -1,5 +1,6 @@
 import { HandHeart } from "lucide-react";
 import Link from "next/link";
+import CartoonyButton from "./cartoonyButton";
 
 const navItems = [
   { href: "/", label: "Начало" },
@@ -23,12 +24,14 @@ export default function Navbar() {
         <ul className="flex gap-6">
           {navItems.map((item) => (
             <li key={item.label}>
+              <CartoonyButton styles="px-3 py-2 rounded-md text-lg font-medium text-foreground hover:bg-primary hover:text-primary-foreground transition-colors" shadowColor="#40563d">
               <Link
                 href={item.href}
-                className="px-3 py-2 rounded-md text-lg font-medium text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                
               >
                 {item.label}
               </Link>
+              </CartoonyButton>
             </li>
           ))}
         </ul>
