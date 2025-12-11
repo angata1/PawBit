@@ -1,27 +1,34 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Gabriela } from "next/font/google";
+import { Gabriela, Libre_Baskerville, Space_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const gabriela = Gabriela({
+  weight: "400",
   subsets: ["latin"],
+  variable: "--font-gabriela",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const libreBaskerville = Libre_Baskerville({
+  weight: ["400", "700", "400"],
+  style: ["normal", "italic"],
   subsets: ["latin"],
+  variable: "--font-libre-baskerville",
+  display: "swap",
 });
-const gabriela = Gabriela({
-  variable: "--font-gabriela",
+
+const spaceMono = Space_Mono({
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
   subsets: ["latin"],
-  weight: ["400"], // Gabriela only has Regular 400
+  variable: "--font-space-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Pawbit",
-  description: "Интерактивна система за даряване на храна за бездомни животни",
+  title: "PawBit - Interactive Animal Feeding",
+  description: "Connect your clicks to real kibble. Watch live video as you donate to stray animals in your city.",
 };
 
 export default function RootLayout({
@@ -30,17 +37,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-
-
-    
     <html lang="en">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossOrigin=""
+        />
+        <script
+          src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossOrigin=""
+          async
+        ></script>
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${gabriela.variable} ${libreBaskerville.variable} ${spaceMono.variable} antialiased`}
       >
-            <Navbar />
-       
+        <Navbar user={null} />
+
         {children}
-        </body>
+      </body>
     </html>
   );
 }
