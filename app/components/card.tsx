@@ -1,62 +1,27 @@
-"use client";
-
-import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
-import React, { ReactNode, useRef, useEffect } from "react";
-
-gsap.registerPlugin(useGSAP);
+import React from 'react';
 
 interface CardProps {
-  children: ReactNode;
-  className?: string,
-  hoverBorderColor?: string,
+  children: React.ReactNode;
+  className?: string;
+  title?: string;
+  hoverEffect?: boolean;
 }
 
-function Card({ children, className, hoverBorderColor }: CardProps) {
-  const container = useRef<HTMLDivElement>(null);
-  
-  const { contextSafe } = useGSAP({ scope: container });
-
-  let tl = gsap.timeline()
-  useGSAP(() => {
-    if (!container.current) return;
-
-   
-    tl.current = gsap.to(container.current, {
-      scale: 1.08,
-      rotate: 2,
-      duration: 0.35,
-      ease: "power1.inOut", 
-      boxShadow: `4px 4px ${hoverBorderColor ?  hoverBorderColor :  "var(--accent)"}`,
-      borderColor: hoverBorderColor ?  hoverBorderColor :  "var(--accent)",
-      paused: true,
-    });
-  }, []);
-
-  const handleEnter = contextSafe(() => {
-    tl.current?.play();
-  });
-
-  const handleLeave = contextSafe(() => {
-    tl.current?.reverse();
-  });
-
+export default function Card({ children, className = '', title, hoverEffect = false }: CardProps) {
   return (
- <div
-  ref={container}
-  onMouseEnter={handleEnter}
-  onMouseLeave={handleLeave}
-  className={
-    className
-      ? `${className} card h-[100%] w-[100%] p-6 border-3 rounded-[2rem] bg-background border-foreground relative overflow-hidden`
-      : "card h-[100%] w-[100%] p-6 border-3 rounded-[2rem] bg-background border-foreground relative overflow-hidden"
-  }
->
-
-      
+    <div className={`
+      bg-card text-card-foreground 
+      border-2 border-foreground rounded-2xl p-6 
+      neu-shadow 
+      ${hoverEffect ? 'hover:-translate-y-1 hover:neu-shadow-lg transition-all duration-300' : ''}
+      ${className}
+    `}>
+      {title && (
+        <h3 className="text-xl font-bold mb-4 border-b-2 border-border pb-2">
+          {title}
+        </h3>
+      )}
       {children}
     </div>
   );
 }
-
-export default Card;
