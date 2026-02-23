@@ -27,4 +27,6 @@ export interface User {
     id: string;
     name: string;
     isAnonymous: boolean;
+    totalDonated: number;
+    balance: number;
 }

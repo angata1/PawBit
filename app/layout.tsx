@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Gabriela, Libre_Baskerville, Space_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/navbar";
+import Footer from "../components/Footer";
+import { createClient } from "@/lib/supabase/server";
 
 const gabriela = Gabriela({
   weight: "400",
@@ -31,11 +33,16 @@ export const metadata: Metadata = {
   description: "Connect your clicks to real kibble. Watch live video as you donate to stray animals in your city.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <html lang="en">
       <head>
@@ -53,11 +60,15 @@ export default function RootLayout({
         ></script>
       </head>
       <body
-        className={`${gabriela.variable} ${libreBaskerville.variable} ${spaceMono.variable} antialiased`}
+        className={`${gabriela.variable} ${libreBaskerville.variable} ${spaceMono.variable} antialiased flex flex-col min-h-screen`}
       >
-        <Navbar user={null} />
+        <Navbar user={user} />
 
-        {children}
+        <main className="flex-1">
+          {children}
+        </main>
+
+        <Footer />
       </body>
     </html>
   );

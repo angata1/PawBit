@@ -45,6 +45,57 @@ let feeders: Feeder[] = [
     },
 ];
 
+let users: User[] = [
+    {
+        id: 'u1',
+        name: 'Alice Johnson',
+        isAnonymous: false,
+        totalDonated: 150.50
+    },
+    {
+        id: 'u2',
+        name: 'Bob Smith',
+        isAnonymous: false,
+        totalDonated: 225.75
+    },
+    {
+        id: 'u3',
+        name: 'Charlie Brown',
+        isAnonymous: false,
+        totalDonated: 185.25
+    },
+    {
+        id: 'u4',
+        name: 'Anonymous',
+        isAnonymous: true,
+        totalDonated: 95.00
+    },
+    {
+        id: 'u5',
+        name: 'Emily Davis',
+        isAnonymous: false,
+        totalDonated: 310.00
+    },
+    {
+        id: 'u6',
+        name: 'Frank Wilson',
+        isAnonymous: false,
+        totalDonated: 75.50
+    },
+    {
+        id: 'u7',
+        name: 'Grace Lee',
+        isAnonymous: false,
+        totalDonated: 120.25
+    },
+    {
+        id: 'u8',
+        name: 'Anonymous',
+        isAnonymous: true,
+        totalDonated: 55.00
+    }
+];
+
 let donations: Donation[] = [
     {
         id: 'd1',
@@ -81,6 +132,9 @@ export const Storage = {
     },
     updateFeeder: (updatedFeeder: Feeder) => {
         feeders = feeders.map(f => f.id === updatedFeeder.id ? updatedFeeder : f);
+    },
+    getUsers: (): User[] => {
+        return users;
     },
     distributeFoodFlow: (amount: number, user: User) => {
         // Mock implementation: distribute to random feeders
