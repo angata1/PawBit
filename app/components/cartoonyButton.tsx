@@ -23,7 +23,6 @@ export default function CartoonyButton({
   const container = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  // useGSAP gives us contextSafe
   const { contextSafe } = useGSAP({ scope: container });
 
   const handleEnter = contextSafe(() => {

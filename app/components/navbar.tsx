@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { PawPrint, Map, Trophy, User, LogOut, Menu, X, Images } from 'lucide-react';
 import Button from './Button';
+import { createClient } from '@/lib/supabase/client';
 
 interface NavbarProps {
   user: any;
@@ -17,9 +18,10 @@ export default function Navbar({ user }: NavbarProps) {
 
   const isActive = (path: string) => pathname === path;
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
-    // Add actual logout logic here
+  const supabase = createClient();
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.refresh();
   };
 
   const NavLink = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (

@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { Feeder, Donation, User } from '../../types';
 import { Storage } from '../../storage';
 import { CURRENT_USER_KEY } from '../../constants';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import DonationModal from '@/components/DonationModal';
 import { Video, ArrowLeft, Brain, Activity, Heart, AlertCircle, CheckCircle2, MapPin, ArrowRight } from 'lucide-react';
 
 export default function FeederDetails() {
@@ -23,9 +25,28 @@ export default function FeederDetails() {
     const [isAnimating, setIsAnimating] = useState(false);
 
     useEffect(() => {
-        // Load user
-        const userStr = localStorage.getItem(CURRENT_USER_KEY);
-        if (userStr) setCurrentUser(JSON.parse(userStr));
+        // Load user from Supabase
+        const supabase = createClient();
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                // Fetch public user data for balance
+                const { data: publicUser } = await supabase
+                    .from('users')
+                    .select('balance')
+                    .eq('auth_id', user.id)
+                    .single();
+
+                setCurrentUser({
+                    id: user.id,
+                    name: user.user_metadata?.full_name || 'User',
+                    isAnonymous: user.user_metadata?.is_anonymous || false,
+                    balance: publicUser?.balance || 0,
+                    totalDonated: 0
+                });
+            }
+        };
+        getUser();
 
         // Load data
         if (id === 'all') {
@@ -65,51 +86,75 @@ export default function FeederDetails() {
         }, 2000);
     };
 
-    const handleDonate = (amount: number) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [donationAmount, setDonationAmount] = useState(5);
+
+    const handleDonate = async (amount: number) => {
         if (!currentUser) {
             router.push('/login');
             return;
         }
 
-        setIsAnimating(true);
-        setTimeout(() => setIsAnimating(false), 1000);
+        // Check Local Balance first (for UX speed)
+        if ((currentUser.balance || 0) < amount) {
+            // Open "Add Funds" modal instead if insufficient
+            setIsModalOpen(true);
+            setDonationAmount(amount); // pre-fill deposit amount needed?
+            return;
+        }
 
-        if (id === 'all') {
-            Storage.distributeFoodFlow(amount, currentUser);
-        } else if (feeder) {
+        setIsAnimating(true);
+
+        // Call API
+        try {
+            const res = await fetch('/api/feed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount, feederId: id === 'all' ? 1 : id }) // Default to 1 if 'all' or specific
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                if (data.error === 'Insufficient funds') {
+                    setIsModalOpen(true); // Prompt to top up
+                } else {
+                    alert(data.error);
+                }
+                setIsAnimating(false);
+                return;
+            }
+
+            // Success
+            // Update local user state
+            setCurrentUser(prev => prev ? ({ ...prev, balance: data.newBalance }) : null);
+
+            // Trigger Animation
+            if (feeder) {
+                const updated = { ...feeder, status: 'feeding' as const };
+                setFeeder(updated);
+                setStreamStatus('live');
+                setTimeout(() => {
+                    const reset = { ...feeder, status: 'active' as const };
+                    setFeeder(reset);
+                }, 10000);
+            }
+
+            // Add to donations/activity list locally
             const newDonation: Donation = {
                 id: Math.random().toString(36).substr(2, 9),
                 donorName: currentUser.isAnonymous ? 'Anonymous' : currentUser.name,
                 donorId: currentUser.id,
                 amount: amount,
-                feederId: feeder.id,
+                feederId: feeder?.id || '1',
                 timestamp: new Date().toISOString(),
-                message: 'Feeding time! 🦴'
+                message: 'Fed via Wallet 🪙'
             };
-            Storage.addDonation(newDonation);
+            setDonations(prev => [newDonation, ...prev]);
 
-            // Trigger feeder animation/status locally
-            if (feeder.status !== 'feeding') {
-                const updated = { ...feeder, status: 'feeding' as const };
-                Storage.updateFeeder(updated);
-                setFeeder(updated);
-                setStreamStatus('live');
-
-                // Reset after 10 seconds
-                setTimeout(() => {
-                    const reset = { ...feeder, status: 'active' as const };
-                    Storage.updateFeeder(reset);
-                    setFeeder(reset);
-                }, 10000);
-            }
-        }
-
-        // Refresh local donations list
-        const allDonations = Storage.getDonations();
-        if (id === 'all') {
-            setDonations(allDonations.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10));
-        } else {
-            setDonations(allDonations.filter(d => d.feederId === id).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10));
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setTimeout(() => setIsAnimating(false), 1000);
         }
     };
 
@@ -299,6 +344,13 @@ export default function FeederDetails() {
                     </div>
                 </div>
             </div>
+            <DonationModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                feederName="Wallet Deposit"
+                initialAmount={donationAmount}
+                isDeposit={true}
+            />
         </div>
     );
 }
