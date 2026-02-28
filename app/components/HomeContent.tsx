@@ -8,7 +8,7 @@ import Image from 'next/image';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { GridPattern } from './gridPattern';
+import { GridPattern } from './GridPattern';
 import { cn } from '@/lib/utils';
 import { Storage } from '../storage';
 

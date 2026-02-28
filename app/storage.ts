@@ -50,49 +50,57 @@ let users: User[] = [
         id: 'u1',
         name: 'Alice Johnson',
         isAnonymous: false,
-        totalDonated: 150.50
+        totalDonated: 150.50,
+        balance: 0
     },
     {
         id: 'u2',
         name: 'Bob Smith',
         isAnonymous: false,
-        totalDonated: 225.75
+        totalDonated: 225.75,
+        balance: 0
     },
     {
         id: 'u3',
         name: 'Charlie Brown',
         isAnonymous: false,
-        totalDonated: 185.25
+        totalDonated: 185.25,
+        balance: 0
     },
     {
         id: 'u4',
         name: 'Anonymous',
         isAnonymous: true,
-        totalDonated: 95.00
+        totalDonated: 95.00,
+        balance: 0
     },
     {
         id: 'u5',
         name: 'Emily Davis',
         isAnonymous: false,
-        totalDonated: 310.00
+        totalDonated: 310.00,
+        balance: 0
     },
     {
         id: 'u6',
         name: 'Frank Wilson',
         isAnonymous: false,
-        totalDonated: 75.50
+        totalDonated: 75.50,
+        balance: 0
     },
     {
         id: 'u7',
         name: 'Grace Lee',
         isAnonymous: false,
-        totalDonated: 120.25
+        totalDonated: 120.25,
+        balance: 0
     },
     {
         id: 'u8',
         name: 'Anonymous',
         isAnonymous: true,
-        totalDonated: 55.00
+        totalDonated: 55.00,
+        balance: 0
     }
 ];
 

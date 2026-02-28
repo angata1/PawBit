@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { GridPattern } from './components/gridPattern';
+import { GridPattern } from './components/GridPattern';
 import { cn } from '@/lib/utils';
 import { Cat, Dog, Home, SearchX } from 'lucide-react';
 import Button from './components/Button';

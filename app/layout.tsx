@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Gabriela, Libre_Baskerville, Space_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "./components/navbar";
+import Navbar from "./components/Navbar";
 import Footer from "../components/Footer";
 import { createClient } from "@/lib/supabase/server";
 
