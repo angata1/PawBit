@@ -39,9 +39,21 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  let userWithRole = user ? { ...user, role: 'user' } : null;
+
+  if (user) {
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('role')
+      .eq('auth_id', user.id)
+      .single();
+    
+    if (dbUser?.role && userWithRole) {
+      userWithRole.role = dbUser.role;
+    }
+  }
 
   return (
     <html lang="en">
@@ -62,7 +74,7 @@ export default async function RootLayout({
       <body
         className={`${gabriela.variable} ${libreBaskerville.variable} ${spaceMono.variable} antialiased flex flex-col min-h-screen`}
       >
-        <Navbar user={user} />
+        <Navbar user={userWithRole} />
 
         <main className="flex-1">
           {children}

@@ -74,7 +74,7 @@ export default function Register() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center pt-20 px-4">
+        <div className="min-h-screen flex items-center justify-center pt-8 px-4">
             <Card className="w-full max-w-md bg-white">
                 <h1 className="text-3xl font-bold mb-2 text-center">Join PawBit</h1>
                 <p className="text-center text-muted-foreground mb-8 font-mono">

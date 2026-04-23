@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { PawPrint, Map, Trophy, User, LogOut, Menu, X, Images } from 'lucide-react';
+import { PawPrint, Map, Trophy, User, LogOut, Menu, X, Images, ShieldAlert } from 'lucide-react';
 import Button from './Button';
 import { createClient } from '@/lib/supabase/client';
 
@@ -42,7 +42,7 @@ export default function Navbar({ user }: NavbarProps) {
   );
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b-2 border-foreground py-3">
+    <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b-2 border-foreground py-3">
       <div className="container mx-auto px-4 flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
@@ -66,6 +66,15 @@ export default function Navbar({ user }: NavbarProps) {
           {user ? (
             <div className="flex items-center gap-4">
               <NavLink to="/profile" icon={User} label="Profile" />
+              {user.role === 'admin' && (
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wide transition-colors bg-accent/20 hover:bg-accent/40 text-accent-foreground border-2 border-accent/50 text-xs"
+                >
+                  <ShieldAlert className="w-4 h-4" />
+                  Admin
+                </Link>
+              )}
               <Button variant="outline" size="sm" onClick={handleLogout} icon={<LogOut className="w-4 h-4" />}>
                 Logout
               </Button>
@@ -100,6 +109,7 @@ export default function Navbar({ user }: NavbarProps) {
           {user ? (
             <>
               <NavLink to="/profile" icon={User} label="Profile" />
+              {user.role === 'admin' && <NavLink to="/admin" icon={ShieldAlert} label="Admin Panel" />}
               <Button variant="secondary" onClick={handleLogout} className="w-full">Logout</Button>
             </>
           ) : (

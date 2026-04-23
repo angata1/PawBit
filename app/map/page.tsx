@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useRouter } from 'next/navigation';
-import { Feeder } from '../types';
-import { Storage } from '../storage';
+import { Feeder, deriveConnectionStatus, formatLastSeen } from '../types';
 import Button from '../components/Button';
-import { Search, Battery, Wifi, Brain, ArrowRight, List, Map as MapIcon, MapPin } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { Search, Battery, Wifi, Brain, ArrowRight, List, Map as MapIcon, MapPin, Loader2 } from 'lucide-react';
 
 export default function MapPage() {
     const navigate = useRouter();
@@ -16,13 +16,72 @@ export default function MapPage() {
     const [feeders, setFeeders] = useState<Feeder[]>([]);
     const [selectedFeederId, setSelectedFeederId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [loadingFeeders, setLoadingFeeders] = useState(true);
 
     // Mobile View State: 'map' or 'list' (Only applies to screens < md)
     const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
 
+    // Map Supabase row to Feeder type
+    const mapFeederRow = (f: any): Feeder => {
+        const enabled = f.enabled ?? true;
+        const lastSeenAt = f.last_seen_at ?? null;
+        return {
+            id: String(f.id),
+            name: f.name,
+            location: {
+                lat: f.location?.lat ?? 42.6977,
+                lng: f.location?.lng ?? 23.3219,
+                address: f.location?.address ?? 'Sofia, Bulgaria',
+            },
+            enabled,
+            lastSeenAt,
+            connectionStatus: deriveConnectionStatus(enabled, lastSeenAt),
+            foodLevel: f.stock_level ?? 50,
+            animalsDetected: f.left_overs ?? 0,
+            lastFeeding: f.created_at,
+            liveStreamUrl: '',
+        };
+    };
 
+    // Fetch feeders from Supabase
     useEffect(() => {
-        setFeeders(Storage.getFeeders());
+        const fetchFeeders = async () => {
+            setLoadingFeeders(true);
+            try {
+                const supabase = createClient();
+                const { data, error } = await supabase
+                    .from('feeders')
+                    .select('*');
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    setFeeders(data.map(mapFeederRow));
+                } else {
+                    // Fallback to mock data if table is empty
+                    const { Storage } = await import('../storage');
+                    setFeeders(Storage.getFeeders());
+                }
+            } catch (err) {
+                console.warn('Failed to load feeders from Supabase, using mock data:', err);
+                const { Storage } = await import('../storage');
+                setFeeders(Storage.getFeeders());
+            } finally {
+                setLoadingFeeders(false);
+            }
+        };
+        fetchFeeders();
+
+        const supabaseClient = createClient();
+        const subscription = supabaseClient.channel('feeders-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'feeders' }, (payload) => {
+                fetchFeeders(); 
+            })
+            .subscribe();
+
+        return () => {
+            supabaseClient.removeChannel(subscription);
+        };
     }, []);
 
     const filteredFeeders = feeders.filter(f =>
@@ -99,7 +158,11 @@ export default function MapPage() {
             </div>
             <div class="p-3">
                <div class="flex justify-between items-center mb-3 text-xs font-mono font-bold">
-                   <span class="text-green-700 bg-green-100 px-2 py-1 rounded">${feeder.status.toUpperCase()}</span>
+                   <span class="px-2 py-1 rounded ${
+                       feeder.connectionStatus === 'online' ? 'text-green-700 bg-green-100' :
+                       feeder.connectionStatus === 'offline' ? 'text-red-700 bg-red-100' :
+                       'text-gray-700 bg-gray-100'
+                   }">${feeder.connectionStatus.replace('_', ' ').toUpperCase()}</span>
                    <span class="text-yellow-700 bg-yellow-100 px-2 py-1 rounded">${feeder.foodLevel}% FOOD</span>
                </div>
                ${renderToStaticMarkup(
@@ -144,7 +207,7 @@ export default function MapPage() {
     };
 
     return (
-        <div className="h-screen pt-[72px] bg-background overflow-hidden flex flex-col md:flex-row">
+        <div className="h-screen pt-0 bg-background overflow-hidden flex flex-col md:flex-row">
 
             {/* Sidebar - List View */}
             <div className={`
@@ -177,7 +240,13 @@ export default function MapPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24 md:pb-4 bg-gray-50">
-                    {filteredFeeders.map(feeder => (
+                    {loadingFeeders ? (
+                        <div className="flex flex-col items-center justify-center py-20 gap-3">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                            <p className="text-sm font-mono text-muted-foreground">Loading feeders...</p>
+                        </div>
+                    ) : null}
+                    {!loadingFeeders && filteredFeeders.map(feeder => (
                         <div
                             key={feeder.id}
                             onClick={() => flyToFeeder(feeder)}
@@ -190,9 +259,17 @@ export default function MapPage() {
                         >
                             <div className="flex justify-between items-start mb-1">
                                 <h3 className="font-bold text-lg text-foreground">{feeder.name}</h3>
-                                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${feeder.status === 'active' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full ${feeder.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
-                                    {feeder.status}
+                                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${
+                                    feeder.connectionStatus === 'online' ? 'bg-green-100 text-green-700 border-green-200' :
+                                    feeder.connectionStatus === 'offline' ? 'bg-red-100 text-red-700 border-red-200' :
+                                    'bg-gray-100 text-gray-600 border-gray-200'
+                                }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${
+                                        feeder.connectionStatus === 'online' ? 'bg-green-500 animate-pulse' :
+                                        feeder.connectionStatus === 'offline' ? 'bg-red-500' :
+                                        'bg-gray-400'
+                                    }`}></span>
+                                    {feeder.connectionStatus.replace('_', ' ')}
                                 </div>
                             </div>
                             <p className="text-xs text-muted-foreground mb-4 truncate font-mono">{feeder.location.address}</p>
@@ -225,6 +302,14 @@ export default function MapPage() {
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="w-3 h-3 bg-primary rounded-full border border-foreground"></span>
                         <span>Online</span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <span className="w-3 h-3 bg-red-500 rounded-full border border-foreground"></span>
+                        <span>Offline</span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <span className="w-3 h-3 bg-gray-400 rounded-full border border-foreground"></span>
+                        <span>Disabled</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="w-3 h-3 bg-accent rounded-full border border-foreground animate-pulse"></span>

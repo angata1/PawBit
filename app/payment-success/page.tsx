@@ -52,7 +52,7 @@ function PaymentSuccessContent() {
     }, [paymentIntentId, redirectStatus]);
 
     return (
-        <div className="min-h-screen pt-24 pb-12 bg-background flex items-center justify-center p-4">
+        <div className="min-h-screen pt-12 pb-12 bg-background flex items-center justify-center p-4">
             <Card className="max-w-md w-full text-center p-8 border-2 border-foreground">
                 {status === 'verifying' && (
                     <div className="flex flex-col items-center">

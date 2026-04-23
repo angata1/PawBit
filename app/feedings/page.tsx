@@ -67,7 +67,7 @@ const Feedings: React.FC = () => {
         .map(s => JSON.parse(s));
 
     return (
-        <div className="min-h-screen pt-24 px-4 pb-12 bg-background container mx-auto max-w-6xl">
+        <div className="min-h-screen pt-12 px-4 pb-12 bg-background container mx-auto max-w-6xl">
 
             {/* Header Section */}
             <div className="text-center mb-12">

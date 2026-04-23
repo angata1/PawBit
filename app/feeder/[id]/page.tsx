@@ -161,7 +161,7 @@ export default function FeederDetails() {
     if (!feeder) return <div className="pt-24 text-center">Loading...</div>;
 
     return (
-        <div className="min-h-screen pt-20 pb-12 px-4 bg-background">
+        <div className="min-h-screen pt-8 pb-12 px-4 bg-background">
             <div className="container mx-auto max-w-6xl">
                 <button onClick={() => router.push('/map')} className="flex items-center gap-2 font-bold text-muted-foreground hover:text-foreground mb-6 transition-colors">
                     <ArrowLeft className="w-5 h-5" /> Back to Map

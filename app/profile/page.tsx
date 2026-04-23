@@ -111,7 +111,7 @@ export default function Profile() {
     const isAnonymous = user.user_metadata?.is_anonymous || false;
 
     return (
-        <div className="min-h-screen pt-24 px-4 pb-12 bg-background container mx-auto max-w-4xl">
+        <div className="min-h-screen pt-12 px-4 pb-12 bg-background container mx-auto max-w-4xl">
             <h1 className="text-4xl font-bold mb-8 text-center">My Profile</h1>
 
             <div className="grid md:grid-cols-2 gap-8">

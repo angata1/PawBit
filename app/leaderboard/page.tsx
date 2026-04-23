@@ -68,7 +68,7 @@ export default function Leaderboard() {
     };
 
     return (
-        <div className="min-h-screen pt-24 px-4 pb-12 container mx-auto max-w-5xl">
+        <div className="min-h-screen pt-12 px-4 pb-12 container mx-auto max-w-5xl">
             <div className="text-center mb-12">
                 <div className="inline-flex items-center gap-2 bg-white px-4 py-1 rounded-full border-2 border-foreground/10 mb-4 shadow-sm">
                     <Star className="w-4 h-4 text-accent fill-accent" />

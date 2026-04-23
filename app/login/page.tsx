@@ -43,7 +43,7 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center pt-20 px-4">
+        <div className="min-h-screen flex items-center justify-center pt-8 px-4">
             <Card className="w-full max-w-md bg-white">
                 <div className="text-center mb-8">
                     <div className="inline-block bg-primary p-4 rounded-full border-2 border-foreground neu-shadow mb-4">
@@ -86,9 +86,9 @@ export default function Login() {
                             />
                             <span className="font-mono">Remember me</span>
                         </label>
-                        <a href="#" className="font-bold text-accent hover:underline">
-                            Lost Password?
-                        </a>
+                        <Link href="/forgot-password" className="font-bold text-accent hover:underline">
+                            Forgot Password?
+                        </Link>
                     </div>
 
                     <Button type="submit" className="w-full" size="lg" disabled={loading}>
