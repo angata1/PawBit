@@ -80,11 +80,11 @@ export default function DonationModal({ isOpen, onClose, feederName, initialAmou
                                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                                 }`}
                         >
-                            ${val}
+                            €{val}
                         </button>
                     ))}
                     <div className="flex items-center">
-                        <span className="mr-2 text-gray-600">$</span>
+                        <span className="mr-2 text-gray-600">€</span>
                         <input
                             type="number"
                             value={amount}

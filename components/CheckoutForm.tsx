@@ -53,7 +53,7 @@ export default function CheckoutForm({ amount }: { amount: number }) {
             <PaymentElement id="payment-element" options={paymentElementOptions} />
             <Button disabled={isLoading || !stripe || !elements} id="submit" className="w-full mt-4">
                 <span id="button-text">
-                    {isLoading ? <div className="spinner" id="spinner">Processing...</div> : `Pay $${amount}`}
+                    {isLoading ? <div className="spinner" id="spinner">Processing...</div> : `Pay €${amount}`}
                 </span>
             </Button>
             {/* Show any error or success messages */}

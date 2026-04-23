@@ -112,7 +112,7 @@ export default function Leaderboard() {
                             <div className="text-right">
                                 <span className="block text-2xl font-black text-primary">
                                     {user.totalDonated.toFixed(0)}
-                                    <span className="text-sm align-top">лв</span>
+                                    <span className="text-sm align-top">€</span>
                                 </span>
                             </div>
 
@@ -150,7 +150,7 @@ export default function Leaderboard() {
                                     fontSize={12}
                                     tickLine={false}
                                     axisLine={false}
-                                    tickFormatter={(val) => `лв${val}`}
+                                    tickFormatter={(val) => `€${val}`}
                                 />
                                 <Tooltip
                                     cursor={{ fill: "transparent" }}
@@ -198,7 +198,7 @@ export default function Leaderboard() {
                                 </div>
                             </div>
                             <span className="font-mono font-bold text-gray-500">
-                                {user.totalDonated.toFixed(2)}лв
+                                {user.totalDonated.toFixed(2)}€
                             </span>
                         </div>
                     ))}

@@ -20,8 +20,8 @@ export async function POST(req: Request) {
         }
 
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: formatAmountForStripe(amount, "usd"),
-            currency: "usd",
+            amount: formatAmountForStripe(amount, "eur"),
+            currency: "eur",
         });
 
         return NextResponse.json({

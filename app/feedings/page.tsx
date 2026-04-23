@@ -165,7 +165,7 @@ const Feedings: React.FC = () => {
                                                     <div key={idx} className="flex justify-between items-center text-sm">
                                                         <span className="font-bold text-foreground">{donor.name}</span>
                                                         <span className="font-mono bg-green-100 text-green-800 px-2 rounded text-xs border border-green-200">
-                                                            {donor.amount}лв
+                                                            {donor.amount}€
                                                         </span>
                                                     </div>
                                                 ))}

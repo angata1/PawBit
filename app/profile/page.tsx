@@ -209,7 +209,7 @@ export default function Profile() {
                         </div>
                         <div className="text-center py-6">
                             <span className="text-5xl font-black text-primary block mb-2">
-                                {Number(user.user_metadata?.balance || 0).toFixed(2)} <span className="text-xl text-muted-foreground">лв</span>
+                                {Number(user.user_metadata?.balance || 0).toFixed(2)} <span className="text-xl text-muted-foreground">€</span>
                             </span>
                             <p className="text-sm text-muted-foreground mb-6">Available to feed animals</p>
                             <Button className="w-full" size="lg" onClick={() => setIsDepositModalOpen(true)}>
@@ -235,7 +235,7 @@ export default function Profile() {
                                                 </div>
                                             </div>
                                             <span className={`font-bold ${tx.amount_eur > 0 ? 'text-green-600' : 'text-foreground'}`}>
-                                                {tx.amount_eur > 0 ? '+' : ''}{tx.amount_eur}лв
+                                                {tx.amount_eur > 0 ? '+' : ''}{tx.amount_eur}€
                                             </span>
                                         </div>
                                     ))

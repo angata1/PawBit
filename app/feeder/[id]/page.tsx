@@ -252,7 +252,7 @@ export default function FeederDetails() {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <span className="block font-black text-primary">+{d.amount}лв</span>
+                                            <span className="block font-black text-primary">+{d.amount}€</span>
                                             <span className="text-[10px] text-muted-foreground opacity-70">{new Date(d.timestamp).toLocaleTimeString()}</span>
                                         </div>
                                     </div>
@@ -289,7 +289,7 @@ export default function FeederDetails() {
                                         onClick={() => handleDonate(amt)}
                                         className="bg-white"
                                     >
-                                        {amt}лв
+                                        {amt}€
                                     </Button>
                                 ))}
                             </div>
