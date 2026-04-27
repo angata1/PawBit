@@ -64,34 +64,18 @@ export async function POST(request: Request) {
     }
 
     // b. Record Meal (Expenditure)
-    const { error: mealError } = await supabase
+    const { data: mealData, error: mealError } = await supabase
         .from('meals')
         .insert({
             feeder_id: feederId,
             total_cost_eur: amount,
-            // Assuming we added a virtual 'user_id' or 'donor_id' column to meals as discussed 
-            // OR we just record it. The prompt's schema didn't have user_id on meals.
-            // Let's stick to the prompt schema: meals has NO user_id. 
-            // So we can't link this specific meal to the user in the 'meals' table directly 
-            // unless we modify schema.
-            // HOWEVER, the user asked for "Transaction History". 
-            // If meals don't have user_id, we can't show "Your Feedings".
-            // I will assume for MVP we insert into 'mealdonations' or just rely on the balance update.
-            // Let's create a 'donations' record with type='spending' (negative) if we want history?
-            // The user's schema has `donations` (credits). 
-            // Let's try to follow the "Wallet" concept: 
-            // We need a place to store "User spent X on Feeder Y". 
-            // Since I can't modify schema ddl, I'll assume I can insert into `meals` and maybe I'll skip the user link for now 
-            // OR I will assume there is a `user_transactions` table I can make. 
-            // BUT the prompt gave specific tables.
-            // Okay, let's look at `donations` table again. `type` column.
-            // I will insert a NEGATIVE donation record to track spending for history.
-            // user_id: user.id, amount_eur: -amount, type: 'feeding_expenditure'
-        });
+        })
+        .select('id')
+        .single();
 
     // Recording the "Spending" event for history
     await supabase.from('donations').insert({
-        user_auth_id: user.id, // Using correct auth reference
+        user_auth_id: user.id,
         amount_eur: -amount,
         type: 'feeding'
     });
@@ -99,6 +83,26 @@ export async function POST(request: Request) {
     if (mealError) {
         // Rollback balance? Complex without stored procedures. 
         // For MVP agent demo, proceed.
+    }
+
+    // c. Broadcast "dispense" command to the Raspberry Pi via Realtime
+    //    The Pi simulator listens on channel `feeder_commands_{feederId}`
+    try {
+        const commandChannel = supabase.channel(`feeder_commands_${feederId}`);
+        await commandChannel.send({
+            type: 'broadcast',
+            event: 'dispense',
+            payload: {
+                amount_eur: amount,
+                meal_id: mealData?.id ?? null,
+                feeder_id: feederId,
+                triggered_at: new Date().toISOString(),
+            }
+        });
+        await supabase.removeChannel(commandChannel);
+    } catch (broadcastErr) {
+        // Non-fatal: the meal is recorded even if the Pi is offline
+        console.warn('Failed to broadcast dispense command:', broadcastErr);
     }
 
     return NextResponse.json({ success: true, newBalance: currentBalance - amount });

@@ -18,7 +18,7 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [channel, setChannel] = useState<any>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+
 
     useEffect(() => {
         const supabase = createClient();
@@ -51,16 +51,7 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
         };
     }, [roomId]);
 
-    const isFirstRender = useRef(true);
-    useEffect(() => {
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
-            return;
-        }
-        if (messages.length > 0) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [messages]);
+
 
     const handleSendMessage = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -116,7 +107,7 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
                         </div>
                     ))
                 )}
-                <div ref={messagesEndRef} />
+
             </div>
 
             <div className="p-4 bg-white border-t-2 border-foreground/10">

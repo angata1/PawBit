@@ -239,9 +239,8 @@ export default function AboutPage() {
 
                         <ul className="space-y-4 pt-2">
                             {[
-                                { icon: Cpu, label: "Raspberry Pi 4 as the brain of each feeder" },
+                                { icon: Cpu, label: "Raspberry Pi Zero 2W as the brain of each feeder" },
                                 { icon: Wifi, label: "Real-time WebSocket connection to Supabase" },
-                                { icon: Eye, label: "USB camera streams live footage to the web" },
                                 { icon: Lightbulb, label: "Sensors detect animal presence and food levels" },
                             ].map((item, i) => (
                                 <li key={i} className="flex items-start gap-3">
@@ -334,9 +333,7 @@ export default function AboutPage() {
                         <Button href="/map" variant="primary" size="lg" icon={<ArrowRight className="w-5 h-5" />}>
                             Find a Feeder
                         </Button>
-                        <Button href="/donate" variant="accent" size="lg" icon={<Heart className="w-5 h-5 fill-current" />}>
-                            Donate Now
-                        </Button>
+
                     </div>
                 </div>
             </section>
