@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { PawPrint, Heart, Mail, Phone, MapPin } from "lucide-react";
+import { Heart, Mail, Phone, MapPin } from "lucide-react";
+import Image from "next/image";
 
 export default function Footer() {
     return (
@@ -9,8 +10,14 @@ export default function Footer() {
                     {/* Brand Section */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
-                            <div className="bg-primary p-2 rounded-lg border-2 border-foreground neu-shadow-sm">
-                                <PawPrint className="w-6 h-6 text-primary-foreground" />
+                            <div className="bg-primary p-1.5 rounded-lg border-2 border-foreground neu-shadow-sm">
+                                <Image 
+                                    src="/logo.svg" 
+                                    alt="PawBit Logo" 
+                                    width={24} 
+                                    height={24} 
+                                    className="object-contain brightness-0 invert"
+                                />
                             </div>
                             <span className="text-xl font-bold">PawBit</span>
                         </div>

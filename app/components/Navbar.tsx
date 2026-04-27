@@ -3,7 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { PawPrint, Map, Trophy, User, LogOut, Menu, X, Images, ShieldAlert } from 'lucide-react';
+import { PawPrint, Map, Trophy, User, LogOut, Menu, X, Images, ShieldAlert, Users } from 'lucide-react';
+import Image from 'next/image';
 import Button from './Button';
 import { createClient } from '@/lib/supabase/client';
 
@@ -46,8 +47,14 @@ export default function Navbar({ user }: NavbarProps) {
       <div className="container mx-auto px-4 flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="bg-accent p-2 rounded-lg border-2 border-foreground neu-shadow-sm group-hover:rotate-6 transition-transform">
-            <PawPrint className="w-8 h-8 text-foreground" />
+          <div className="bg-primary p-1.5 rounded-lg border-2 border-foreground neu-shadow-sm group-hover:rotate-6 transition-transform overflow-hidden">
+            <Image 
+              src="/logo.svg" 
+              alt="PawBit Logo" 
+              width={32} 
+              height={32} 
+              className="object-contain brightness-0 invert"
+            />
           </div>
           <span className="text-3xl font-black tracking-tighter text-foreground group-hover:text-primary transition-colors hidden sm:block">
             PawBit
@@ -60,6 +67,7 @@ export default function Navbar({ user }: NavbarProps) {
           <NavLink to="/map" icon={Map} label="Map" />
           <NavLink to="/feedings" icon={Images} label="Gallery" />
           <NavLink to="/leaderboard" icon={Trophy} label="Rankings" />
+          <NavLink to="/about" icon={Users} label="About" />
 
           <div className="h-8 w-0.5 bg-foreground/20 mx-2" />
 
@@ -105,6 +113,7 @@ export default function Navbar({ user }: NavbarProps) {
           <NavLink to="/map" icon={Map} label="Map" />
           <NavLink to="/feedings" icon={Images} label="Gallery" />
           <NavLink to="/leaderboard" icon={Trophy} label="Rankings" />
+          <NavLink to="/about" icon={Users} label="About" />
           <hr className="border-foreground/20" />
           {user ? (
             <>

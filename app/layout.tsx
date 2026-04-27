@@ -31,6 +31,9 @@ const spaceMono = Space_Mono({
 export const metadata: Metadata = {
   title: "PawBit - Interactive Animal Feeding",
   description: "Connect your clicks to real kibble. Watch live video as you donate to stray animals in your city.",
+  icons: {
+    icon: "/logo.svg",
+  },
 };
 
 export default async function RootLayout({
