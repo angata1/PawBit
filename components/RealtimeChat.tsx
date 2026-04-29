@@ -78,6 +78,16 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
         });
     };
 
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
     return (
         <div className="flex flex-col h-[400px] bg-white border-4 border-foreground shadow-[8px_8px_0px_rgba(0,0,0,1)] rounded-3xl overflow-hidden mt-8">
             <div className="bg-foreground text-background p-4 flex items-center gap-2">
@@ -92,22 +102,24 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
                         <p className="font-mono text-sm">No messages yet. Start chatting!</p>
                     </div>
                 ) : (
-                    messages.map((msg) => (
-                        <div key={msg.id} className={`flex flex-col ${msg.user_id === currentUser?.id ? 'items-end' : 'items-start'}`}>
-                            <span className="text-xs font-bold text-muted-foreground mb-1 ml-1">
-                                {msg.user_name}
-                            </span>
-                            <div className={`px-4 py-2 rounded-2xl max-w-[85%] break-words border-2 ${
-                                msg.user_id === currentUser?.id 
-                                ? 'bg-primary text-primary-foreground border-foreground rounded-tr-sm' 
-                                : 'bg-white border-foreground rounded-tl-sm shadow-[2px_2px_0px_rgba(0,0,0,1)]'
-                            }`}>
-                                {msg.message}
+                    <>
+                        {messages.map((msg) => (
+                            <div key={msg.id} className={`flex flex-col ${msg.user_id === currentUser?.id ? 'items-end' : 'items-start'}`}>
+                                <span className="text-xs font-bold text-muted-foreground mb-1 ml-1">
+                                    {msg.user_name}
+                                </span>
+                                <div className={`px-4 py-2 rounded-2xl max-w-[85%] break-words border-2 ${
+                                    msg.user_id === currentUser?.id 
+                                    ? 'bg-primary text-primary-foreground border-foreground rounded-tr-sm' 
+                                    : 'bg-white border-foreground rounded-tl-sm shadow-[2px_2px_0px_rgba(0,0,0,1)]'
+                                }`}>
+                                    {msg.message}
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        ))}
+                        <div ref={messagesEndRef} />
+                    </>
                 )}
-
             </div>
 
             <div className="p-4 bg-white border-t-2 border-foreground/10">
