@@ -267,7 +267,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState<'overview' | 'feeders' | 'transactions'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'feeders' | 'transactions' | 'pools'>('overview');
     const [data, setData] = useState<AdminData | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -278,6 +278,14 @@ export default function AdminDashboard() {
     const [editStatus, setEditStatus] = useState('');
     const [feedersExpanded, setFeedersExpanded] = useState<Record<string, boolean>>({});
     const [userEmail, setUserEmail] = useState('');
+
+    // Pool management state
+    const [pools, setPools] = useState<any[]>([]);
+    const [poolLoading, setPoolLoading] = useState(false);
+    const [poolAction, setPoolAction] = useState<'add' | 'deduct'>('deduct');
+    const [poolAmount, setPoolAmount] = useState('');
+    const [poolReason, setPoolReason] = useState('');
+    const [poolMessage, setPoolMessage] = useState('');
 
     const supabase = createClient();
 
@@ -359,6 +367,49 @@ export default function AdminDashboard() {
         window.location.href = '/';
     };
 
+    // ── Pool management ──
+    const fetchPools = useCallback(async () => {
+        setPoolLoading(true);
+        try {
+            const res = await fetch('/api/admin/pools');
+            if (!res.ok) throw new Error('Failed to load pools');
+            const json = await res.json();
+            setPools(json.pools || []);
+        } catch (e: any) {
+            console.error('Pool fetch error:', e);
+        } finally {
+            setPoolLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === 'pools') fetchPools();
+    }, [activeTab, fetchPools]);
+
+    const handlePoolAction = async () => {
+        const amt = parseFloat(poolAmount);
+        if (!amt || amt <= 0) return;
+        setPoolLoading(true);
+        setPoolMessage('');
+        try {
+            const res = await fetch('/api/admin/pools', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: poolAction, amount: amt, reason: poolReason || 'admin_adjustment' }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Action failed');
+            setPoolMessage(`✅ Successfully ${poolAction === 'deduct' ? 'deducted' : 'added'} €${amt.toFixed(2)}`);
+            setPoolAmount('');
+            setPoolReason('');
+            fetchPools();
+        } catch (e: any) {
+            setPoolMessage(`❌ ${e.message}`);
+        } finally {
+            setPoolLoading(false);
+        }
+    };
+
     const fmtCurrency = (v: number) => `€${v.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
     const fmtShortDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
@@ -428,6 +479,7 @@ export default function AdminDashboard() {
                         { key: 'overview', label: 'Overview', icon: BarChart2 },
                         { key: 'feeders', label: `Feeders (${data?.feeders.length ?? 0})`, icon: Package },
                         { key: 'transactions', label: 'Transactions', icon: DollarSign },
+                        { key: 'pools', label: 'Donation Pools', icon: Battery },
                     ].map(t => (
                         <button
                             key={t.key}
@@ -936,6 +988,127 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 )}
+                {/* ══════════ POOLS TAB ══════════ */}
+                {activeTab === 'pools' && (
+                    <div className="space-y-6">
+                        <div>
+                            <h2 className="text-2xl font-black">Donation Pool Management</h2>
+                            <p className="text-sm text-muted-foreground font-mono">View balances, add funds, or deduct for maintenance & repairs</p>
+                        </div>
+
+                        {/* Pool Balances */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {pools.map(pool => (
+                                <div key={pool.id} className={`bg-white border-2 border-foreground rounded-2xl p-5 shadow-[3px_3px_0px_rgba(60,50,30,0.8)] ${pool.feeder_id === null ? 'ring-2 ring-primary' : ''}`}>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`p-2 rounded-xl border-2 border-foreground ${pool.feeder_id === null ? 'bg-primary' : 'bg-accent'}`}>
+                                                <DollarSign className="w-4 h-4 text-white" />
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-sm">{pool.feeder_name}</p>
+                                                {pool.feeder_id === null && <span className="text-[10px] font-bold text-primary uppercase">Primary Fund</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-3xl font-black text-foreground">€{Number(pool.balance).toFixed(2)}</p>
+                                    <p className="text-[10px] text-muted-foreground font-mono mt-1">Updated: {pool.last_updated ? new Date(pool.last_updated).toLocaleString('en-GB') : '–'}</p>
+                                </div>
+                            ))}
+                            {pools.length === 0 && !poolLoading && (
+                                <div className="col-span-full bg-white border-2 border-dashed border-foreground/30 rounded-2xl p-12 text-center">
+                                    <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                                    <p className="font-bold text-muted-foreground">No donation pools found</p>
+                                    <p className="text-xs text-muted-foreground font-mono">Run the SQL migration to initialize the Global Pool</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Admin Actions */}
+                        <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                            <h3 className="font-black text-lg mb-1">Admin Actions — Global Pool</h3>
+                            <p className="text-sm text-muted-foreground font-mono mb-5">Add or deduct funds for maintenance, repairs, new feeders, etc.</p>
+
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                {/* Action Select */}
+                                <div className="flex-shrink-0">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Action</label>
+                                    <select
+                                        value={poolAction}
+                                        onChange={e => setPoolAction(e.target.value as any)}
+                                        className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                                    >
+                                        <option value="deduct">Deduct (Withdraw)</option>
+                                        <option value="add">Add (Top Up)</option>
+                                    </select>
+                                </div>
+
+                                {/* Amount */}
+                                <div className="flex-1">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Amount (€)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        value={poolAmount}
+                                        onChange={e => setPoolAmount(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                                    />
+                                </div>
+
+                                {/* Reason */}
+                                {poolAction === 'deduct' && (
+                                    <div className="flex-1">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Reason</label>
+                                        <input
+                                            type="text"
+                                            value={poolReason}
+                                            onChange={e => setPoolReason(e.target.value)}
+                                            placeholder="e.g. feeder repair, new hardware"
+                                            className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Submit */}
+                                <div className="flex items-end">
+                                    <button
+                                        onClick={handlePoolAction}
+                                        disabled={poolLoading || !poolAmount}
+                                        className={`px-6 py-2.5 border-2 border-foreground rounded-xl font-bold text-sm text-white shadow-[3px_3px_0px_rgba(60,50,30,0.8)] hover:-translate-y-0.5 transition-all disabled:opacity-50 flex items-center gap-2 ${
+                                            poolAction === 'deduct' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
+                                        }`}
+                                    >
+                                        {poolLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : poolAction === 'deduct' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                                        {poolAction === 'deduct' ? 'Withdraw' : 'Add Funds'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Feedback */}
+                            {poolMessage && (
+                                <div className={`mt-4 p-3 rounded-xl border text-sm font-mono ${
+                                    poolMessage.startsWith('✅') ? 'bg-green-50 border-green-300 text-green-700' : 'bg-red-50 border-red-300 text-red-700'
+                                }`}>
+                                    {poolMessage}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Explanation */}
+                        <div className="bg-muted/30 border-2 border-foreground/10 rounded-2xl p-5">
+                            <h4 className="font-bold text-sm mb-2 flex items-center gap-2"><Settings className="w-4 h-4 text-primary" /> How Donation Pools Work</h4>
+                            <ul className="text-xs text-muted-foreground font-mono space-y-1.5 list-disc list-inside">
+                                <li><strong>Global Pool</strong> — Funds available to ALL feeders. Used when a feeder&apos;s own pool is empty.</li>
+                                <li><strong>Feeder Pool</strong> — Funds dedicated to a specific feeder. Checked FIRST before the global pool.</li>
+                                <li><strong>Live Donation</strong> — User clicks &quot;Feed&quot; directly. Deducted from their wallet, bypasses pools entirely.</li>
+                                <li><strong>Deductions</strong> — Admin can withdraw from the Global Pool for maintenance, repairs, and infrastructure costs.</li>
+                            </ul>
+                        </div>
+                    </div>
+                )}
+
             </main>
 
             {/* ── Add Feeder Modal ── */}

@@ -190,7 +190,7 @@ export default function HomeContent() {
     return (
         <div className="w-full" ref={container}>
             {/* ========== HERO ========== */}
-            <section className="min-h-[92vh] flex flex-col items-center justify-center relative overflow-hidden px-4">
+            <section className="min-h-[92svh] md:min-h-[92vh] flex flex-col items-center justify-center relative overflow-hidden px-4">
                 <div className="absolute inset-0 z-0 pointer-events-none">
                     <Image
                         src="/hero-cat.png"
@@ -225,7 +225,7 @@ export default function HomeContent() {
                 </div>
 
                 {/* ── Scroll indicator ── */}
-                <div className="scroll-indicator absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 md:gap-2 z-10 pointer-events-none select-none opacity-0">
+                <div className="scroll-indicator absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 md:gap-2 z-10 pointer-events-none select-none opacity-0 mb-safe">
                     <span className="text-[9px] md:text-[11px] font-black tracking-[0.4em] uppercase text-foreground/40 md:text-foreground/60 mb-1 md:mb-2">Scroll</span>
                     <div className="scroll-indicator-icon relative flex items-center justify-center">
                         <div className="absolute w-12 h-12 md:w-20 md:h-20 bg-primary/20 rounded-full blur-2xl animate-pulse" />

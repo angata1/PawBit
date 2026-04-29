@@ -22,6 +22,7 @@ export default function Navbar({ user }: NavbarProps) {
   const supabase = createClient();
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setIsOpen(false);
     router.refresh();
   };
 
@@ -46,7 +47,7 @@ export default function Navbar({ user }: NavbarProps) {
     <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b-2 border-foreground py-3">
       <div className="container mx-auto px-4 flex justify-between items-center">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2 group">
           <div className="bg-primary p-1.5 rounded-lg border-2 border-foreground neu-shadow-sm group-hover:rotate-6 transition-transform overflow-hidden">
             <Image 
               src="/logo.svg" 
@@ -123,8 +124,8 @@ export default function Navbar({ user }: NavbarProps) {
             </>
           ) : (
             <>
-              <Link href="/login" className="block text-center font-bold py-2 bg-white border-2 border-foreground rounded-lg">Log In</Link>
-              <Link href="/register" className="block text-center font-bold py-2 bg-accent text-accent-foreground border-2 border-foreground rounded-lg">Join Now</Link>
+              <Link href="/login" onClick={() => setIsOpen(false)} className="block text-center font-bold py-2 bg-white border-2 border-foreground rounded-lg">Log In</Link>
+              <Link href="/register" onClick={() => setIsOpen(false)} className="block text-center font-bold py-2 bg-accent text-accent-foreground border-2 border-foreground rounded-lg">Join Now</Link>
             </>
           )}
         </div>

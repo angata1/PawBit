@@ -61,7 +61,7 @@ export default function FeederDetails() {
 
                 setFeeder({
                     id: 'all',
-                    name: 'Global FoodFlow™ Network',
+                    name: 'Global Donation Pool',
                     location: { lat: 0, lng: 0, address: `Active across ${allFeeders.length} stations` },
                     enabled: true,
                     lastSeenAt: new Date().toISOString(),
@@ -252,7 +252,7 @@ export default function FeederDetails() {
                         {id === 'all' ? (
                             <Card className="h-[400px] flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 border-4 border-foreground neu-shadow">
                                 <Brain className="w-24 h-24 text-primary mb-4" />
-                                <h2 className="text-3xl font-bold text-center mb-2">FoodFlow™ AI Active</h2>
+                                <h2 className="text-3xl font-bold text-center mb-2">Donation Pool Active</h2>
                                 <p className="text-center max-w-md text-muted-foreground font-medium px-6">
                                     Donations are intelligently distributed to the hungriest animals across our global network of IoT feeding stations.
                                 </p>
@@ -456,7 +456,7 @@ export default function FeederDetails() {
                                         <Brain className="w-6 h-6" />
                                         <span className="text-xs font-bold uppercase tracking-widest">Recommended Path</span>
                                     </div>
-                                    <h3 className="text-3xl font-black mb-2">Use FoodFlow™</h3>
+                                    <h3 className="text-3xl font-black mb-2">Donate to Pool</h3>
                                     <p className="text-sm opacity-90 mb-6 font-mono leading-relaxed">Let our AI system determine which animals need your help the most right now.</p>
                                     <div className="flex items-center gap-2 font-bold text-sm bg-white/20 w-fit px-4 py-2 rounded-xl backdrop-blur-md border border-white/30 group-hover:bg-white/30 transition-colors">
                                         Switch to AI Flow <ArrowRight className="w-4 h-4" />

@@ -13,7 +13,7 @@ const MOCK_VIDEOS = Array.from({ length: 45 }).map((_, i) => {
     const feeder = MOCK_FEEDERS[i % MOCK_FEEDERS.length];
     return {
         id: `v${i}`,
-        youtubeId: i % 2 === 0 ? '_QRi0EAiAUU' : '87nz_q_JluM',
+        youtubeId: i % 2 === 0 ? 'N8lkEdzfqH0' : '87nz_q_JluM',
         title: `Lunch time at ${feeder.name}`,
         feederId: feeder.id,
         feederName: feeder.name,

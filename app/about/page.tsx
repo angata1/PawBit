@@ -94,9 +94,7 @@ export default function AboutPage() {
                 <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-center gap-14">
                     {/* text */}
                     <div className="flex-1 space-y-6 text-center lg:text-left">
-                        <span className="about-hero-text inline-block px-4 py-1.5 text-xs font-bold uppercase tracking-widest bg-primary/15 text-primary rounded-full border border-primary/30">
-                            About PawBit
-                        </span>
+
 
                         <h1 className="about-hero-text text-5xl md:text-6xl font-black leading-[1.1]">
                             Two Students.<br />
@@ -133,7 +131,7 @@ export default function AboutPage() {
 
                     <p className="story-block text-lg text-muted-foreground leading-relaxed">
                         We kept asking ourselves: <strong className="text-foreground">what if feeding them didn&apos;t depend
-                        on who happened to walk by?</strong> What if anyone, anywhere, could press a button and actually
+                            on who happened to walk by?</strong> What if anyone, anywhere, could press a button and actually
                         deliver food to an animal that needs it — right now, in real-time?
                     </p>
 
@@ -180,7 +178,7 @@ export default function AboutPage() {
                             {
                                 icon: Cpu,
                                 title: "Custom Hardware",
-                                body: "Designed and built by us using Raspberry Pi and custom CAD. While not open-source just yet, our goal is to share the blueprints soon.",
+                                body: "Designed and built by us using Raspberry Pi and custom CAD. While not open-source just yet, our goal is to share the finished blueprints soon.",
                                 color: "text-secondary-foreground",
                                 bg: "bg-secondary/20"
                             },
@@ -276,7 +274,7 @@ export default function AboutPage() {
                                     <p className="text-sm font-mono text-primary mt-1">Programmer, Website Builder &amp; Project Planner</p>
                                 </div>
                                 <p className="text-muted-foreground leading-relaxed text-center md:text-left">
-                                    Builds the web platform, manages the system architecture, and maps out the project roadmap. 
+                                    Builds the web platform, manages the system architecture, and maps out the project roadmap.
                                     Believes that code can do more than just live on a screen — it can put food in a hungry animal&apos;s bowl.
                                 </p>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center md:justify-start">
@@ -298,7 +296,7 @@ export default function AboutPage() {
                                     <p className="text-sm font-mono text-accent mt-1">Hardware Maker &amp; CAD Designer</p>
                                 </div>
                                 <p className="text-muted-foreground leading-relaxed text-center md:text-left">
-                                    Handles the physical engineering, from 3D modeling the feeder enclosures to wiring the electronics. 
+                                    Handles the physical engineering, from 3D modeling the feeder enclosures to wiring the electronics.
                                     Turning sketches into functional, animal-proof hardware that works in the real world.
                                 </p>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center md:justify-start">
@@ -309,10 +307,7 @@ export default function AboutPage() {
                         </div>
                     </div>
 
-                    <p className="text-center text-muted-foreground mt-10 text-lg">
-                        We&apos;re students at <strong className="text-foreground">PMG &ldquo;Yane Sandanski&rdquo;</strong>, Gotse Delchev.
-                        PawBit is our way of proving that age doesn&apos;t determine impact.
-                    </p>
+
                 </div>
             </section>
 

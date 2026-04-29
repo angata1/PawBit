@@ -3,6 +3,7 @@ import { Gabriela, Libre_Baskerville, Space_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "../components/Footer";
+import CookieBanner from "../components/CookieBanner";
 import { createClient } from "@/lib/supabase/server";
 
 const gabriela = Gabriela({
@@ -84,6 +85,7 @@ export default async function RootLayout({
         </main>
 
         <Footer />
+        <CookieBanner />
       </body>
     </html>
   );

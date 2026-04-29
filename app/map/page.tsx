@@ -207,11 +207,11 @@ export default function MapPage() {
     };
 
     return (
-        <div className="h-screen pt-0 bg-background overflow-hidden flex flex-col md:flex-row">
+        <div className="h-[calc(100dvh-74px)] md:h-[calc(100vh-74px)] pt-0 bg-background overflow-hidden flex flex-col md:flex-row">
 
             {/* Sidebar - List View */}
             <div className={`
-        bg-card border-r-2 border-foreground flex flex-col z-20 shadow-2xl flex-shrink-0
+        bg-card border-r-2 border-foreground flex flex-col z-[60] md:z-20 shadow-2xl flex-shrink-0
         w-full md:w-96 h-full absolute md:relative top-0 left-0 transition-transform duration-300
         ${mobileView === 'list' ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
@@ -234,7 +234,7 @@ export default function MapPage() {
                         className="w-full flex justify-between items-center bg-accent text-accent-foreground border-accent-foreground"
                         size="md"
                     >
-                        <span className="flex items-center gap-2"><Brain className="w-5 h-5" /> FoodFlow AI</span>
+                        <span className="flex items-center gap-2"><Brain className="w-5 h-5" /> Donation Pool</span>
                         <ArrowRight className="w-5 h-5" />
                     </Button>
                 </div>
@@ -318,7 +318,7 @@ export default function MapPage() {
                 </div>
 
                 {/* Mobile Toggle Button (Floating) */}
-                <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex gap-2 shadow-2xl">
+                <div className="md:hidden absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] flex gap-2 shadow-2xl mb-safe">
                     <Button
                         onClick={() => setMobileView('list')}
                         className={`rounded-l-full rounded-r-none border-r-0 ${mobileView === 'list' ? '' : 'bg-white'}`}

@@ -144,9 +144,9 @@ export const Storage = {
     getUsers: (): User[] => {
         return users;
     },
-    distributeFoodFlow: (amount: number, user: User) => {
-        // Mock implementation: distribute to random feeders
-        console.log(`Distributing ${amount} from ${user.name}`);
-        // In a real app, this would update multiple feeders
+    distributeToPool: (amount: number, user: User) => {
+        // Mock implementation: distribute to donation pool
+        console.log(`Distributing ${amount} from ${user.name} to donation pool`);
+        // In the real app, this calls /api/donate-pool
     }
 };

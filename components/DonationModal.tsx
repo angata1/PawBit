@@ -57,8 +57,8 @@ export default function DonationModal({ isOpen, onClose, feederName, initialAmou
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="relative w-full max-w-lg bg-white rounded-xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm pt-safe pb-safe">
+            <div className="relative w-full max-w-lg bg-white rounded-xl shadow-2xl p-6 max-h-[90dvh] overflow-y-auto">
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"

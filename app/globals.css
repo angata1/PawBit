@@ -139,8 +139,9 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
     font-family: var(--font-sans);
+    min-height: 100svh;
   }
 
   h1,
@@ -158,6 +159,10 @@
   input,
   button {
     font-family: var(--font-mono);
+  }
+
+  button, a {
+    touch-action: manipulation;
   }
 
   .font-serif-heading {
@@ -188,6 +193,20 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Safe Area Utilities */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
   }
 }
 
