@@ -27,7 +27,7 @@ export const FeedersTab = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-black">Feeder Management</h2>
-                    <p className="text-sm text-muted-foreground font-mono">Connected to live Supabase database</p>
+                    <p className="text-sm text-muted-foreground font-mono">Manage and monitor your hardware network</p>
                 </div>
                 <button
                     onClick={() => setShowAddFeeder(true)}

@@ -275,7 +275,7 @@ export default function AdminDashboard() {
     const [showAddFeeder, setShowAddFeeder] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editingFeeder, setEditingFeeder] = useState<Feeder | null>(null);
-    const [editStatus, setEditStatus] = useState('');
+    const [editForm, setEditForm] = useState<any>({});
     const [feedersExpanded, setFeedersExpanded] = useState<Record<string, boolean>>({});
     const [userEmail, setUserEmail] = useState('');
 
@@ -342,19 +342,30 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleUpdateFeederStatus = async (feeder: Feeder) => {
-        if (!editStatus) return;
+    const handleUpdateFeeder = async (feeder: Feeder) => {
         try {
+            const body = {
+                name: editForm.name,
+                location: {
+                    ...feeder.location,
+                    address: editForm.address,
+                    lat: parseFloat(editForm.lat),
+                    lng: parseFloat(editForm.lng),
+                },
+                enabled: editForm.status === 'enabled',
+                stock_level: parseInt(editForm.stock_level, 10),
+                left_overs: parseInt(editForm.left_overs, 10),
+            };
             const res = await fetch(`/api/admin/feeders/${feeder.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ enabled: editStatus === 'enabled' }),
+                body: JSON.stringify(body),
             });
             if (!res.ok) throw new Error('Failed to update');
             const updated = await res.json();
             setData(prev => prev ? {
                 ...prev,
-                feeders: prev.feeders.map(f => f.id === feeder.id ? { ...f, enabled: editStatus === 'enabled' } : f)
+                feeders: prev.feeders.map(f => f.id === feeder.id ? updated.feeder : f)
             } : prev);
             setEditingFeeder(null);
         } catch (e: any) {
@@ -439,57 +450,35 @@ export default function AdminDashboard() {
         <div className="min-h-screen bg-background">
 
             {/* ── Top Bar ── */}
-            <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-foreground">
-                <div className="px-6 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="bg-accent p-1.5 rounded-lg border-2 border-foreground">
-                                <PawPrint className="w-6 h-6 text-foreground" />
-                            </div>
-                            <span className="font-black text-xl tracking-tight">PawBit</span>
-                        </Link>
-                        <div className="h-6 w-0.5 bg-foreground/20" />
-                        <div className="flex items-center gap-2">
-                            <ShieldAlert className="w-4 h-4 text-accent" />
-                            <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Admin Panel</span>
-                        </div>
+            <header className="sticky top-[73px] z-40 bg-white/95 backdrop-blur-md border-b-2 border-foreground">
+                {/* Tab navigation — horizontally scrollable on mobile */}
+                <div className="px-2 sm:px-6 flex items-center justify-between bg-muted/30">
+                    <div className="flex gap-0.5 sm:gap-1 overflow-x-auto no-scrollbar">
+                        {[
+                            { key: 'overview', label: 'Overview', icon: BarChart2 },
+                            { key: 'feeders', label: `Feeders (${data?.feeders.length ?? 0})`, icon: Package },
+                            { key: 'transactions', label: 'Transactions', icon: DollarSign },
+                            { key: 'pools', label: 'Pools', icon: Battery },
+                        ].map(t => (
+                            <button
+                                key={t.key}
+                                onClick={() => setActiveTab(t.key as any)}
+                                className={`flex items-center gap-1.5 px-3 sm:px-5 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${activeTab === t.key ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                            >
+                                <t.icon className="w-4 h-4" />
+                                <span className="hidden xs:inline sm:inline">{t.label}</span>
+                            </button>
+                        ))}
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => fetchData(true)}
-                            disabled={refreshing}
-                            className="flex items-center gap-2 px-3 py-1.5 border-2 border-foreground rounded-lg text-sm font-bold hover:bg-muted transition-colors disabled:opacity-50"
-                        >
-                            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                            Refresh
-                        </button>
-                        <div className="text-xs font-mono text-muted-foreground hidden sm:block">{userEmail}</div>
-                        <button
-                            onClick={handleSignOut}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 text-destructive border-2 border-destructive/50 rounded-lg text-sm font-bold hover:bg-destructive hover:text-white transition-colors"
-                        >
-                            <LogOut className="w-4 h-4" /> Sign Out
-                        </button>
-                    </div>
-                </div>
 
-                {/* Tab navigation */}
-                <div className="px-6 flex gap-1 bg-muted/30">
-                    {[
-                        { key: 'overview', label: 'Overview', icon: BarChart2 },
-                        { key: 'feeders', label: `Feeders (${data?.feeders.length ?? 0})`, icon: Package },
-                        { key: 'transactions', label: 'Transactions', icon: DollarSign },
-                        { key: 'pools', label: 'Donation Pools', icon: Battery },
-                    ].map(t => (
-                        <button
-                            key={t.key}
-                            onClick={() => setActiveTab(t.key as any)}
-                            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold border-b-2 transition-all ${activeTab === t.key ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-                        >
-                            <t.icon className="w-4 h-4" />
-                            {t.label}
-                        </button>
-                    ))}
+                    <button
+                        onClick={() => fetchData(true)}
+                        disabled={refreshing}
+                        className="flex items-center gap-1.5 px-3 py-1.5 border-2 border-foreground rounded-lg text-xs font-bold hover:bg-muted transition-colors disabled:opacity-50 flex-shrink-0 ml-4"
+                    >
+                        <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                        <span className="hidden sm:inline">Refresh</span>
+                    </button>
                 </div>
             </header>
 
@@ -502,7 +491,7 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            <main className="px-6 py-8 max-w-[1400px] mx-auto">
+            <main className="px-3 sm:px-6 py-6 sm:py-8 max-w-[1400px] mx-auto">
 
                 {/* ══════════ OVERVIEW TAB ══════════ */}
                 {activeTab === 'overview' && data && (
@@ -733,7 +722,7 @@ export default function AdminDashboard() {
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                                 <h2 className="text-2xl font-black">Feeder Management</h2>
-                                <p className="text-sm text-muted-foreground font-mono">Connected to live Supabase database</p>
+                                <p className="text-sm text-muted-foreground font-mono">Manage and monitor your hardware network</p>
                             </div>
                             <button
                                 onClick={() => setShowAddFeeder(true)}
@@ -838,10 +827,18 @@ export default function AdminDashboard() {
                                                     <button
                                                         onClick={() => {
                                                             setEditingFeeder(feeder);
-                                                            setEditStatus(feeder.enabled ? 'enabled' : 'disabled');
+                                                            setEditForm({
+                                                                name: feeder.name || '',
+                                                                address: feeder.location?.address || '',
+                                                                lat: feeder.location?.lat?.toString() || '0',
+                                                                lng: feeder.location?.lng?.toString() || '0',
+                                                                status: feeder.enabled ? 'enabled' : 'disabled',
+                                                                stock_level: feeder.stock_level?.toString() || '0',
+                                                                left_overs: feeder.left_overs?.toString() || '0',
+                                                            });
                                                         }}
                                                         className="p-2 rounded-lg border-2 border-foreground/20 hover:border-primary hover:bg-primary/10 transition-colors"
-                                                        title="Edit status"
+                                                        title="Edit feeder"
                                                     >
                                                         <Edit3 className="w-4 h-4" />
                                                     </button>
@@ -865,31 +862,52 @@ export default function AdminDashboard() {
 
                                             {/* Inline edit panel */}
                                             {isEditing && (
-                                                <div className="border-t-2 border-border bg-muted/30 px-5 py-4 flex flex-wrap items-center gap-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <label className="text-xs font-bold uppercase text-muted-foreground">Admin Status:</label>
-                                                        <select
-                                                            value={editStatus}
-                                                            onChange={e => setEditStatus(e.target.value)}
-                                                            className="px-3 py-1.5 border-2 border-foreground rounded-lg text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-primary"
-                                                        >
-                                                            {['enabled', 'disabled'].map(s => (
-                                                                <option key={s} value={s}>{s}</option>
-                                                            ))}
-                                                        </select>
+                                                <div className="border-t-2 border-border bg-muted/30 px-5 py-4 flex flex-col gap-4">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                                        <div>
+                                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Name</label>
+                                                            <input type="text" value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Address</label>
+                                                            <input type="text" value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Latitude</label>
+                                                            <input type="number" step="any" value={editForm.lat} onChange={e => setEditForm({ ...editForm, lat: e.target.value })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Longitude</label>
+                                                            <input type="number" step="any" value={editForm.lng} onChange={e => setEditForm({ ...editForm, lng: e.target.value })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Food Level (%)</label>
+                                                            <input type="number" min="0" max="100" value={editForm.stock_level} onChange={e => setEditForm({ ...editForm, stock_level: e.target.value })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Leftovers</label>
+                                                            <input type="number" min="0" value={editForm.left_overs} onChange={e => setEditForm({ ...editForm, left_overs: e.target.value })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Admin Status</label>
+                                                            <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary">
+                                                                <option value="enabled">Enabled</option>
+                                                                <option value="disabled">Disabled</option>
+                                                            </select>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex gap-2 items-center">
-                                                        <button
-                                                            onClick={() => handleUpdateFeederStatus(feeder)}
-                                                            className="px-4 py-1.5 bg-primary border-2 border-foreground rounded-lg text-xs font-bold text-white flex items-center gap-1.5 hover:bg-primary/90"
-                                                        >
-                                                            <Save className="w-3 h-3" /> Save
-                                                        </button>
+                                                    <div className="flex gap-2 items-center justify-end">
                                                         <button
                                                             onClick={() => setEditingFeeder(null)}
-                                                            className="px-4 py-1.5 border-2 border-foreground rounded-lg text-xs font-bold hover:bg-muted"
+                                                            className="px-4 py-1.5 border-2 border-foreground rounded-lg text-xs font-bold hover:bg-muted transition-colors"
                                                         >
                                                             Cancel
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleUpdateFeeder(feeder)}
+                                                            className="px-4 py-1.5 bg-primary border-2 border-foreground rounded-lg text-xs font-bold text-white flex items-center gap-1.5 hover:bg-primary/90 transition-colors"
+                                                        >
+                                                            <Save className="w-3 h-3" /> Save Changes
                                                         </button>
                                                     </div>
                                                 </div>

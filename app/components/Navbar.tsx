@@ -19,6 +19,8 @@ export default function Navbar({ user }: NavbarProps) {
 
   const isActive = (path: string) => pathname === path;
 
+
+
   const supabase = createClient();
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -57,7 +59,7 @@ export default function Navbar({ user }: NavbarProps) {
               className="object-contain brightness-0 invert"
             />
           </div>
-          <span className="text-3xl font-black tracking-tighter text-foreground group-hover:text-primary transition-colors hidden sm:block">
+          <span className="text-3xl font-black tracking-tighter text-foreground group-hover:text-primary transition-colors">
             PawBit
           </span>
         </Link>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Gabriela, Libre_Baskerville, Space_Mono } from "next/font/google";
+import { Gabriela } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "../components/Footer";
@@ -13,21 +13,6 @@ const gabriela = Gabriela({
   display: "swap",
 });
 
-const libreBaskerville = Libre_Baskerville({
-  weight: ["400", "700", "400"],
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-  variable: "--font-libre-baskerville",
-  display: "swap",
-});
-
-const spaceMono = Space_Mono({
-  weight: ["400", "700"],
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-  variable: "--font-space-mono",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "PawBit - Interactive Animal Feeding",
@@ -76,7 +61,7 @@ export default async function RootLayout({
         ></script>
       </head>
       <body
-        className={`${gabriela.variable} ${libreBaskerville.variable} ${spaceMono.variable} antialiased flex flex-col min-h-screen`}
+        className={`${gabriela.variable} antialiased flex flex-col min-h-screen`}
       >
         <Navbar user={userWithRole} />
 

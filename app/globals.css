@@ -41,9 +41,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  --font-sans: var(--font-sans);
-  --font-serif: var(--font-serif);
-  --font-mono: var(--font-mono);
+  --font-sans: var(--font-gabriela);
+  --font-serif: var(--font-gabriela);
+  --font-mono: var(--font-gabriela);
 }
 
 :root {
@@ -80,9 +80,9 @@
   --sidebar-border: 220 210 190;
   --sidebar-ring: 122 163 116;
 
-  --font-sans: 'Gabriela', serif;
-  --font-serif: 'Libre Baskerville', serif;
-  --font-mono: 'Space Mono', monospace;
+  --font-sans: var(--font-gabriela), serif;
+  --font-serif: var(--font-gabriela), serif;
+  --font-mono: var(--font-gabriela), serif;
 
   --radius: 0.75rem;
 
@@ -136,11 +136,12 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    font-family: var(--font-gabriela), serif;
   }
 
   body {
     @apply bg-background text-foreground overflow-x-hidden;
-    font-family: var(--font-sans);
+    font-family: var(--font-gabriela), serif;
     min-height: 100svh;
   }
 
@@ -150,15 +151,19 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-sans);
+    font-family: var(--font-gabriela), serif;
   }
 
   p,
   span,
   div,
   input,
-  button {
-    font-family: var(--font-mono);
+  button,
+  select,
+  textarea,
+  option,
+  a {
+    font-family: var(--font-gabriela), serif;
   }
 
   button, a {
@@ -166,7 +171,7 @@
   }
 
   .font-serif-heading {
-    font-family: var(--font-serif);
+    font-family: var(--font-gabriela), serif;
   }
 }
 

@@ -89,10 +89,10 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
     }, [messages]);
 
     return (
-        <div className="flex flex-col h-[400px] bg-white border-4 border-foreground shadow-[8px_8px_0px_rgba(0,0,0,1)] rounded-3xl overflow-hidden mt-8">
-            <div className="bg-foreground text-background p-4 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                <h3 className="font-bold font-mono">Live Chat (No History)</h3>
+        <div className="flex flex-col h-[400px] bg-white border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] rounded-3xl overflow-hidden">
+            <div className="bg-foreground text-background p-3 sm:p-4 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+                <h3 className="font-bold font-mono text-sm sm:text-base">Live Chat (No History)</h3>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/10">

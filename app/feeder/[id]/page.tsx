@@ -209,35 +209,35 @@ export default function FeederDetails() {
     const isOffline = feeder.connectionStatus !== 'online';
 
     return (
-        <div className="min-h-screen pt-8 pb-12 px-4 bg-background">
+        <div className="min-h-screen pt-4 sm:pt-8 pb-12 px-4 bg-background overflow-x-hidden">
             <div className="container mx-auto max-w-6xl">
-                <button onClick={() => router.push('/map')} className="flex items-center gap-2 font-bold text-muted-foreground hover:text-foreground mb-6 transition-colors">
-                    <ArrowLeft className="w-5 h-5" /> Back to Map
+                <button onClick={() => router.push('/map')} className="flex items-center gap-2 font-bold text-muted-foreground hover:text-foreground mb-4 sm:mb-6 transition-colors text-sm sm:text-base">
+                    <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /> Back to Map
                 </button>
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <h1 className="text-4xl font-bold">{feeder.name}</h1>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8 gap-4">
+                    <div className="w-full sm:w-auto">
+                        <div className="flex items-center flex-wrap gap-2 sm:gap-3 mb-2">
+                            <h1 className="text-2xl sm:text-4xl font-bold break-words">{feeder.name}</h1>
                             {feeder.connectionStatus === 'online' ? (
-                                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold border border-green-300 animate-pulse">ONLINE</span>
+                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-green-100 text-green-800 rounded-full text-[10px] sm:text-xs font-bold border border-green-300 animate-pulse">ONLINE</span>
                             ) : (
-                                <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold border border-red-300">OFFLINE</span>
+                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-red-100 text-red-800 rounded-full text-[10px] sm:text-xs font-bold border border-red-300">OFFLINE</span>
                             )}
                         </div>
-                        <p className="text-lg text-muted-foreground font-mono flex items-center gap-2">
-                            <MapPin className="w-4 h-4" /> {feeder.location.address}
+                        <p className="text-sm sm:text-lg text-muted-foreground font-mono flex items-center gap-2">
+                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4" /> {feeder.location.address}
                         </p>
                     </div>
-                    <div className="flex gap-4">
-                        <div className="bg-white px-4 py-2 rounded-xl border-2 border-foreground text-center shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                            <span className="block text-xs font-bold uppercase text-gray-500">Food Level</span>
-                            <span className="block text-xl font-black text-primary">{feeder.foodLevel}%</span>
+                    <div className="flex gap-3 sm:gap-4 w-full sm:w-auto">
+                        <div className="flex-1 sm:flex-initial bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border-2 border-foreground text-center shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                            <span className="block text-[10px] font-bold uppercase text-gray-500">Food</span>
+                            <span className="block text-lg sm:text-xl font-black text-primary">{feeder.foodLevel}%</span>
                         </div>
-                        <div className="bg-white px-4 py-2 rounded-xl border-2 border-foreground text-center shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                            <span className="block text-xs font-bold uppercase text-gray-500">Nearby</span>
-                            <span className="block text-xl font-black text-accent">{feeder.animalsDetected}</span>
+                        <div className="flex-1 sm:flex-initial bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border-2 border-foreground text-center shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                            <span className="block text-[10px] font-bold uppercase text-gray-500">Nearby</span>
+                            <span className="block text-lg sm:text-xl font-black text-accent">{feeder.animalsDetected}</span>
                         </div>
                     </div>
                 </div>
@@ -250,23 +250,23 @@ export default function FeederDetails() {
 
                         {/* Stream / AI block */}
                         {id === 'all' ? (
-                            <Card className="h-[400px] flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 border-4 border-foreground neu-shadow">
-                                <Brain className="w-24 h-24 text-primary mb-4" />
-                                <h2 className="text-3xl font-bold text-center mb-2">Donation Pool Active</h2>
-                                <p className="text-center max-w-md text-muted-foreground font-medium px-6">
+                            <Card className="h-[300px] sm:h-[400px] flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-foreground neu-shadow">
+                                <Brain className="w-16 h-16 sm:w-24 sm:h-24 text-primary mb-4" />
+                                <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2 px-4">Donation Pool Active</h2>
+                                <p className="text-center max-w-md text-muted-foreground font-medium px-6 text-sm sm:text-base">
                                     Donations are intelligently distributed to the hungriest animals across our global network of IoT feeding stations.
                                 </p>
                             </Card>
                         ) : (
-                            <div className="relative rounded-3xl overflow-hidden border-4 border-foreground bg-black h-[420px] shadow-[8px_8px_0px_rgba(0,0,0,1)]">
+                            <div className="relative rounded-3xl overflow-hidden border-2 border-foreground bg-black h-[250px] sm:h-[420px] shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)]">
 
                                 {/* OFFLINE STATE — simple, brutalist overlay */}
                                 {isOffline && (
                                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/80 z-10 backdrop-blur-sm">
-                                        <div className="bg-card border-4 border-foreground shadow-[8px_8px_0px_rgba(0,0,0,1)] p-8 rounded-2xl flex flex-col items-center text-center max-w-sm mx-4 transform -rotate-1">
-                                            <WifiOff className="w-16 h-16 text-foreground mb-4" />
-                                            <h2 className="text-4xl font-black uppercase text-foreground mb-2">Offline</h2>
-                                            <p className="font-mono text-muted-foreground text-sm leading-relaxed">
+                                        <div className="bg-card border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 sm:p-8 rounded-2xl flex flex-col items-center text-center max-w-sm mx-4 transform -rotate-1">
+                                            <WifiOff className="w-10 h-10 sm:w-16 sm:h-16 text-foreground mb-4" />
+                                            <h2 className="text-2xl sm:text-4xl font-black uppercase text-foreground mb-2">Offline</h2>
+                                            <p className="font-mono text-muted-foreground text-xs sm:text-sm leading-relaxed">
                                                 This feeder is currently unreachable. Live stream and donations are temporarily paused.
                                             </p>
                                         </div>
@@ -305,7 +305,7 @@ export default function FeederDetails() {
 
                         {/* Donation panel — directly below stream */}
                         {id !== 'all' && (
-                            <Card className={`relative overflow-hidden transition-all duration-500 border-4 border-foreground shadow-[8px_8px_0px_rgba(0,0,0,1)] ${isAnimating ? 'ring-4 ring-accent scale-[1.01]' : ''}`}>
+                            <Card className={`relative overflow-hidden transition-all duration-500 border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] ${isAnimating ? 'ring-4 ring-accent scale-[1.01]' : ''}`}>
                                 {isAnimating && (
                                     <div className="absolute inset-0 bg-accent/20 flex items-center justify-center z-10 backdrop-blur-md animate-in fade-in">
                                         <div className="bg-white p-8 rounded-full border-4 border-accent shadow-2xl transform animate-bounce">
@@ -370,7 +370,7 @@ export default function FeederDetails() {
 
                         {/* All-feeder donation */}
                         {id === 'all' && (
-                            <Card className={`relative overflow-hidden transition-all duration-500 border-4 border-foreground shadow-[8px_8px_0px_rgba(0,0,0,1)] ${isAnimating ? 'ring-4 ring-accent scale-[1.01]' : ''}`}>
+                            <Card className={`relative overflow-hidden transition-all duration-500 border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] ${isAnimating ? 'ring-4 ring-accent scale-[1.01]' : ''}`}>
                                 {isAnimating && (
                                     <div className="absolute inset-0 bg-accent/20 flex items-center justify-center z-10 backdrop-blur-md animate-in fade-in">
                                         <div className="bg-white p-8 rounded-full border-4 border-accent shadow-2xl transform animate-bounce">
@@ -424,9 +424,9 @@ export default function FeederDetails() {
                                                 <p className="text-xs text-muted-foreground font-mono">Dispensed {d.total_cost_eur}€ worth of food</p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <span className="block font-black text-primary">+{d.total_cost_eur}€</span>
-                                            <span className="text-[10px] text-muted-foreground font-mono opacity-70">
+                                        <div className="text-right flex-shrink-0">
+                                            <span className="block font-black text-primary text-sm sm:text-base">+{d.total_cost_eur}€</span>
+                                            <span className="text-[9px] sm:text-[10px] text-muted-foreground font-mono opacity-70">
                                                 {new Date(d.triggered_at || d.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
@@ -447,7 +447,7 @@ export default function FeederDetails() {
 
                         {id !== 'all' && (
                             <div
-                                className="bg-gradient-to-br from-primary to-green-600 p-8 rounded-2xl text-white border-4 border-foreground shadow-[8px_8px_0px_rgba(0,0,0,1)] relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all"
+                                className="bg-gradient-to-br from-primary to-green-600 p-6 sm:p-8 rounded-2xl text-white border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all"
                                 onClick={() => router.push('/feeder/all')}
                             >
                                 <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-700" />
@@ -457,7 +457,7 @@ export default function FeederDetails() {
                                         <span className="text-xs font-bold uppercase tracking-widest">Recommended Path</span>
                                     </div>
                                     <h3 className="text-3xl font-black mb-2">Donate to Pool</h3>
-                                    <p className="text-sm opacity-90 mb-6 font-mono leading-relaxed">Let our AI system determine which animals need your help the most right now.</p>
+                                    <p className="text-sm opacity-90 mb-6 font-mono leading-relaxed">Let our system determine which animals need your help the most right now.</p>
                                     <div className="flex items-center gap-2 font-bold text-sm bg-white/20 w-fit px-4 py-2 rounded-xl backdrop-blur-md border border-white/30 group-hover:bg-white/30 transition-colors">
                                         Switch to AI Flow <ArrowRight className="w-4 h-4" />
                                     </div>

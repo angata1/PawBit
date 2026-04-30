@@ -158,7 +158,7 @@ export default function Leaderboard() {
                                         backgroundColor: "rgb(var(--card))",
                                         border: "2px solid rgb(var(--foreground))",
                                         borderRadius: "12px",
-                                        fontFamily: "Space Mono",
+                                        fontFamily: "Gabriela, serif",
                                         boxShadow: "4px 4px 0px rgba(0,0,0,0.1)",
                                     }}
                                 />
