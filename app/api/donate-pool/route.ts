@@ -24,6 +24,18 @@ export async function POST(request: Request) {
     }
 
     // 1. Get current user balance
+    // Ensure user exists using Upsert (Idempotent)
+    const { error: upsertError } = await supabase
+        .from('users')
+        .upsert(
+            {
+                auth_id: user.id,
+                email: user.email,
+                name: user.user_metadata?.full_name || 'User'
+            },
+            { onConflict: 'auth_id', ignoreDuplicates: true }
+        );
+
     const { data: userData, error: userError } = await supabase
         .from('users')
         .select('balance')
@@ -59,12 +71,13 @@ export async function POST(request: Request) {
     const { error: poolError } = await supabase.rpc('add_to_donation_pool', rpcParams);
 
     if (poolError) {
+        console.error('Pool credit error:', poolError);
         // Attempt rollback of balance
         await supabase
             .from('users')
             .update({ balance: currentBalance })
             .eq('auth_id', user.id);
-        return NextResponse.json({ error: 'Failed to credit pool' }, { status: 500 });
+        return NextResponse.json({ error: poolError.message || 'Failed to credit pool' }, { status: 500 });
     }
 
     // 4. Record the donation for history & attribution

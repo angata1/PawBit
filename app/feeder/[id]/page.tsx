@@ -8,7 +8,7 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import DonationModal from '@/components/DonationModal';
 import RealtimeChat from '@/components/RealtimeChat';
-import { Video, ArrowLeft, Brain, Activity, Heart, AlertCircle, MapPin, ArrowRight, Loader2, WifiOff } from 'lucide-react';
+import { Video, ArrowLeft, Brain, Activity, Heart, AlertCircle, MapPin, ArrowRight, Loader2, WifiOff, PlayCircle } from 'lucide-react';
 
 export default function FeederDetails() {
     const params = useParams();
@@ -20,7 +20,7 @@ export default function FeederDetails() {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const [streamStatus, setStreamStatus] = useState<'offline' | 'connecting' | 'live'>('offline');
+    const [streamStatus, setStreamStatus] = useState<'offline' | 'standby' | 'connecting' | 'live'>('offline');
     const [customAmount, setCustomAmount] = useState('');
     const [isAnimating, setIsAnimating] = useState(false);
 
@@ -45,6 +45,7 @@ export default function FeederDetails() {
             animalsDetected: f.left_overs ?? 0,
             lastFeeding: f.created_at,
             liveStreamUrl: '',
+            isStreaming: f.is_streaming ?? false,
         };
     };
 
@@ -75,7 +76,7 @@ export default function FeederDetails() {
             const { data: recentMeals } = await supabase
                 .from('meals')
                 .select('*')
-                .order('triggered_at', { ascending: false })
+                .order('time_of_meal', { ascending: false })
                 .limit(10);
 
             if (recentMeals) setDonations(recentMeals);
@@ -87,16 +88,37 @@ export default function FeederDetails() {
                 .single();
 
             if (feederData) {
+                const { data: streamData } = await supabase
+                    .from('livestreams')
+                    .select('stream_url')
+                    .eq('feeder_id', id)
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
                 const mapped = mapFeederRow(feederData);
+                if (streamData?.stream_url) {
+                    mapped.liveStreamUrl = streamData.stream_url;
+                }
+
                 setFeeder(mapped);
-                setStreamStatus(mapped.connectionStatus === 'online' ? 'live' : 'offline');
+                if (mapped.connectionStatus === 'online') {
+                    setStreamStatus(prev => {
+                        if (mapped.isStreaming) return 'live';
+                        if (prev === 'connecting') return 'connecting';
+                        return 'standby';
+                    });
+                } else {
+                    setStreamStatus('offline');
+                }
             }
 
             const { data: feederMeals } = await supabase
                 .from('meals')
                 .select('*')
                 .eq('feeder_id', id)
-                .order('triggered_at', { ascending: false })
+                .order('time_of_meal', { ascending: false })
                 .limit(10);
 
             if (feederMeals) setDonations(feederMeals);
@@ -113,7 +135,7 @@ export default function FeederDetails() {
                     .from('users')
                     .select('balance')
                     .eq('auth_id', user.id)
-                    .single();
+                    .maybeSingle();
 
                 setCurrentUser({
                     id: user.id,
@@ -147,11 +169,42 @@ export default function FeederDetails() {
             }, () => { fetchData(); })
             .subscribe();
 
+        const livestreamsChannel = supabase
+            .channel('livestreams-updates')
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'livestreams',
+                filter: id !== 'all' ? `feeder_id=eq.${id}` : undefined
+            }, () => { fetchData(); })
+            .subscribe();
+
         return () => {
             supabase.removeChannel(mealsChannel);
             supabase.removeChannel(feedersChannel);
+            supabase.removeChannel(livestreamsChannel);
         };
     }, [id]);
+
+    const handleStartStream = () => {
+        if (!currentUser) {
+            router.push('/login');
+            return;
+        }
+        setStreamStatus('connecting');
+        const supabase = createClient();
+        const channel = supabase.channel(`feeder_commands_${id}`);
+        channel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                channel.send({
+                    type: 'broadcast',
+                    event: 'start_stream',
+                    payload: { requested_by: currentUser.id }
+                });
+                // We wait for the hardware to update the 'is_streaming' flag via Supabase Realtime
+            }
+        });
+    };
 
     const handleDonate = async (amount: number) => {
         if (!currentUser) {
@@ -168,10 +221,13 @@ export default function FeederDetails() {
         setIsAnimating(true);
 
         try {
-            const res = await fetch('/api/feed', {
+            const endpoint = '/api/donate-pool';
+            const bodyPayload = id === 'all' ? { amount } : { amount, feederId: id };
+
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount, feederId: id === 'all' ? '1' : id })
+                body: JSON.stringify(bodyPayload)
             });
             const data = await res.json();
 
@@ -281,18 +337,47 @@ export default function FeederDetails() {
                                     </div>
                                 )}
 
+                                {/* STANDBY */}
+                                {streamStatus === 'standby' && !isOffline && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 text-white z-10">
+                                        <div className="bg-black/50 p-6 rounded-2xl flex flex-col items-center text-center border border-white/10 shadow-xl">
+                                            <Video className="w-12 h-12 mb-4 text-primary" />
+                                            <h3 className="text-xl font-bold mb-2">Camera Ready</h3>
+                                            <p className="text-sm text-gray-400 mb-6 max-w-xs font-mono">Start the live stream to view the feeder area in real-time.</p>
+                                            <Button variant="primary" onClick={handleStartStream} icon={<PlayCircle className="w-5 h-5 fill-current" />}>
+                                                Start Live Stream
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* LIVE */}
                                 {streamStatus === 'live' && !isOffline && (
                                     <>
-                                        <img
-                                            src={feeder.liveStreamUrl || `https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=2043&auto=format&fit=crop`}
-                                            className="w-full h-full object-cover opacity-80"
-                                            alt="Live Feeder Stream"
-                                        />
-                                        <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded flex items-center gap-2 font-bold text-sm border-2 border-black shadow-lg">
+                                        {feeder.liveStreamUrl ? (
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                src={feeder.liveStreamUrl.includes('watch?v=') 
+                                                    ? feeder.liveStreamUrl.replace('watch?v=', 'embed/').split('&')[0]
+                                                    : feeder.liveStreamUrl}
+                                                title="Live Feeder Stream"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-zinc-900 flex flex-col items-center justify-center text-muted-foreground font-mono text-sm">
+                                                <Video className="w-10 h-10 mb-2 opacity-50" />
+                                                <p>Live stream signal connected</p>
+                                                <p className="text-xs opacity-50 mt-1">(No YouTube URL configured in backend)</p>
+                                            </div>
+                                        )}
+                                        <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded flex items-center gap-2 font-bold text-sm border-2 border-black shadow-lg z-20 pointer-events-none">
                                             <span className="w-2 h-2 bg-white rounded-full animate-pulse" /> LIVE FEED
                                         </div>
-                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6 text-white">
+                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6 text-white z-20 pointer-events-none">
                                             <p className="font-mono text-sm flex items-center gap-2">
                                                 <Activity className="w-4 h-4 text-green-400" />
                                                 Sensor Data: {feeder.animalsDetected > 0 ? `${feeder.animalsDetected} subjects detected` : 'Monitoring area...'}
@@ -323,7 +408,7 @@ export default function FeederDetails() {
                                     )}
                                 </div>
                                 <p className="text-muted-foreground text-sm mb-6 font-mono leading-relaxed">
-                                    100% of your donation is converted to food and dispensed immediately.
+                                    100% of your donation is added to the feeder's pool to be dispensed.
                                 </p>
 
                                 <div className={`space-y-4 ${isOffline ? 'opacity-40 pointer-events-none select-none' : ''}`}>
@@ -354,7 +439,7 @@ export default function FeederDetails() {
                                             variant="accent"
                                             className="flex-shrink-0"
                                         >
-                                            Feed
+                                            Donate
                                         </Button>
                                     </div>
                                 </div>
@@ -398,7 +483,7 @@ export default function FeederDetails() {
                                         onChange={(e) => setCustomAmount(e.target.value)}
                                     />
                                     <Button onClick={() => handleDonate(Number(customAmount) || 1)} disabled={!customAmount} variant="accent" className="flex-shrink-0">
-                                        Feed
+                                        Donate
                                     </Button>
                                 </div>
                                 <div className="bg-muted/30 p-4 rounded-xl border-2 border-foreground/10 text-xs font-mono text-muted-foreground">
@@ -427,7 +512,7 @@ export default function FeederDetails() {
                                         <div className="text-right flex-shrink-0">
                                             <span className="block font-black text-primary text-sm sm:text-base">+{d.total_cost_eur}€</span>
                                             <span className="text-[9px] sm:text-[10px] text-muted-foreground font-mono opacity-70">
-                                                {new Date(d.triggered_at || d.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(d.time_of_meal).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
                                     </div>

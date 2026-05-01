@@ -73,6 +73,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Create a pool for this feeder
+    if (data) {
+        await supabase.from('donation_pools').insert({
+            feeder_id: data.id,
+            balance_amount: 0.0
+        });
+    }
+
     // Return the generated key so the admin can copy it
     return NextResponse.json({ 
         feeder: {

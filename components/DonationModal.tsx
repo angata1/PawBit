@@ -96,7 +96,7 @@ export default function DonationModal({ isOpen, onClose, feederName, initialAmou
                 </div>
 
                 {clientSecret && (
-                    <Elements options={options} stripe={stripePromise}>
+                    <Elements key={clientSecret} options={options} stripe={stripePromise}>
                         <CheckoutForm amount={amount} />
                         {/* Note: CheckoutForm needs to handle success by calling an API to credit the user if relying on client-side confirmation for MVP */}
                     </Elements>

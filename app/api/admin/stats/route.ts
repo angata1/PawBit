@@ -30,7 +30,7 @@ export async function GET() {
         const { data: meals, error: mealsError } = await supabase
             .from('meals')
             .select('*')
-            .order('triggered_at', { ascending: false });
+            .order('time_of_meal', { ascending: false });
 
         // --- Users ---
         const { data: users, error: usersError } = await supabase
@@ -67,13 +67,13 @@ export async function GET() {
         const allMeals = meals || [];
         const totalMeals = allMeals.length;
         const mealsThisMonth = allMeals.filter((m: any) =>
-            new Date(m.triggered_at || m.created_at) >= thirtyDaysAgo
+            new Date(m.time_of_meal) >= thirtyDaysAgo
         ).length;
 
         // Meals by day (last 14)
         const mealsByDay = last14Days.map(day => {
             const count = allMeals.filter((m: any) =>
-                (m.triggered_at || m.created_at || '').startsWith(day)
+                (m.time_of_meal || '').startsWith(day)
             ).length;
             return { date: day, meals: count };
         });

@@ -15,6 +15,7 @@ export interface Feeder {
     animalsDetected: number;
     lastFeeding?: string;
     liveStreamUrl?: string;
+    isStreaming?: boolean;
 }
 
 // Utility: derive connection status from enabled + lastSeenAt

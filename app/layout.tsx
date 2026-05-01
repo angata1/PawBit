@@ -37,7 +37,7 @@ export default async function RootLayout({
       .from('users')
       .select('role')
       .eq('auth_id', user.id)
-      .single();
+      .maybeSingle();
     
     if (dbUser?.role && userWithRole) {
       userWithRole.role = dbUser.role;
