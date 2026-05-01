@@ -26,6 +26,7 @@ export interface Feeder {
     enabled: boolean;
     stock_level?: number;
     left_overs?: number;
+    dispense_price_eur?: number;
     importance_rank?: number;
     created_at?: string;
     pi_auth_key?: string;

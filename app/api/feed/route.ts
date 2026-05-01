@@ -11,8 +11,36 @@ export async function POST(request: Request) {
 
     const { amount, feederId } = await request.json();
 
-    if (!amount || amount <= 0) {
+    if (!feederId) {
+        return NextResponse.json({ error: 'Missing feederId' }, { status: 400 });
+    }
+
+    const { data: feeder, error: feederError } = await supabase
+        .from('feeders')
+        .select('id, enabled, dispense_price_eur')
+        .eq('id', feederId)
+        .single();
+
+    if (feederError || !feeder) {
+        return NextResponse.json({ error: 'Feeder not found' }, { status: 404 });
+    }
+
+    if (!feeder.enabled) {
+        return NextResponse.json({ error: 'Feeder is disabled' }, { status: 403 });
+    }
+
+    const minimumPrice = Number(feeder.dispense_price_eur || 2);
+    const feedAmount = Number(amount || minimumPrice);
+
+    if (!Number.isFinite(feedAmount) || feedAmount <= 0) {
         return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
+    }
+
+    if (feedAmount < minimumPrice) {
+        return NextResponse.json({
+            error: `This feeder costs at least ${minimumPrice.toFixed(2)} EUR per feeding`,
+            minimumPrice
+        }, { status: 400 });
     }
 
     // 1. Get current balance
@@ -46,7 +74,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to access user profile' }, { status: 500 });
     }
 
-    if (currentBalance < amount) {
+    if (currentBalance < feedAmount) {
         return NextResponse.json({ error: 'Insufficient funds' }, { status: 402 });
     }
 
@@ -56,7 +84,7 @@ export async function POST(request: Request) {
     // a. Update Balance
     const { error: updateError } = await supabase
         .from('users')
-        .update({ balance: currentBalance - amount })
+        .update({ balance: currentBalance - feedAmount })
         .eq('auth_id', user.id);
 
     if (updateError) {
@@ -68,7 +96,8 @@ export async function POST(request: Request) {
         .from('meals')
         .insert({
             feeder_id: feederId,
-            total_cost_eur: amount,
+            total_cost_eur: feedAmount,
+            triggered_by: 'live',
         })
         .select('id')
         .single();
@@ -76,8 +105,8 @@ export async function POST(request: Request) {
     // Recording the "Spending" event for history
     await supabase.from('donations').insert({
         user_auth_id: user.id,
-        amount_eur: -amount,
-        type: 'feeding'
+        amount_eur: -feedAmount,
+        type: 'live_feed'
     });
 
     if (mealError) {
@@ -89,15 +118,24 @@ export async function POST(request: Request) {
     //    The Pi simulator listens on channel `feeder_commands_{feederId}`
     try {
         const commandChannel = supabase.channel(`feeder_commands_${feederId}`);
-        await commandChannel.send({
-            type: 'broadcast',
-            event: 'dispense',
-            payload: {
-                amount_eur: amount,
-                meal_id: mealData?.id ?? null,
-                feeder_id: feederId,
-                triggered_at: new Date().toISOString(),
-            }
+        await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('Realtime channel subscribe timed out')), 5000);
+            commandChannel.subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    clearTimeout(timeout);
+                    await commandChannel.send({
+                        type: 'broadcast',
+                        event: 'dispense',
+                        payload: {
+                            amount_eur: feedAmount,
+                            meal_id: mealData?.id ?? null,
+                            feeder_id: feederId,
+                            triggered_at: new Date().toISOString(),
+                        }
+                    });
+                    resolve();
+                }
+            });
         });
         await supabase.removeChannel(commandChannel);
     } catch (broadcastErr) {
@@ -105,5 +143,11 @@ export async function POST(request: Request) {
         console.warn('Failed to broadcast dispense command:', broadcastErr);
     }
 
-    return NextResponse.json({ success: true, newBalance: currentBalance - amount });
+    return NextResponse.json({
+        success: true,
+        newBalance: currentBalance - feedAmount,
+        amount: feedAmount,
+        minimumPrice,
+        mealId: mealData?.id ?? null
+    });
 }

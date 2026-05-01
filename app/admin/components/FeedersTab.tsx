@@ -104,6 +104,10 @@ export const FeedersTab = ({
                                             <p className="font-black text-accent-foreground">{animals}</p>
                                             <p className="text-[10px] text-muted-foreground uppercase font-bold">Leftovers</p>
                                         </div>
+                                        <div className="text-center">
+                                            <p className="font-black text-primary">€{Number(feeder.dispense_price_eur || 2).toFixed(2)}</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase font-bold">Meal</p>
+                                        </div>
                                     </div>
 
                                     <div className="flex items-center gap-2 flex-shrink-0">

@@ -8,7 +8,7 @@ interface AddFeederModalProps {
 }
 
 export const AddFeederModal = ({ onClose, onAdd }: AddFeederModalProps) => {
-    const [form, setForm] = useState({ name: '', address: '', lat: '42.6977', lng: '23.3219', status: 'active', food_level: '100' });
+    const [form, setForm] = useState({ name: '', address: '', lat: '42.6977', lng: '23.3219', status: 'active', food_level: '100', dispense_price_eur: '2.00' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [createdKey, setCreatedKey] = useState<string | null>(null);
@@ -26,6 +26,7 @@ export const AddFeederModal = ({ onClose, onAdd }: AddFeederModalProps) => {
                     lat: parseFloat(form.lat),
                     lng: parseFloat(form.lng),
                     food_level: parseInt(form.food_level),
+                    dispense_price_eur: parseFloat(form.dispense_price_eur),
                 }),
             });
             const data = await res.json();
@@ -78,6 +79,7 @@ export const AddFeederModal = ({ onClose, onAdd }: AddFeederModalProps) => {
                         { label: 'Latitude', key: 'lat', type: 'number', placeholder: '42.6977' },
                         { label: 'Longitude', key: 'lng', type: 'number', placeholder: '23.3219' },
                         { label: 'Food Level (%)', key: 'food_level', type: 'number', placeholder: '100' },
+                        { label: 'Meal Price (EUR)', key: 'dispense_price_eur', type: 'number', placeholder: '2.00' },
                     ].map(f => (
                         <div key={f.key}>
                             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">{f.label}</label>

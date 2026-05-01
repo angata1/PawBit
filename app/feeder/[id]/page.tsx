@@ -21,6 +21,7 @@ export default function FeederDetails() {
     const [loading, setLoading] = useState(true);
 
     const [streamStatus, setStreamStatus] = useState<'offline' | 'standby' | 'connecting' | 'live'>('offline');
+    const [donationMode, setDonationMode] = useState<'live' | 'feeder_pool' | 'global_pool'>(id === 'all' ? 'global_pool' : 'feeder_pool');
     const [customAmount, setCustomAmount] = useState('');
     const [isAnimating, setIsAnimating] = useState(false);
 
@@ -43,6 +44,7 @@ export default function FeederDetails() {
             connectionStatus: deriveConnectionStatus(enabled, lastSeenAt),
             foodLevel: f.stock_level ?? 0,
             animalsDetected: f.left_overs ?? 0,
+            dispensePriceEur: Number(f.dispense_price_eur ?? 2),
             lastFeeding: f.created_at,
             liveStreamUrl: '',
             isStreaming: f.is_streaming ?? false,
@@ -69,6 +71,7 @@ export default function FeederDetails() {
                     connectionStatus: 'online',
                     foodLevel: avgFood,
                     animalsDetected: totalAnimals,
+                    dispensePriceEur: 2,
                     liveStreamUrl: ''
                 });
             }
@@ -206,23 +209,31 @@ export default function FeederDetails() {
         });
     };
 
-    const handleDonate = async (amount: number) => {
+    const handleDonate = async (amount: number, mode = donationMode) => {
         if (!currentUser) {
             router.push('/login');
             return;
         }
 
-        if ((currentUser.balance || 0) < amount) {
+        const donationAmount = Number(amount);
+        if (!Number.isFinite(donationAmount) || donationAmount <= 0) return;
+
+        if ((currentUser.balance || 0) < donationAmount) {
             setIsModalOpen(true);
-            setDonationAmount(amount);
+            setDonationAmount(donationAmount);
             return;
         }
 
         setIsAnimating(true);
 
         try {
-            const endpoint = '/api/donate-pool';
-            const bodyPayload = id === 'all' ? { amount } : { amount, feederId: id };
+            const isLiveFeed = mode === 'live' && id !== 'all';
+            const endpoint = isLiveFeed ? '/api/feed' : '/api/donate-pool';
+            const bodyPayload = isLiveFeed
+                ? { amount: donationAmount, feederId: id }
+                : mode === 'feeder_pool' && id !== 'all'
+                    ? { amount: donationAmount, feederId: id }
+                    : { amount: donationAmount };
 
             const res = await fetch(endpoint, {
                 method: 'POST',
@@ -242,7 +253,7 @@ export default function FeederDetails() {
             }
 
             setCurrentUser(prev => prev ? ({ ...prev, balance: data.newBalance }) : null);
-            setStreamStatus('live');
+            if (isLiveFeed) setStreamStatus('live');
             setTimeout(() => { setIsAnimating(false); }, 2000);
 
         } catch (err) {
@@ -263,6 +274,15 @@ export default function FeederDetails() {
     if (!feeder) return <div className="pt-24 text-center">Feeder not found.</div>;
 
     const isOffline = feeder.connectionStatus !== 'online';
+    const feederPrice = Number(feeder.dispensePriceEur || 2);
+    const quickAmounts = donationMode === 'live'
+        ? Array.from(new Set([feederPrice, 5, 10])).sort((a, b) => a - b)
+        : [2, 5, 10];
+    const selectedModeLabel = donationMode === 'live'
+        ? `Live feeding (${feederPrice.toFixed(2)} EUR minimum)`
+        : donationMode === 'feeder_pool'
+            ? 'Feeder pool'
+            : 'Global pool';
 
     return (
         <div className="min-h-screen pt-4 sm:pt-8 pb-12 px-4 bg-background overflow-x-hidden">
@@ -291,10 +311,12 @@ export default function FeederDetails() {
                             <span className="block text-[10px] font-bold uppercase text-gray-500">Food</span>
                             <span className="block text-lg sm:text-xl font-black text-primary">{feeder.foodLevel}%</span>
                         </div>
-                        <div className="flex-1 sm:flex-initial bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border-2 border-foreground text-center shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                            <span className="block text-[10px] font-bold uppercase text-gray-500">Nearby</span>
-                            <span className="block text-lg sm:text-xl font-black text-accent">{feeder.animalsDetected}</span>
-                        </div>
+                        {id !== 'all' && (
+                            <div className="flex-1 sm:flex-initial bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border-2 border-foreground text-center shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                                <span className="block text-[10px] font-bold uppercase text-gray-500">Meal Price</span>
+                                <span className="block text-lg sm:text-xl font-black text-primary">{feederPrice.toFixed(2)} EUR</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -380,7 +402,7 @@ export default function FeederDetails() {
                                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6 text-white z-20 pointer-events-none">
                                             <p className="font-mono text-sm flex items-center gap-2">
                                                 <Activity className="w-4 h-4 text-green-400" />
-                                                Sensor Data: {feeder.animalsDetected > 0 ? `${feeder.animalsDetected} subjects detected` : 'Monitoring area...'}
+                                                Sensor Data: Monitoring area...
                                             </p>
                                         </div>
                                     </>
@@ -400,7 +422,7 @@ export default function FeederDetails() {
                                 )}
 
                                 <div className="flex items-start justify-between mb-2">
-                                    <h2 className="text-2xl font-black">Make a Donation</h2>
+                                    <h2 className="text-2xl font-black">Support This Feeder</h2>
                                     {isOffline && (
                                         <span className="text-xs font-bold px-2 py-1 bg-red-100 text-red-700 border border-red-300 rounded-lg font-mono">
                                             Donations paused — feeder offline
@@ -408,12 +430,37 @@ export default function FeederDetails() {
                                     )}
                                 </div>
                                 <p className="text-muted-foreground text-sm mb-6 font-mono leading-relaxed">
-                                    100% of your donation is added to the feeder's pool to be dispensed.
+                                    Choose whether this goes to the live feeder, this feeder&apos;s pool, or the shared global pool.
                                 </p>
 
-                                <div className={`space-y-4 ${isOffline ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+                                <div className="grid sm:grid-cols-3 gap-2 mb-5">
+                                    {[
+                                        { key: 'live', label: 'Live feed', disabled: streamStatus !== 'live' || isOffline },
+                                        { key: 'feeder_pool', label: 'Feeder pool', disabled: false },
+                                        { key: 'global_pool', label: 'Global pool', disabled: false },
+                                    ].map(option => (
+                                        <button
+                                            key={option.key}
+                                            type="button"
+                                            disabled={option.disabled}
+                                            onClick={() => setDonationMode(option.key as typeof donationMode)}
+                                            className={`px-3 py-2 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition-all ${
+                                                donationMode === option.key
+                                                    ? 'bg-primary text-white border-foreground shadow-[3px_3px_0px_rgba(60,50,30,0.8)]'
+                                                    : 'bg-white text-foreground border-foreground/20 hover:border-primary'
+                                            } disabled:opacity-40 disabled:cursor-not-allowed`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className={`space-y-4 ${donationMode === 'live' && (isOffline || streamStatus !== 'live') ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+                                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                        {selectedModeLabel}
+                                    </p>
                                     <div className="grid grid-cols-3 gap-3">
-                                        {[2, 5, 10].map(amt => (
+                                        {quickAmounts.map(amt => (
                                             <Button
                                                 key={amt}
                                                 variant="outline"
@@ -469,7 +516,7 @@ export default function FeederDetails() {
                                 </p>
                                 <div className="grid grid-cols-3 gap-3 mb-4">
                                     {[2, 5, 10].map(amt => (
-                                        <Button key={amt} variant="outline" onClick={() => handleDonate(amt)} className="bg-white border-2 hover:bg-primary/5 transition-colors">
+                                        <Button key={amt} variant="outline" onClick={() => handleDonate(amt, 'global_pool')} className="bg-white border-2 hover:bg-primary/5 transition-colors">
                                             {amt}€
                                         </Button>
                                     ))}
@@ -482,7 +529,7 @@ export default function FeederDetails() {
                                         value={customAmount}
                                         onChange={(e) => setCustomAmount(e.target.value)}
                                     />
-                                    <Button onClick={() => handleDonate(Number(customAmount) || 1)} disabled={!customAmount} variant="accent" className="flex-shrink-0">
+                                    <Button onClick={() => handleDonate(Number(customAmount) || 1, 'global_pool')} disabled={!customAmount} variant="accent" className="flex-shrink-0">
                                         Donate
                                     </Button>
                                 </div>

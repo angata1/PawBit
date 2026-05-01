@@ -45,6 +45,7 @@ interface Feeder {
     enabled: boolean;
     stock_level?: number;
     left_overs?: number;
+    dispense_price_eur?: number;
     importance_rank?: number;
     created_at?: string;
     pi_auth_key?: string; // used temporarily after creation
@@ -134,7 +135,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 // ─── Add Feeder Modal ─────────────────────────────────────────────────────────
 const AddFeederModal = ({ onClose, onAdd }: { onClose: () => void; onAdd: (feeder: Feeder) => void }) => {
-    const [form, setForm] = useState({ name: '', address: '', lat: '42.6977', lng: '23.3219', status: 'active', food_level: '100' });
+    const [form, setForm] = useState({ name: '', address: '', lat: '42.6977', lng: '23.3219', status: 'active', food_level: '100', dispense_price_eur: '2.00' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [createdKey, setCreatedKey] = useState<string | null>(null);
@@ -152,6 +153,7 @@ const AddFeederModal = ({ onClose, onAdd }: { onClose: () => void; onAdd: (feede
                     lat: parseFloat(form.lat),
                     lng: parseFloat(form.lng),
                     food_level: parseInt(form.food_level),
+                    dispense_price_eur: parseFloat(form.dispense_price_eur),
                 }),
             });
             const data = await res.json();
@@ -204,6 +206,7 @@ const AddFeederModal = ({ onClose, onAdd }: { onClose: () => void; onAdd: (feede
                         { label: 'Latitude', key: 'lat', type: 'number', placeholder: '42.6977' },
                         { label: 'Longitude', key: 'lng', type: 'number', placeholder: '23.3219' },
                         { label: 'Food Level (%)', key: 'food_level', type: 'number', placeholder: '100' },
+                        { label: 'Meal Price (EUR)', key: 'dispense_price_eur', type: 'number', placeholder: '2.00' },
                     ].map(f => (
                         <div key={f.key}>
                             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">{f.label}</label>
@@ -355,6 +358,7 @@ export default function AdminDashboard() {
                 enabled: editForm.status === 'enabled',
                 stock_level: parseInt(editForm.stock_level, 10),
                 left_overs: parseInt(editForm.left_overs, 10),
+                dispense_price_eur: parseFloat(editForm.dispense_price_eur),
             };
             const res = await fetch(`/api/admin/feeders/${feeder.id}`, {
                 method: 'PATCH',
@@ -817,6 +821,10 @@ export default function AdminDashboard() {
                                                         <p className="font-black text-accent-foreground">{animals}</p>
                                                         <p className="text-[10px] text-muted-foreground uppercase font-bold">Leftovers</p>
                                                     </div>
+                                                    <div className="text-center">
+                                                        <p className="font-black text-primary">€{Number(feeder.dispense_price_eur || 2).toFixed(2)}</p>
+                                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Meal</p>
+                                                    </div>
                                                     <p className="text-[10px] text-muted-foreground font-mono hidden sm:block">
                                                         ID: {String(feeder.id).slice(0, 8)}...
                                                     </p>
@@ -835,6 +843,7 @@ export default function AdminDashboard() {
                                                                 status: feeder.enabled ? 'enabled' : 'disabled',
                                                                 stock_level: feeder.stock_level?.toString() || '0',
                                                                 left_overs: feeder.left_overs?.toString() || '0',
+                                                                dispense_price_eur: feeder.dispense_price_eur?.toString() || '2.00',
                                                             });
                                                         }}
                                                         className="p-2 rounded-lg border-2 border-foreground/20 hover:border-primary hover:bg-primary/10 transition-colors"
@@ -887,6 +896,10 @@ export default function AdminDashboard() {
                                                         <div>
                                                             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Leftovers</label>
                                                             <input type="number" min="0" value={editForm.left_overs} onChange={e => setEditForm({ ...editForm, left_overs: e.target.value })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Meal Price (EUR)</label>
+                                                            <input type="number" min="0.01" step="0.01" value={editForm.dispense_price_eur} onChange={e => setEditForm({ ...editForm, dispense_price_eur: e.target.value })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary" />
                                                         </div>
                                                         <div>
                                                             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Admin Status</label>

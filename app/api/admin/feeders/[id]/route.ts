@@ -17,10 +17,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const { id } = await params;
     const body = await request.json();
+    const updatePayload = { ...body };
+
+    if (updatePayload.dispense_price_eur !== undefined) {
+        const price = Number(updatePayload.dispense_price_eur);
+        if (!Number.isFinite(price) || price <= 0) {
+            return NextResponse.json({ error: 'Dispense price must be greater than 0' }, { status: 400 });
+        }
+        updatePayload.dispense_price_eur = price;
+    }
 
     const { data, error } = await supabase
         .from('feeders')
-        .update(body)
+        .update(updatePayload)
         .eq('id', id)
         .select()
         .single();

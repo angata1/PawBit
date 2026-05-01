@@ -9,10 +9,12 @@ export interface Feeder {
         address: string;
     };
     enabled: boolean;
+    status?: string;
     lastSeenAt: string | null;
     connectionStatus: ConnectionStatus;
     foodLevel: number;
     animalsDetected: number;
+    dispensePriceEur?: number;
     lastFeeding?: string;
     liveStreamUrl?: string;
     isStreaming?: boolean;

@@ -18,8 +18,9 @@ export async function POST(request: Request) {
     }
 
     const { amount, feederId } = await request.json();
+    const donationAmount = Number(amount);
 
-    if (!amount || amount <= 0) {
+    if (!Number.isFinite(donationAmount) || donationAmount <= 0) {
         return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
     }
 
@@ -48,14 +49,14 @@ export async function POST(request: Request) {
 
     const currentBalance = userData.balance || 0;
 
-    if (currentBalance < amount) {
+    if (currentBalance < donationAmount) {
         return NextResponse.json({ error: 'Insufficient funds' }, { status: 402 });
     }
 
     // 2. Deduct from user balance
     const { error: updateError } = await supabase
         .from('users')
-        .update({ balance: currentBalance - amount })
+        .update({ balance: currentBalance - donationAmount })
         .eq('auth_id', user.id);
 
     if (updateError) {
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Add to Donation Pool (global or feeder-specific)
-    const rpcParams: any = { p_amount: amount };
+    const rpcParams: { p_amount: number; p_feeder_id?: number } = { p_amount: donationAmount };
     if (feederId) {
         rpcParams.p_feeder_id = parseInt(feederId);
     }
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
     // 4. Record the donation for history & attribution
     await supabase.from('donations').insert({
         user_auth_id: user.id,
-        amount_eur: amount,
+        amount_eur: donationAmount,
         type: 'pool'
     });
 
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
         success: true,
-        newBalance: currentBalance - amount,
-        message: `${amount}€ donated to ${target}!`
+        newBalance: currentBalance - donationAmount,
+        message: `${donationAmount} EUR donated to ${target}!`
     });
 }

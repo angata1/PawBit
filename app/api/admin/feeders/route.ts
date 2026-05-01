@@ -42,10 +42,15 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, address, lat, lng, status, food_level } = body;
+    const { name, address, lat, lng, status, food_level, dispense_price_eur } = body;
+    const dispensePrice = Number(dispense_price_eur || 2);
 
     if (!name || !address) {
         return NextResponse.json({ error: 'Name and address are required' }, { status: 400 });
+    }
+
+    if (!Number.isFinite(dispensePrice) || dispensePrice <= 0) {
+        return NextResponse.json({ error: 'Dispense price must be greater than 0' }, { status: 400 });
     }
 
     // Generate a unique registration key for the Raspberry Pi
@@ -64,6 +69,7 @@ export async function POST(request: Request) {
             enabled: status !== 'offline',
             stock_level: food_level || 100,
             left_overs: 0,
+            dispense_price_eur: dispensePrice,
             importance_rank: 0
         })
         .select()

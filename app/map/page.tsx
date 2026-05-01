@@ -38,6 +38,7 @@ export default function MapPage() {
             connectionStatus: deriveConnectionStatus(enabled, lastSeenAt),
             foodLevel: f.stock_level ?? 50,
             animalsDetected: f.left_overs ?? 0,
+            dispensePriceEur: Number(f.dispense_price_eur ?? 2),
             lastFeeding: f.created_at,
             liveStreamUrl: '',
         };
