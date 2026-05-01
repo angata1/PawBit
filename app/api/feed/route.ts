@@ -114,6 +114,14 @@ export async function POST(request: Request) {
         // For MVP agent demo, proceed.
     }
 
+    if (mealData?.id) {
+        await supabase.from('meal_contributions').insert({
+            meal_id: mealData.id,
+            user_id: user.id,
+            amount_contributed: feedAmount
+        });
+    }
+
     // c. Broadcast "dispense" command to the Raspberry Pi via Realtime
     //    The Pi simulator listens on channel `feeder_commands_{feederId}`
     try {

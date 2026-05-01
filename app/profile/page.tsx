@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { User } from "@supabase/supabase-js";
@@ -8,73 +8,168 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import DonationModal from "@/components/DonationModal";
-import { User as UserIcon, Shield, Key, Loader2 } from "lucide-react";
+import { User as UserIcon, Shield, Key, Loader2, PlayCircle, MapPin } from "lucide-react";
+
+type MessageState = { type: "success" | "error"; text: string } | null;
+
+type TransactionRow = {
+    id: number;
+    amount_eur: number;
+    type: string;
+    created_at: string;
+};
+
+type ContributionRow = {
+    amount_contributed: number | null;
+    meals: {
+        id: number;
+        time_of_meal: string | null;
+        total_cost_eur: number | null;
+        video_link: string | null;
+        feeders: {
+            id: number;
+            name: string | null;
+            location: {
+                address?: string;
+            } | null;
+        }[] | null;
+    }[] | null;
+};
+
+type UserVideo = {
+    mealId: number;
+    youtubeUrl: string;
+    feederId: string;
+    feederName: string;
+    location: string;
+    contributionAmount: number;
+    mealCost: number;
+    timestamp: string;
+};
+
+function getYouTubeEmbedUrl(url: string): string {
+    if (!url) return "";
+
+    if (url.includes("/embed/")) return url;
+
+    try {
+        const parsed = new URL(url);
+        const videoId = parsed.searchParams.get("v");
+        if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+
+        const segments = parsed.pathname.split("/").filter(Boolean);
+        const shortId = parsed.hostname.includes("youtu.be") ? segments[0] : "";
+        if (shortId) return `https://www.youtube.com/embed/${shortId}`;
+    } catch {
+        return url;
+    }
+
+    return url;
+}
 
 export default function Profile() {
     const [user, setUser] = useState<User | null>(null);
-    const [transactions, setTransactions] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<TransactionRow[]>([]);
+    const [contributedVideos, setContributedVideos] = useState<UserVideo[]>([]);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-    const router = useRouter();
-    const supabase = createClient();
-
-    // Password Update State
+    const [message, setMessage] = useState<MessageState>(null);
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
 
+    const router = useRouter();
+    const supabase = createClient();
+
     useEffect(() => {
         const getUser = async () => {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error || !user) {
+            const { data: { user: authUser }, error } = await supabase.auth.getUser();
+            if (error || !authUser) {
                 router.push("/login");
                 return;
             }
 
-            // Fetch public user data (balance)
             const { data: publicUser } = await supabase
-                .from('users')
-                .select('balance')
-                .eq('auth_id', user.id)
+                .from("users")
+                .select("balance")
+                .eq("auth_id", authUser.id)
                 .single();
 
             if (publicUser) {
-                // Update local user object with real balance from DB
-                user.user_metadata.balance = publicUser.balance;
-
-                // Fetch transactions
-                const { data: userTransactions } = await supabase
-                    .from('donations')
-                    .select('*')
-                    .eq('user_auth_id', user.id) // Updated to match schema
-                    .order('created_at', { ascending: false })
-                    .limit(20);
-
-                if (userTransactions) {
-                    setTransactions(userTransactions);
-                }
+                authUser.user_metadata.balance = publicUser.balance;
             }
 
-            setUser(user);
+            const { data: userTransactions } = await supabase
+                .from("donations")
+                .select("id, amount_eur, type, created_at")
+                .eq("user_auth_id", authUser.id)
+                .order("created_at", { ascending: false })
+                .limit(20);
+
+            if (userTransactions) {
+                setTransactions(userTransactions as TransactionRow[]);
+            }
+
+            const { data: contributionRows } = await supabase
+                .from("meal_contributions")
+                .select(`
+                    amount_contributed,
+                    meals (
+                        id,
+                        time_of_meal,
+                        total_cost_eur,
+                        video_link,
+                        feeders (
+                            id,
+                            name,
+                            location
+                        )
+                    )
+                `)
+                .eq("user_id", authUser.id)
+                .order("created_at", { ascending: false });
+
+            const mappedVideos = ((contributionRows || []) as ContributionRow[])
+                .map((row) => {
+                    const meal = row.meals?.[0] || null;
+                    const feeder = meal?.feeders?.[0] || null;
+
+                    if (!meal || !meal.video_link) return null;
+
+                    return {
+                        mealId: meal.id,
+                        youtubeUrl: meal.video_link,
+                        feederId: String(feeder?.id || ""),
+                        feederName: feeder?.name || "Unknown feeder",
+                        location: feeder?.location?.address || "Unknown location",
+                        contributionAmount: Number(row.amount_contributed || 0),
+                        mealCost: Number(meal.total_cost_eur || 0),
+                        timestamp: meal.time_of_meal || new Date().toISOString(),
+                    };
+                })
+                .filter((row): row is UserVideo => row !== null);
+
+            setContributedVideos(mappedVideos);
+            setUser(authUser);
             setLoading(false);
         };
-        getUser();
-    }, [supabase, router]);
 
-    const handleUpdateProfile = async (updates: any) => {
+        void getUser();
+    }, [router, supabase]);
+
+    const handleUpdateProfile = async (updates: { password?: string; data?: { is_anonymous: boolean } }) => {
         setUpdating(true);
         setMessage(null);
         try {
             const { error } = await supabase.auth.updateUser(updates);
             if (error) throw error;
-            setMessage({ type: 'success', text: "Profile updated successfully!" });
+            setMessage({ type: "success", text: "Profile updated successfully!" });
 
-            // Refresh user data
             const { data: { user: updatedUser } } = await supabase.auth.getUser();
             setUser(updatedUser);
-        } catch (error: any) {
-            setMessage({ type: 'error', text: error.message });
+        } catch (error) {
+            const typedError = error as Error;
+            setMessage({ type: "error", text: typedError.message });
         } finally {
             setUpdating(false);
             setNewPassword("");
@@ -82,10 +177,10 @@ export default function Profile() {
         }
     };
 
-    const handlePasswordChange = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handlePasswordChange = async (event: React.FormEvent) => {
+        event.preventDefault();
         if (newPassword !== confirmPassword) {
-            setMessage({ type: 'error', text: "Passwords do not match" });
+            setMessage({ type: "error", text: "Passwords do not match" });
             return;
         }
         await handleUpdateProfile({ password: newPassword });
@@ -111,11 +206,10 @@ export default function Profile() {
     const isAnonymous = user.user_metadata?.is_anonymous || false;
 
     return (
-        <div className="min-h-screen pt-12 px-4 pb-12 bg-background container mx-auto max-w-4xl">
+        <div className="min-h-screen pt-12 px-4 pb-12 bg-background container mx-auto max-w-6xl">
             <h1 className="text-4xl font-bold mb-8 text-center">My Profile</h1>
 
-            <div className="grid md:grid-cols-2 gap-8">
-                {/* User Info & Settings */}
+            <div className="grid xl:grid-cols-[1fr_1fr_1.2fr] gap-8">
                 <div className="space-y-8">
                     <Card className="bg-white">
                         <div className="flex items-center gap-4 mb-6">
@@ -135,8 +229,8 @@ export default function Profile() {
                                         <Shield className="w-5 h-5 text-accent" />
                                         <span>Privacy Mode</span>
                                     </div>
-                                    <div className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${isAnonymous ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                        {isAnonymous ? 'Anonymous' : 'Public'}
+                                    <div className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${isAnonymous ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                                        {isAnonymous ? "Anonymous" : "Public"}
                                     </div>
                                 </div>
                                 <p className="text-sm text-muted-foreground mb-4">
@@ -156,7 +250,6 @@ export default function Profile() {
                         </div>
                     </Card>
 
-                    {/* Change Password */}
                     <Card className="bg-white">
                         <div className="flex items-center gap-2 mb-6">
                             <Key className="w-5 h-5 text-primary" />
@@ -165,7 +258,7 @@ export default function Profile() {
 
                         <form onSubmit={handlePasswordChange}>
                             {message && (
-                                <div className={`p-4 rounded-lg mb-4 text-sm ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                <div className={`p-4 rounded-lg mb-4 text-sm ${message.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
                                     {message.text}
                                 </div>
                             )}
@@ -174,7 +267,7 @@ export default function Profile() {
                                 label="New Password"
                                 type="password"
                                 value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
+                                onChange={(event) => setNewPassword(event.target.value)}
                                 placeholder="Min. 6 characters"
                                 required
                             />
@@ -182,7 +275,7 @@ export default function Profile() {
                                 label="Confirm Password"
                                 type="password"
                                 value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                onChange={(event) => setConfirmPassword(event.target.value)}
                                 placeholder="Repeat password"
                                 required
                             />
@@ -198,18 +291,17 @@ export default function Profile() {
                     </Card>
                 </div>
 
-                {/* Wallet Section */}
                 <div className="space-y-8">
                     <Card className="bg-white border-2 border-primary/20">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-bold flex items-center gap-2">
-                                <span className="p-2 bg-yellow-100 rounded-lg text-yellow-700">🪙</span>
-                                Wallet Balance
+                                <span className="p-2 bg-yellow-100 rounded-lg text-yellow-700">Wallet</span>
+                                Balance
                             </h2>
                         </div>
                         <div className="text-center py-6">
                             <span className="text-5xl font-black text-primary block mb-2">
-                                {Number(user.user_metadata?.balance || 0).toFixed(2)} <span className="text-xl text-muted-foreground">€</span>
+                                {Number(user.user_metadata?.balance || 0).toFixed(2)} <span className="text-xl text-muted-foreground">EUR</span>
                             </span>
                             <p className="text-sm text-muted-foreground mb-6">Available to feed animals</p>
                             <Button className="w-full" size="lg" onClick={() => setIsDepositModalOpen(true)}>
@@ -221,33 +313,82 @@ export default function Profile() {
                     <Card className="bg-white">
                         <h2 className="text-xl font-bold mb-4">Transaction History</h2>
                         <div className="space-y-3">
-                            <div className="space-y-3">
-                                {transactions.length > 0 ? (
-                                    transactions.map((tx) => (
-                                        <div key={tx.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg border border-foreground/10">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${tx.amount_eur > 0 ? 'bg-green-100 border-green-300 text-green-700' : 'bg-red-100 border-red-300 text-red-700'}`}>
-                                                    {tx.amount_eur > 0 ? '↓' : '↑'}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-sm capitalize">{tx.type.replace('deposit:', 'Deposit ').replace('feeding', 'Feeding')}</p>
-                                                    <p className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString()}</p>
-                                                </div>
+                            {transactions.length > 0 ? (
+                                transactions.map((tx) => (
+                                    <div key={tx.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg border border-foreground/10">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${tx.amount_eur > 0 ? "bg-green-100 border-green-300 text-green-700" : "bg-red-100 border-red-300 text-red-700"}`}>
+                                                {tx.amount_eur > 0 ? "↓" : "↑"}
                                             </div>
-                                            <span className={`font-bold ${tx.amount_eur > 0 ? 'text-green-600' : 'text-foreground'}`}>
-                                                {tx.amount_eur > 0 ? '+' : ''}{tx.amount_eur}€
-                                            </span>
+                                            <div>
+                                                <p className="font-bold text-sm capitalize">{tx.type.replace("deposit:", "Deposit ").replace("feeding", "Feeding").replace("live_feed", "Live feed")}</p>
+                                                <p className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString()}</p>
+                                            </div>
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="text-sm text-muted-foreground text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                        No transactions yet.
+                                        <span className={`font-bold ${tx.amount_eur > 0 ? "text-green-600" : "text-foreground"}`}>
+                                            {tx.amount_eur > 0 ? "+" : ""}{tx.amount_eur} EUR
+                                        </span>
                                     </div>
-                                )}
-                            </div>
+                                ))
+                            ) : (
+                                <div className="text-sm text-muted-foreground text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                    No transactions yet.
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </div>
+
+                <Card className="bg-white">
+                    <h2 className="text-xl font-bold mb-4">Feedings You Helped Fund</h2>
+                    <div className="space-y-4">
+                        {contributedVideos.length > 0 ? (
+                            contributedVideos.map((video) => (
+                                <div key={`${video.mealId}-${video.youtubeUrl}`} className="rounded-2xl overflow-hidden border-2 border-foreground/10 bg-muted/10">
+                                    <div className="aspect-video bg-black">
+                                        <iframe
+                                            className="w-full h-full"
+                                            src={getYouTubeEmbedUrl(video.youtubeUrl)}
+                                            title={`${video.feederName} contribution`}
+                                            frameBorder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                        />
+                                    </div>
+                                    <div className="p-4 space-y-3">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <h3 className="font-bold text-lg">{video.feederName}</h3>
+                                                <div className="flex items-center gap-2 text-sm text-muted-foreground font-mono">
+                                                    <MapPin className="w-4 h-4" />
+                                                    {video.location}
+                                                </div>
+                                            </div>
+                                            <span className="inline-flex items-center gap-2 bg-accent/20 text-accent-foreground px-3 py-1 rounded-lg text-xs font-bold border border-accent/50 uppercase tracking-wider">
+                                                <PlayCircle className="w-3 h-3" /> Recorded
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="font-mono text-muted-foreground">
+                                                {new Date(video.timestamp).toLocaleDateString()} {new Date(video.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                            </span>
+                                            <span className="font-bold text-primary">
+                                                You contributed {video.contributionAmount.toFixed(2)} / {video.mealCost.toFixed(2)} EUR
+                                            </span>
+                                        </div>
+                                        <Button className="w-full" variant="outline" onClick={() => router.push(`/feeder/${video.feederId}`)}>
+                                            Open Feeder
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-sm text-muted-foreground text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                No attributed feeding videos yet.
+                            </div>
+                        )}
+                    </div>
+                </Card>
             </div>
 
             <DonationModal

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Feeder, deriveConnectionStatus, formatLastSeen } from '../types';
 import Button from '../components/Button';
 import { createClient } from '@/lib/supabase/client';
-import { Search, Battery, Wifi, Brain, ArrowRight, List, Map as MapIcon, MapPin, Loader2 } from 'lucide-react';
+import { Search, Battery, Brain, ArrowRight, List, Map as MapIcon, MapPin, Loader2 } from 'lucide-react';
 
 export default function MapPage() {
     const navigate = useRouter();
@@ -137,7 +137,6 @@ export default function MapPage() {
             const iconHtml = `
         <div class="w-10 h-10 bg-primary rounded-full border-2 border-foreground flex items-center justify-center shadow-lg relative hover:scale-110 transition-transform cursor-pointer">
            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-           ${feeder.animalsDetected > 0 ? '<span class="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full border-2 border-white animate-pulse"></span>' : ''}
         </div>
       `;
 
@@ -169,7 +168,7 @@ export default function MapPage() {
                ${renderToStaticMarkup(
                     <Button
                         id={`btn-${feeder.id}`}
-                        className="w-full pointer-events-auto" // Ensure pointer events work if needed, though id-based click handler handles it
+                        className="w-full pointer-events-auto"
                         variant="primary"
                     >
                         FEED NOW
@@ -203,7 +202,6 @@ export default function MapPage() {
         setMobileView('map'); // Switch to map on mobile
         if (mapInstanceRef.current) {
             mapInstanceRef.current.flyTo([feeder.location.lat, feeder.location.lng], 16);
-            // Find marker and open popup? (Leaflet doesn't easily expose markers by ID without a registry, keeping it simple for now)
         }
     };
 
@@ -277,7 +275,6 @@ export default function MapPage() {
 
                             <div className="flex items-center gap-4 text-xs font-bold opacity-80">
                                 <span className="flex items-center gap-1 text-orange-700 bg-orange-50 px-2 py-1 rounded"><Battery className="w-3 h-3" /> {feeder.foodLevel}% Food</span>
-                                <span className="flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-1 rounded"><Wifi className="w-3 h-3" /> {feeder.animalsDetected} Animals</span>
                             </div>
 
                             <ArrowRight className="absolute right-4 bottom-4 w-5 h-5 text-gray-300" />
@@ -308,13 +305,9 @@ export default function MapPage() {
                         <span className="w-3 h-3 bg-red-500 rounded-full border border-foreground"></span>
                         <span>Offline</span>
                     </div>
-                    <div className="flex items-center gap-2 mb-1.5">
+                    <div className="flex items-center gap-2">
                         <span className="w-3 h-3 bg-gray-400 rounded-full border border-foreground"></span>
                         <span>Disabled</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 bg-accent rounded-full border border-foreground animate-pulse"></span>
-                        <span>Animal Nearby</span>
                     </div>
                 </div>
 
