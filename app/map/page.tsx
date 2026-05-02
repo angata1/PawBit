@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Feeder, deriveConnectionStatus, formatLastSeen } from '../types';
 import Button from '../components/Button';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslations } from 'next-intl';
 import { Search, Battery, Heart, ArrowRight, List, Map as MapIcon, MapPin, Loader2 } from 'lucide-react';
 
 const escapeHtml = (unsafe: string) => {
@@ -21,6 +22,7 @@ export default function MapPage() {
     const navigate = useRouter();
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<any>(null);
+    const t = useTranslations('MapPage');
 
     const [feeders, setFeeders] = useState<Feeder[]>([]);
     const [selectedFeederId, setSelectedFeederId] = useState<string | null>(null);
@@ -203,8 +205,8 @@ export default function MapPage() {
                     <span class="px-2 py-1 rounded border ${feeder.connectionStatus === 'online' ? 'text-green-700 bg-green-100 border-green-200' :
                         feeder.connectionStatus === 'offline' ? 'text-red-700 bg-red-100 border-red-200' :
                             'text-zinc-700 bg-zinc-100 border-zinc-200'
-                        }">${feeder.connectionStatus.replace('_', ' ').toUpperCase()}</span>
-                    <span class="text-orange-700 bg-orange-50 px-2 py-1 rounded border border-orange-100">${feeder.foodLevel}% FOOD</span>
+                        }">${t(feeder.connectionStatus).toUpperCase()}</span>
+                    <span class="text-orange-700 bg-orange-50 px-2 py-1 rounded border border-orange-100">${feeder.foodLevel}% ${t('food')}</span>
                 </div>
                ${renderToStaticMarkup(
                     <Button
@@ -212,7 +214,7 @@ export default function MapPage() {
                         className="w-full pointer-events-auto"
                         variant="primary"
                     >
-                        FEED NOW
+                        ${t('feedNow')}
                     </Button>
                 )}
             </div>
@@ -256,12 +258,12 @@ export default function MapPage() {
         ${mobileView === 'list' ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
                 <div className="p-6 border-b-2 border-foreground bg-white z-10">
-                    <h1 className="text-2xl font-bold mb-4 font-serif">Find a Hungry Pal</h1>
+                    <h1 className="text-2xl font-bold mb-4 font-serif">{t('sidebarTitle')}</h1>
 
                     <div className="relative mb-4">
                         <input
                             type="text"
-                            placeholder="Search park or street..."
+                            placeholder={t('searchPlaceholder')}
                             className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-all font-mono text-sm"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -274,7 +276,7 @@ export default function MapPage() {
                         className="w-full flex justify-between items-center bg-accent text-accent-foreground border-accent-foreground"
                         size="md"
                     >
-                        <span className="flex items-center gap-2"><Heart className="w-5 h-5" fill="currentColor" /> Global Pool</span>
+                        <span className="flex items-center gap-2"><Heart className="w-5 h-5" fill="currentColor" /> {t('globalPool')}</span>
                         <ArrowRight className="w-5 h-5" />
                     </Button>
                 </div>
@@ -283,7 +285,7 @@ export default function MapPage() {
                     {loadingFeeders ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-3">
                             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                            <p className="text-sm font-mono text-muted-foreground">Loading feeders...</p>
+                            <p className="text-sm font-mono text-muted-foreground">{t('loading')}</p>
                         </div>
                     ) : null}
                     {!loadingFeeders && filteredFeeders.map(feeder => (
@@ -307,13 +309,13 @@ export default function MapPage() {
                                         feeder.connectionStatus === 'offline' ? 'bg-red-500' :
                                             'bg-zinc-400'
                                         }`}></span>
-                                    {feeder.connectionStatus.replace('_', ' ')}
+                                    {t(feeder.connectionStatus)}
                                 </div>
                             </div>
                             <p className="text-xs text-muted-foreground mb-4 truncate font-mono">{feeder.location.address}</p>
 
                             <div className="flex items-center gap-4 text-xs font-bold opacity-80">
-                                <span className="flex items-center gap-1 text-orange-700 bg-orange-50 px-2 py-1 rounded"><Battery className="w-3 h-3" /> {feeder.foodLevel}% Food</span>
+                                <span className="flex items-center gap-1 text-orange-700 bg-orange-50 px-2 py-1 rounded"><Battery className="w-3 h-3" /> {feeder.foodLevel}% {t('food')}</span>
                             </div>
 
                             <ArrowRight className="absolute right-4 bottom-4 w-5 h-5 text-gray-300" />
@@ -323,7 +325,7 @@ export default function MapPage() {
                     {filteredFeeders.length === 0 && (
                         <div className="text-center py-10 opacity-50">
                             <MapPin className="w-12 h-12 mx-auto mb-2" />
-                            <p>No feeders found here.</p>
+                            <p>{t('noFeeders')}</p>
                         </div>
                     )}
                 </div>
@@ -335,18 +337,18 @@ export default function MapPage() {
 
                 {/* Desktop Legend */}
                 <div className="hidden md:block absolute top-4 right-4 bg-white/90 backdrop-blur px-4 py-3 rounded-xl border-2 border-foreground z-[400] text-xs font-mono shadow-xl">
-                    <h4 className="font-bold mb-2 border-b border-gray-200 pb-1">Feeder Status</h4>
+                    <h4 className="font-bold mb-2 border-b border-gray-200 pb-1">{t('legendTitle')}</h4>
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="w-3 h-3 bg-green-500 rounded-full border border-foreground"></span>
-                        <span>Online</span>
+                        <span>{t('online')}</span>
                     </div>
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="w-3 h-3 bg-red-500 rounded-full border border-foreground"></span>
-                        <span>Offline</span>
+                        <span>{t('offline')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="w-3 h-3 bg-gray-400 rounded-full border border-foreground"></span>
-                        <span>Disabled</span>
+                        <span>{t('disabled')}</span>
                     </div>
                 </div>
 
@@ -358,7 +360,7 @@ export default function MapPage() {
                         variant={mobileView === 'list' ? 'primary' : 'outline'}
                         icon={<List className="w-4 h-4" />}
                     >
-                        List
+                        {t('list')}
                     </Button>
                     <Button
                         onClick={() => setMobileView('map')}
@@ -366,7 +368,7 @@ export default function MapPage() {
                         variant={mobileView === 'map' ? 'primary' : 'outline'}
                         icon={<MapIcon className="w-4 h-4" />}
                     >
-                        Map
+                        {t('map')}
                     </Button>
                 </div>
             </div>

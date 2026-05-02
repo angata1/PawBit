@@ -166,7 +166,8 @@
     font-family: var(--font-gabriela), serif;
   }
 
-  button, a {
+  button,
+  a {
     touch-action: manipulation;
   }
 
@@ -175,21 +176,20 @@
   }
 }
 
+@utility neu-shadow {
+  box-shadow: 3px 3px 0px 0px rgba(40, 32, 18, 0.85);
+}
+
+@utility neu-shadow-sm {
+  box-shadow: 1px 1px 0px 0px rgba(40, 32, 18, 0.85);
+}
+
+@utility neu-shadow-lg {
+  box-shadow: 6px 6px 0px 0px rgba(40, 32, 18, 0.75);
+}
+
+
 @layer components {
-
-  /* Neubrutalist Shadows - Softened */
-  .neu-shadow {
-    box-shadow: 3px 3px 0px 0px rgba(60, 50, 30, 0.8);
-  }
-
-  .neu-shadow-sm {
-    box-shadow: 1px 1px 0px 0px rgba(60, 50, 30, 0.8);
-  }
-
-  .neu-shadow-lg {
-    box-shadow: 6px 6px 0px 0px rgba(60, 50, 30, 0.6);
-  }
-
   /* Utilities */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -204,12 +204,15 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
   .pt-safe {
     padding-top: env(safe-area-inset-top);
   }
+
   .mb-safe {
     margin-bottom: env(safe-area-inset-bottom);
   }
+
   .mt-safe {
     margin-top: env(safe-area-inset-top);
   }

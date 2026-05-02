@@ -22,7 +22,7 @@ export default function Button({
     // Playful, tactile base styles
     // hover: Lift up slightly + increased shadow
     // active: Push down + remove shadow + slight scale down (squash)
-    const baseStyles = "relative inline-flex cursor-pointer items-center justify-center font-bold uppercase tracking-wider transition-all duration-200 border-2 border-foreground rounded-xl shadow-[3px_3px_0px_0px_rgba(60,50,30,1)] hover:-translate-y-1 hover:shadow-[5px_5px_0px_0px_rgba(60,50,30,1)] active:translate-y-1 active:shadow-none active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:translate-y-0 disabled:shadow-[3px_3px_0px_0px_rgba(60,50,30,1)] whitespace-nowrap";
+    const baseStyles = "relative inline-flex cursor-pointer items-center justify-center font-bold uppercase tracking-wider transition-all duration-200 border-2 border-foreground rounded-xl neu-shadow hover:-translate-y-1 hover:neu-shadow-lg active:translate-y-1 active:shadow-none active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:translate-y-0 whitespace-nowrap";
 
     const variants = {
         primary: "bg-primary text-primary-foreground hover:bg-primary/90",

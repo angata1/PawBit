@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 function PaymentSuccessContent() {
     const searchParams = useSearchParams();
@@ -12,13 +13,14 @@ function PaymentSuccessContent() {
     const paymentIntentId = searchParams.get('payment_intent');
     const redirectStatus = searchParams.get('redirect_status');
 
+    const t = useTranslations('PaymentSuccess');
     const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
-    const [message, setMessage] = useState('Verifying your deposit...');
+    const [message, setMessage] = useState(t('verifying'));
 
     useEffect(() => {
         if (!paymentIntentId || redirectStatus !== 'succeeded') {
             setStatus('error');
-            setMessage('Invalid payment information.');
+            setMessage(t('invalidInfo'));
             return;
         }
 
@@ -39,12 +41,12 @@ function PaymentSuccessContent() {
                         setStatus('success'); // Still show success if refreshed
                     } else {
                         setStatus('error');
-                        setMessage(data.error || 'Failed to update wallet.');
+                        setMessage(data.error || t('walletUpdateFailed'));
                     }
                 }
             } catch (err) {
                 setStatus('error');
-                setMessage('Connection error.');
+                setMessage(t('connectionError'));
             }
         };
 
@@ -57,7 +59,7 @@ function PaymentSuccessContent() {
                 {status === 'verifying' && (
                     <div className="flex flex-col items-center">
                         <Loader2 className="w-16 h-16 text-primary animate-spin mb-6" />
-                        <h1 className="text-2xl font-bold mb-2">Processing...</h1>
+                        <h1 className="text-2xl font-bold mb-2">{t('processing')}</h1>
                         <p className="text-muted-foreground">{message}</p>
                     </div>
                 )}
@@ -67,12 +69,12 @@ function PaymentSuccessContent() {
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
                             <CheckCircle2 className="w-10 h-10 text-green-600" />
                         </div>
-                        <h1 className="text-3xl font-black mb-2 text-foreground">Success!</h1>
+                        <h1 className="text-3xl font-black mb-2 text-foreground">{t('successTitle')}</h1>
                         <p className="text-muted-foreground mb-8">
-                            Funds have been added to your wallet. You can now start feeding animals.
+                            {t('successDesc')}
                         </p>
                         <Button onClick={() => router.push('/profile')} size="lg" className="w-full">
-                            Go to Wallet
+                            {t('goWallet')}
                         </Button>
                     </div>
                 )}
@@ -82,10 +84,10 @@ function PaymentSuccessContent() {
                         <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
                             <AlertCircle className="w-10 h-10 text-red-600" />
                         </div>
-                        <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
+                        <h1 className="text-2xl font-bold mb-2">{t('errorTitle')}</h1>
                         <p className="text-muted-foreground mb-8">{message}</p>
                         <Button onClick={() => router.push('/profile')} variant="outline" className="w-full">
-                            Return to Profile
+                            {t('returnProfile')}
                         </Button>
                     </div>
                 )}

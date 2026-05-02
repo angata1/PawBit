@@ -8,6 +8,7 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import DonationModal from '@/components/DonationModal';
 import RealtimeChat from '@/components/RealtimeChat';
+import { useTranslations } from 'next-intl';
 import { Video, ArrowLeft, Activity, Heart, AlertCircle, MapPin, ArrowRight, Loader2, WifiOff, PlayCircle } from 'lucide-react';
 
 function getSafeYouTubeUrl(url: string) {
@@ -35,6 +36,7 @@ export default function FeederDetails() {
     const params = useParams();
     const id = params?.id as string;
     const router = useRouter();
+    const t = useTranslations('FeederDetails');
 
     const [feeder, setFeeder] = useState<Feeder | null>(null);
     const [donations, setDonations] = useState<any[]>([]);
@@ -82,7 +84,6 @@ export default function FeederDetails() {
                 const avgFood = allFeeders.length > 0
                     ? Math.round(allFeeders.reduce((acc, f) => acc + (f.stock_level || 0), 0) / allFeeders.length)
                     : 0;
-
                 setFeeder({
                     id: 'all',
                     name: 'Global Donation Pool',
@@ -93,7 +94,8 @@ export default function FeederDetails() {
                     foodLevel: avgFood,
                     animalsDetected: totalAnimals,
                     dispensePriceEur: 2,
-                    liveStreamUrl: ''
+                    liveStreamUrl: '',
+                    isStreaming: false
                 });
             }
 
@@ -163,7 +165,7 @@ export default function FeederDetails() {
 
                 setCurrentUser({
                     id: user.id,
-                    name: user.user_metadata?.full_name || 'User',
+                    name: user.user_metadata?.full_name || t('communityMember'),
                     isAnonymous: user.user_metadata?.is_anonymous || false,
                     balance: publicUser?.balance || 0,
                     totalDonated: 0
@@ -290,12 +292,12 @@ export default function FeederDetails() {
         <div className="min-h-screen flex items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-4">
                 <Loader2 className="w-12 h-12 animate-spin text-primary" />
-                <p className="font-mono text-muted-foreground">Accessing secure IoT node...</p>
+                <p className="font-mono text-muted-foreground">{t('accessingSecureNode')}</p>
             </div>
         </div>
     );
 
-    if (!feeder) return <div className="pt-24 text-center">Feeder not found.</div>;
+    if (!feeder) return <div className="pt-24 text-center">{t('feederNotFound')}</div>;
 
     const isOffline = feeder.connectionStatus !== 'online';
     const feederPrice = Number(feeder.dispensePriceEur || 2);
@@ -303,43 +305,43 @@ export default function FeederDetails() {
         ? Array.from(new Set([feederPrice, 5, 10])).sort((a, b) => a - b)
         : [2, 5, 10];
     const selectedModeLabel = donationMode === 'live'
-        ? `Live feeding (${feederPrice.toFixed(2)} EUR minimum)`
+        ? `${t('modes.live')} (${feederPrice.toFixed(2)} EUR minimum)`
         : donationMode === 'feeder_pool'
-            ? 'Feeder pool'
-            : 'Global pool';
+            ? t('modes.feeder_pool')
+            : t('modes.global_pool');
 
     return (
         <div className="min-h-screen pt-4 sm:pt-8 pb-12 px-4 bg-background overflow-x-hidden">
             <div className="container mx-auto max-w-6xl">
                 <button onClick={() => router.push('/map')} className="flex items-center gap-2 font-bold text-muted-foreground hover:text-foreground mb-4 sm:mb-6 transition-colors text-sm sm:text-base">
-                    <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /> Back to Map
+                    <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /> {t('backToMap')}
                 </button>
 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8 gap-4">
                     <div className="w-full sm:w-auto">
                         <div className="flex items-center flex-wrap gap-2 sm:gap-3 mb-2">
-                            <h1 className="text-2xl sm:text-4xl font-bold break-words">{feeder.name}</h1>
+                            <h1 className="text-2xl sm:text-4xl font-bold break-words">{feeder.id === 'all' ? t('globalPool') : feeder.name}</h1>
                             {feeder.connectionStatus === 'online' ? (
-                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-green-100 text-green-800 rounded-full text-[10px] sm:text-xs font-bold border border-green-300 animate-pulse uppercase">ONLINE</span>
+                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-green-100 text-green-800 rounded-full text-[10px] sm:text-xs font-bold border border-green-300 animate-pulse uppercase">{t('online')}</span>
                             ) : feeder.connectionStatus === 'offline' ? (
-                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-red-100 text-red-800 rounded-full text-[10px] sm:text-xs font-bold border border-red-300 uppercase">OFFLINE</span>
+                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-red-100 text-red-800 rounded-full text-[10px] sm:text-xs font-bold border border-red-300 uppercase">{t('offline')}</span>
                             ) : (
-                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-zinc-100 text-zinc-800 rounded-full text-[10px] sm:text-xs font-bold border border-zinc-300 uppercase">DISABLED</span>
+                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-zinc-100 text-zinc-800 rounded-full text-[10px] sm:text-xs font-bold border border-zinc-300 uppercase">{t('disabled')}</span>
                             )}
                         </div>
                         <p className="text-sm sm:text-lg text-muted-foreground font-mono flex items-center gap-2">
-                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4" /> {feeder.location.address}
+                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4" /> {feeder.id === 'all' ? t('globalPoolSidebarDesc') : feeder.location.address}
                         </p>
                     </div>
                     <div className="flex gap-3 sm:gap-4 w-full sm:w-auto">
                         <div className="flex-1 sm:flex-initial bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border-2 border-foreground text-center shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                            <span className="block text-[10px] font-bold uppercase text-gray-500">Food</span>
+                            <span className="block text-[10px] font-bold uppercase text-gray-500">{t('food')}</span>
                             <span className="block text-lg sm:text-xl font-black text-primary">{feeder.foodLevel}%</span>
                         </div>
                         {id !== 'all' && (
                             <div className="flex-1 sm:flex-initial bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border-2 border-foreground text-center shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                                <span className="block text-[10px] font-bold uppercase text-gray-500">Meal Price</span>
+                                <span className="block text-[10px] font-bold uppercase text-gray-500">{t('mealPrice')}</span>
                                 <span className="block text-lg sm:text-xl font-black text-primary">{feederPrice.toFixed(2)} EUR</span>
                             </div>
                         )}
@@ -356,9 +358,9 @@ export default function FeederDetails() {
                         {id === 'all' ? (
                             <Card className="h-[300px] sm:h-[400px] flex flex-col items-center justify-center bg-white border-2 border-foreground neu-shadow">
                                 <Heart className="w-16 h-16 sm:w-24 sm:h-24 text-primary mb-4" fill="currentColor" />
-                                <h2 className="text-2xl sm:text-3xl font-black text-center mb-2 px-4 uppercase">Global Donation Pool</h2>
+                                <h2 className="text-2xl sm:text-3xl font-black text-center mb-2 px-4 uppercase">{t('globalPool')}</h2>
                                 <p className="text-center max-w-md text-muted-foreground font-mono px-6 text-sm sm:text-base">
-                                    Donations are pooled together and distributed across all active feeders in the network.
+                                    {t('globalPoolDesc')}
                                 </p>
                             </Card>
                         ) : (
@@ -369,9 +371,9 @@ export default function FeederDetails() {
                                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/80 z-10 backdrop-blur-sm">
                                         <div className="bg-card border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 sm:p-8 rounded-2xl flex flex-col items-center text-center max-w-sm mx-4 transform -rotate-1">
                                             <WifiOff className="w-10 h-10 sm:w-16 sm:h-16 text-foreground mb-4" />
-                                            <h2 className="text-2xl sm:text-4xl font-black uppercase text-foreground mb-2">Offline</h2>
+                                            <h2 className="text-2xl sm:text-4xl font-black uppercase text-foreground mb-2">{t('offlineStatus')}</h2>
                                             <p className="font-mono text-muted-foreground text-xs sm:text-sm leading-relaxed">
-                                                This feeder is currently unreachable. Live stream and donations are temporarily paused.
+                                                {t('offlineDesc')}
                                             </p>
                                         </div>
                                     </div>
@@ -381,7 +383,7 @@ export default function FeederDetails() {
                                 {streamStatus === 'connecting' && !isOffline && (
                                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white z-10">
                                         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                                        <p className="font-mono animate-pulse">Establishing secure IoT tunnel...</p>
+                                        <p className="font-mono animate-pulse">{t('establishingTunnel')}</p>
                                     </div>
                                 )}
 
@@ -390,10 +392,10 @@ export default function FeederDetails() {
                                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 text-white z-10">
                                         <div className="bg-black/50 p-6 rounded-2xl flex flex-col items-center text-center border border-white/10 shadow-xl">
                                             <Video className="w-12 h-12 mb-4 text-primary" />
-                                            <h3 className="text-xl font-bold mb-2">Camera Ready</h3>
-                                            <p className="text-sm text-gray-400 mb-6 max-w-xs font-mono">Start the live stream to view the feeder area in real-time.</p>
+                                            <h3 className="text-xl font-bold mb-2">{t('cameraReady')}</h3>
+                                            <p className="text-sm text-gray-400 mb-6 max-w-xs font-mono">{t('startStreamDesc')}</p>
                                             <Button variant="primary" onClick={handleStartStream} icon={<PlayCircle className="w-5 h-5 fill-current" />}>
-                                                Start Live Stream
+                                                {t('startLiveStream')}
                                             </Button>
                                         </div>
                                     </div>
@@ -421,12 +423,12 @@ export default function FeederDetails() {
                                             </div>
                                         )}
                                         <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded flex items-center gap-2 font-bold text-sm border-2 border-black shadow-lg z-20 pointer-events-none">
-                                            <span className="w-2 h-2 bg-white rounded-full animate-pulse" /> LIVE FEED
+                                            <span className="w-2 h-2 bg-white rounded-full animate-pulse" /> {t('liveFeed')}
                                         </div>
                                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6 text-white z-20 pointer-events-none">
                                             <p className="font-mono text-sm flex items-center gap-2">
                                                 <Activity className="w-4 h-4 text-green-400" />
-                                                Sensor Data: Monitoring area...
+                                                {t('sensorData')}
                                             </p>
                                         </div>
                                     </>
@@ -446,22 +448,22 @@ export default function FeederDetails() {
                                 )}
 
                                 <div className="flex items-start justify-between mb-2">
-                                    <h2 className="text-2xl font-black">Support This Feeder</h2>
+                                    <h2 className="text-2xl font-black">{t('supportFeeder')}</h2>
                                     {isOffline && (
                                         <span className="text-xs font-bold px-2 py-1 bg-red-100 text-red-700 border border-red-300 rounded-lg font-mono">
-                                            Donations paused — feeder offline
+                                            {t('donationsPaused')}
                                         </span>
                                     )}
                                 </div>
                                 <p className="text-muted-foreground text-sm mb-6 font-mono leading-relaxed">
-                                    Choose whether this goes to the live feeder, this feeder&apos;s pool, or the shared global pool.
+                                    {t('chooseModeDesc')}
                                 </p>
 
                                 <div className="grid sm:grid-cols-3 gap-2 mb-5">
                                     {[
-                                        { key: 'live', label: 'Live feed', disabled: streamStatus !== 'live' || isOffline },
-                                        { key: 'feeder_pool', label: 'Feeder pool', disabled: false },
-                                        { key: 'global_pool', label: 'Global pool', disabled: false },
+                                        { key: 'live', label: t('modes.live'), disabled: streamStatus !== 'live' || isOffline },
+                                        { key: 'feeder_pool', label: t('modes.feeder_pool'), disabled: false },
+                                        { key: 'global_pool', label: t('modes.global_pool'), disabled: false },
                                     ].map(option => (
                                         <button
                                             key={option.key}
@@ -499,7 +501,7 @@ export default function FeederDetails() {
                                     <div className="flex gap-2 w-full">
                                         <input
                                             type="number"
-                                            placeholder="Custom amount"
+                                            placeholder={t('customAmount')}
                                             className="flex-1 px-4 py-3 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-0 font-mono font-bold"
                                             value={customAmount}
                                             onChange={(e) => setCustomAmount(e.target.value)}
@@ -510,16 +512,16 @@ export default function FeederDetails() {
                                             variant="accent"
                                             className="flex-shrink-0"
                                         >
-                                            Donate
+                                            {t('donate')}
                                         </Button>
                                     </div>
                                 </div>
 
                                 <div className="bg-muted/30 p-4 rounded-xl border-2 border-foreground/10 text-xs font-mono text-muted-foreground mt-6">
                                     <div className="flex items-center gap-2 mb-2 text-foreground font-bold uppercase tracking-tighter">
-                                        <AlertCircle className="w-4 h-4 text-primary" /> Impact Guarantee
+                                        <AlertCircle className="w-4 h-4 text-primary" /> {t('impactGuarantee')}
                                     </div>
-                                    <p>We record every feeding. You can view your impact history and recorded clips in your profile.</p>
+                                    <p>{t('impactDesc')}</p>
                                 </div>
                             </Card>
                         )}
@@ -534,9 +536,9 @@ export default function FeederDetails() {
                                         </div>
                                     </div>
                                 )}
-                                <h2 className="text-2xl font-black mb-2">Make a Donation</h2>
+                                <h2 className="text-2xl font-black mb-2">{t('makeDonation')}</h2>
                                 <p className="text-muted-foreground text-sm mb-6 font-mono leading-relaxed">
-                                    Your contribution is added to the global pool and distributed across all feeders that need restocking.
+                                    {t('globalPoolCtaDesc')}
                                 </p>
                                 <div className="grid grid-cols-3 gap-3 mb-4">
                                     {[2, 5, 10].map(amt => (
@@ -548,26 +550,26 @@ export default function FeederDetails() {
                                 <div className="flex gap-2 mb-6 w-full">
                                     <input
                                         type="number"
-                                        placeholder="Custom amount"
+                                        placeholder={t('customAmount')}
                                         className="flex-1 px-4 py-3 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-0 font-mono font-bold"
                                         value={customAmount}
                                         onChange={(e) => setCustomAmount(e.target.value)}
                                     />
                                     <Button onClick={() => handleDonate(Number(customAmount) || 1, 'global_pool')} disabled={!customAmount} variant="accent" className="flex-shrink-0">
-                                        Donate
+                                        {t('donate')}
                                     </Button>
                                 </div>
                                 <div className="bg-muted/30 p-4 rounded-xl border-2 border-foreground/10 text-xs font-mono text-muted-foreground">
                                     <div className="flex items-center gap-2 mb-2 text-foreground font-bold uppercase tracking-tighter">
-                                        <AlertCircle className="w-4 h-4 text-primary" /> Impact Guarantee
+                                        <AlertCircle className="w-4 h-4 text-primary" /> {t('impactGuarantee')}
                                     </div>
-                                    <p>We record every feeding. You can view your impact history and recorded clips in your profile.</p>
+                                    <p>{t('impactDesc')}</p>
                                 </div>
                             </Card>
                         )}
 
                         {/* Recent Activity — at the very bottom of left column */}
-                        <Card title="Recent Activity">
+                        <Card title={t('recentActivity')}>
                             <div className="space-y-4">
                                 {donations.length > 0 ? donations.map(d => (
                                     <div key={d.id} className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border-2 border-foreground/10 hover:border-foreground/20 transition-colors">
@@ -576,8 +578,8 @@ export default function FeederDetails() {
                                                 <Heart className="w-5 h-5 text-accent" fill="currentColor" />
                                             </div>
                                             <div>
-                                                <p className="font-bold text-sm">Community Member</p>
-                                                <p className="text-xs text-muted-foreground font-mono">Dispensed {d.total_cost_eur}€ worth of food</p>
+                                                <p className="font-bold text-sm">{t('communityMember')}</p>
+                                                <p className="text-xs text-muted-foreground font-mono">{t('dispensedFood', { amount: d.total_cost_eur })}</p>
                                             </div>
                                         </div>
                                         <div className="text-right flex-shrink-0">
@@ -589,8 +591,8 @@ export default function FeederDetails() {
                                     </div>
                                 )) : (
                                     <div className="py-8 text-center border-2 border-dashed border-foreground/10 rounded-xl">
-                                        <p className="text-muted-foreground italic font-mono">No recent feedings recorded.</p>
-                                        <p className="text-xs text-muted-foreground/60 mt-1">Be the first to fuel this station!</p>
+                                        <p className="text-muted-foreground italic font-mono">{t('noRecentFeedings')}</p>
+                                        <p className="text-xs text-muted-foreground/60 mt-1">{t('beTheFirst')}</p>
                                     </div>
                                 )}
                             </div>
@@ -610,14 +612,14 @@ export default function FeederDetails() {
                                     <div className="w-8 h-8 bg-primary rounded-lg border-2 border-foreground flex items-center justify-center flex-shrink-0">
                                         <Heart className="w-4 h-4 text-white" fill="currentColor" />
                                     </div>
-                                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Global Pool</span>
+                                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('modes.global_pool')}</span>
                                 </div>
-                                <h3 className="text-xl font-black mb-1">Donate to Global Pool</h3>
+                                <h3 className="text-xl font-black mb-1">{t('donateToGlobal')}</h3>
                                 <p className="text-sm text-muted-foreground font-mono leading-relaxed mb-4">
-                                    Your donation is pooled with others and split across all feeders that need restocking.
+                                    {t('globalPoolSidebarDesc')}
                                 </p>
                                 <div className="flex items-center gap-2 font-bold text-sm border-2 border-foreground w-fit px-3 py-1.5 rounded-xl bg-background hover:bg-primary hover:text-white hover:border-primary transition-colors">
-                                    View Global Pool <ArrowRight className="w-4 h-4" />
+                                    {t('viewGlobalPool')} <ArrowRight className="w-4 h-4" />
                                 </div>
                             </div>
                         )}
@@ -630,7 +632,7 @@ export default function FeederDetails() {
             <DonationModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                feederName="Wallet Deposit"
+                feederName={t('walletDeposit')}
                 initialAmount={donationAmount}
                 isDeposit={true}
             />

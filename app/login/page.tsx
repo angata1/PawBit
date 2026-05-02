@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from 'next-intl';
 
 import { useState } from "react";
 import Card from "../components/Card";
@@ -17,6 +18,7 @@ export default function Login() {
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
     const supabase = createClient();
+    const t = useTranslations('Login');
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -36,7 +38,7 @@ export default function Login() {
                 router.refresh();
             }
         } catch (err) {
-            setError("An unexpected error occurred");
+            setError(t('errorGeneric'));
         } finally {
             setLoading(false);
         }
@@ -49,9 +51,9 @@ export default function Login() {
                     <div className="inline-block bg-primary p-4 rounded-full border-2 border-foreground neu-shadow mb-4">
                         <PawPrint className="w-8 h-8 text-primary-foreground" />
                     </div>
-                    <h1 className="text-3xl font-bold">Welcome Back</h1>
+                    <h1 className="text-3xl font-bold">{t('title')}</h1>
                     <p className="text-muted-foreground font-mono">
-                        Sign in to track your furry friends.
+                        {t('desc')}
                     </p>
                 </div>
 
@@ -62,17 +64,17 @@ export default function Login() {
                         </div>
                     )}
                     <Input
-                        label="Email Address"
+                        label={t('emailLabel')}
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder={t('emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                     />
                     <Input
-                        label="Password"
+                        label={t('passwordLabel')}
                         type="password"
-                        placeholder="••••••••"
+                        placeholder={t('passwordPlaceholder')}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -84,15 +86,15 @@ export default function Login() {
                                 type="checkbox"
                                 className="w-4 h-4 rounded border-2 border-foreground text-primary focus:ring-primary"
                             />
-                            <span className="font-mono">Remember me</span>
+                            <span className="font-mono">{t('rememberMe')}</span>
                         </label>
                         <Link href="/forgot-password" className="font-bold text-accent hover:underline">
-                            Forgot Password?
+                            {t('forgotPassword')}
                         </Link>
                     </div>
 
                     <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                        {loading ? "Logging in..." : "Log In"}
+                        {loading ? t('loggingInBtn') : t('loginBtn')}
                     </Button>
                 </form>
 
@@ -101,7 +103,7 @@ export default function Login() {
                         <div className="w-full border-t-2 border-foreground/10"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-muted-foreground font-mono">Or continue with</span>
+                        <span className="px-2 bg-white text-muted-foreground font-mono">{t('orContinueWith')}</span>
                     </div>
                 </div>
 
@@ -130,9 +132,9 @@ export default function Login() {
                 </Button>
 
                 <div className="mt-6 text-center text-sm font-mono">
-                    Don&apos;t have an account?{" "}
+                    {t('dontHaveAccount')}{" "}
                     <Link href="/register"><span className="font-bold text-primary cursor-pointer hover:underline">
-                        Register now
+                        {t('registerNow')}
                     </span></Link>
                 </div>
             </Card>

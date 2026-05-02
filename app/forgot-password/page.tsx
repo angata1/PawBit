@@ -7,6 +7,7 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import { KeyRound, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ export default function ForgotPassword() {
     const [message, setMessage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const supabase = createClient();
+    const t = useTranslations('Auth');
 
     const handleReset = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -29,10 +31,10 @@ export default function ForgotPassword() {
             if (error) {
                 setError(error.message);
             } else {
-                setMessage("Check your email for a password reset link.");
+                setMessage(t('checkEmail'));
             }
         } catch (err) {
-            setError("An unexpected error occurred");
+            setError(t('errorGeneric'));
         } finally {
             setLoading(false);
         }
@@ -43,16 +45,16 @@ export default function ForgotPassword() {
             <Card className="w-full max-w-md bg-white p-8">
                 <Link href="/login" className="inline-flex items-center text-sm font-bold text-muted-foreground hover:text-foreground transition-colors mb-6">
                     <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Login
+                    {t('backToLogin')}
                 </Link>
 
                 <div className="text-center mb-8">
                     <div className="inline-block bg-accent p-4 rounded-full border-2 border-foreground neu-shadow mb-4">
                         <KeyRound className="w-8 h-8 text-accent-foreground" />
                     </div>
-                    <h1 className="text-3xl font-bold">Reset Password</h1>
+                    <h1 className="text-3xl font-bold">{t('resetPassword')}</h1>
                     <p className="text-muted-foreground font-mono mt-2">
-                        Enter your email and we'll send you a link to reset your password.
+                        {t('resetPasswordDesc')}
                     </p>
                 </div>
 
@@ -69,7 +71,7 @@ export default function ForgotPassword() {
                     )}
                     <div className="mb-4">
                         <Input
-                            label="Email Address"
+                            label={t('emailLabel')}
                             type="email"
                             placeholder="you@example.com"
                             value={email}
@@ -79,7 +81,7 @@ export default function ForgotPassword() {
                     </div>
 
                     <Button type="submit" className="w-full mt-4" size="lg" disabled={loading}>
-                        {loading ? "Sending..." : "Send Reset Link"}
+                        {loading ? t('sending') : t('sendResetLink')}
                     </Button>
                 </form>
             </Card>

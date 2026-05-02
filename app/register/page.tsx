@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from 'next-intl';
 
 import Card from "../components/Card";
 import Button from "../components/Button";
@@ -18,6 +19,7 @@ export default function Register() {
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
     const supabase = createClient();
+    const t = useTranslations('Register');
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,7 +27,7 @@ export default function Register() {
         setError(null);
 
         if (password !== confirmPassword) {
-            setError("Passwords do not match");
+            setError(t('passwordsDoNotMatch'));
             setLoading(false);
             return;
         }
@@ -64,10 +66,10 @@ export default function Register() {
 
                 // Check if email confirmation is required/sent
                 // For now redirect or show message
-                router.push("/login?message=Account created! Please check your email to confirm.");
+                router.push(`/login?message=${encodeURIComponent(t('accountCreated'))}`);
             }
         } catch (err) {
-            setError("An unexpected error occurred");
+            setError(t('errorGeneric'));
         } finally {
             setLoading(false);
         }
@@ -76,9 +78,9 @@ export default function Register() {
     return (
         <div className="min-h-screen flex items-center justify-center pt-8 px-4">
             <Card className="w-full max-w-md bg-white">
-                <h1 className="text-3xl font-bold mb-2 text-center">Join PawBit</h1>
+                <h1 className="text-3xl font-bold mb-2 text-center">{t('title')}</h1>
                 <p className="text-center text-muted-foreground mb-8 font-mono">
-                    Become a hero for street animals.
+                    {t('desc')}
                 </p>
 
                 <form onSubmit={handleRegister}>
@@ -88,40 +90,40 @@ export default function Register() {
                         </div>
                     )}
                     <Input
-                        label="Full Name"
+                        label={t('fullNameLabel')}
                         type="text"
-                        placeholder="John Doe"
+                        placeholder={t('fullNamePlaceholder')}
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         required
                     />
                     <Input
-                        label="Email Address"
+                        label={t('emailLabel')}
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder={t('emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                     />
                     <Input
-                        label="Password"
+                        label={t('passwordLabel')}
                         type="password"
-                        placeholder="••••••••"
+                        placeholder={t('passwordPlaceholder')}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
                     <Input
-                        label="Confirm Password"
+                        label={t('confirmPasswordLabel')}
                         type="password"
-                        placeholder="••••••••"
+                        placeholder={t('passwordPlaceholder')}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
                     />
 
                     <Button type="submit" variant="accent" className="w-full mt-4" size="lg" disabled={loading}>
-                        {loading ? "Creating Account..." : "Create Account"}
+                        {loading ? t('creatingAccountBtn') : t('createAccountBtn')}
                     </Button>
                 </form>
 
@@ -130,7 +132,7 @@ export default function Register() {
                         <div className="w-full border-t-2 border-foreground/10"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-muted-foreground font-mono">Or continue with</span>
+                        <span className="px-2 bg-white text-muted-foreground font-mono">{t('orContinueWith')}</span>
                     </div>
                 </div>
 
@@ -159,9 +161,9 @@ export default function Register() {
                 </Button>
 
                 <div className="mt-6 text-center text-sm font-mono">
-                    Already have an account?{" "}
+                    {t('alreadyHaveAccount')}{" "}
                     <Link href="/login"><span className="font-bold text-primary cursor-pointer hover:underline">
-                        Login now
+                        {t('loginNow')}
                     </span></Link>
                 </div>
             </Card>

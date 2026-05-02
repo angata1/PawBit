@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { User } from "@supabase/supabase-js";
+import { useTranslations } from "next-intl";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import Input from "../components/Input";
@@ -32,7 +33,19 @@ type ContributionRow = {
             location: {
                 address?: string;
             } | null;
+        } | {
+            id: number;
+            name: string | null;
+            location: {
+                address?: string;
+            } | null;
         }[] | null;
+    } | {
+        id: number;
+        time_of_meal: string | null;
+        total_cost_eur: number | null;
+        video_link: string | null;
+        feeders: any;
     }[] | null;
 };
 
@@ -70,6 +83,9 @@ function getYouTubeEmbedUrl(url: string): string {
 export default function Profile() {
     const [user, setUser] = useState<User | null>(null);
     const [transactions, setTransactions] = useState<TransactionRow[]>([]);
+    const [txPage, setTxPage] = useState(0);
+    const [hasMoreTx, setHasMoreTx] = useState(true);
+    const [loadingTx, setLoadingTx] = useState(false);
     const [contributedVideos, setContributedVideos] = useState<UserVideo[]>([]);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -80,6 +96,7 @@ export default function Profile() {
 
     const router = useRouter();
     const supabase = createClient();
+    const t = useTranslations("Profile");
 
     useEffect(() => {
         const getUser = async () => {
@@ -104,10 +121,11 @@ export default function Profile() {
                 .select("id, amount_eur, type, created_at")
                 .eq("user_auth_id", authUser.id)
                 .order("created_at", { ascending: false })
-                .limit(20);
+                .range(0, 4);
 
             if (userTransactions) {
                 setTransactions(userTransactions as TransactionRow[]);
+                if (userTransactions.length < 5) setHasMoreTx(false);
             }
 
             const { data: contributionRows } = await supabase
@@ -129,10 +147,10 @@ export default function Profile() {
                 .eq("user_id", authUser.id)
                 .order("created_at", { ascending: false });
 
-            const mappedVideos = ((contributionRows || []) as ContributionRow[])
+            const mappedVideos = ((contributionRows || []) as any[])
                 .map((row) => {
-                    const meal = row.meals?.[0] || null;
-                    const feeder = meal?.feeders?.[0] || null;
+                    const meal = Array.isArray(row.meals) ? row.meals[0] : row.meals;
+                    const feeder = meal ? (Array.isArray(meal.feeders) ? meal.feeders[0] : meal.feeders) : null;
 
                     if (!meal || !meal.video_link) return null;
 
@@ -140,8 +158,8 @@ export default function Profile() {
                         mealId: meal.id,
                         youtubeUrl: meal.video_link,
                         feederId: String(feeder?.id || ""),
-                        feederName: feeder?.name || "Unknown feeder",
-                        location: feeder?.location?.address || "Unknown location",
+                        feederName: feeder?.name || t("unknownLocation"), // Reusing unknown location if name is missing
+                        location: feeder?.location?.address || t("unknownLocation"),
                         contributionAmount: Number(row.amount_contributed || 0),
                         mealCost: Number(meal.total_cost_eur || 0),
                         timestamp: meal.time_of_meal || new Date().toISOString(),
@@ -157,13 +175,32 @@ export default function Profile() {
         void getUser();
     }, [router, supabase]);
 
+    const loadMoreTransactions = async () => {
+        if (!user || loadingTx) return;
+        setLoadingTx(true);
+        const nextPage = txPage + 1;
+        const { data: newTx } = await supabase
+            .from("donations")
+            .select("id, amount_eur, type, created_at")
+            .eq("user_auth_id", user.id)
+            .order("created_at", { ascending: false })
+            .range(nextPage * 5, (nextPage + 1) * 5 - 1);
+
+        if (newTx) {
+            setTransactions((prev) => [...prev, ...(newTx as TransactionRow[])]);
+            setTxPage(nextPage);
+            if (newTx.length < 5) setHasMoreTx(false);
+        }
+        setLoadingTx(false);
+    };
+
     const handleUpdateProfile = async (updates: { password?: string; data?: { is_anonymous: boolean } }) => {
         setUpdating(true);
         setMessage(null);
         try {
             const { error } = await supabase.auth.updateUser(updates);
             if (error) throw error;
-            setMessage({ type: "success", text: "Profile updated successfully!" });
+            setMessage({ type: "success", text: t("updateSuccess") });
 
             const { data: { user: updatedUser } } = await supabase.auth.getUser();
             setUser(updatedUser);
@@ -180,7 +217,7 @@ export default function Profile() {
     const handlePasswordChange = async (event: React.FormEvent) => {
         event.preventDefault();
         if (newPassword !== confirmPassword) {
-            setMessage({ type: "error", text: "Passwords do not match" });
+            setMessage({ type: "error", text: t("errorPasswords") });
             return;
         }
         await handleUpdateProfile({ password: newPassword });
@@ -207,18 +244,18 @@ export default function Profile() {
 
     return (
         <div className="min-h-screen pt-12 px-4 pb-12 bg-background container mx-auto max-w-6xl">
-            <h1 className="text-4xl font-bold mb-8 text-center">My Profile</h1>
+            <h1 className="text-4xl font-bold mb-8 text-center">{t("title")}</h1>
 
-            <div className="grid xl:grid-cols-[1fr_1fr_1.2fr] gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1fr_1fr_1.2fr] gap-6 md:gap-8">
                 <div className="space-y-8">
                     <Card className="bg-white">
                         <div className="flex items-center gap-4 mb-6">
                             <div className="p-4 bg-primary/10 rounded-full">
                                 <UserIcon className="w-8 h-8 text-primary" />
                             </div>
-                            <div>
-                                <h2 className="text-xl font-bold">{user.user_metadata?.full_name || "User"}</h2>
-                                <p className="text-muted-foreground font-mono text-sm">{user.email}</p>
+                            <div className="min-w-0 flex-1">
+                                <h2 className="text-xl font-bold truncate">{user.user_metadata?.full_name || "User"}</h2>
+                                <p className="text-muted-foreground font-mono text-sm truncate">{user.email}</p>
                             </div>
                         </div>
 
@@ -227,16 +264,16 @@ export default function Profile() {
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2 font-bold">
                                         <Shield className="w-5 h-5 text-accent" />
-                                        <span>Privacy Mode</span>
+                                        <span>{t("privacyMode")}</span>
                                     </div>
                                     <div className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${isAnonymous ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                                        {isAnonymous ? "Anonymous" : "Public"}
+                                        {isAnonymous ? t("anonymous") : t("public")}
                                     </div>
                                 </div>
                                 <p className="text-sm text-muted-foreground mb-4">
                                     {isAnonymous
-                                        ? "Your name is hidden from leaderboards and feeds."
-                                        : "Your name appears on leaderboards and donations."}
+                                        ? t("nameHidden")
+                                        : t("nameVisible")}
                                 </p>
                                 <Button
                                     variant="outline"
@@ -244,7 +281,7 @@ export default function Profile() {
                                     disabled={updating}
                                     size="sm"
                                 >
-                                    {updating ? "Updating..." : (isAnonymous ? "Switch to Public" : "Switch to Anonymous")}
+                                    {updating ? t("updating") : (isAnonymous ? t("switchToPublic") : t("switchToAnonymous"))}
                                 </Button>
                             </div>
                         </div>
@@ -253,7 +290,7 @@ export default function Profile() {
                     <Card className="bg-white">
                         <div className="flex items-center gap-2 mb-6">
                             <Key className="w-5 h-5 text-primary" />
-                            <h2 className="text-xl font-bold">Change Password</h2>
+                            <h2 className="text-xl font-bold">{t("changePassword")}</h2>
                         </div>
 
                         <form onSubmit={handlePasswordChange}>
@@ -264,19 +301,19 @@ export default function Profile() {
                             )}
 
                             <Input
-                                label="New Password"
+                                label={t("newPassword")}
                                 type="password"
                                 value={newPassword}
                                 onChange={(event) => setNewPassword(event.target.value)}
-                                placeholder="Min. 6 characters"
+                                placeholder={t("minChars")}
                                 required
                             />
                             <Input
-                                label="Confirm Password"
+                                label={t("confirmPassword")}
                                 type="password"
                                 value={confirmPassword}
                                 onChange={(event) => setConfirmPassword(event.target.value)}
-                                placeholder="Repeat password"
+                                placeholder={t("repeatPassword")}
                                 required
                             />
 
@@ -285,27 +322,27 @@ export default function Profile() {
                                 className="w-full mt-4"
                                 disabled={updating || !newPassword}
                             >
-                                {updating ? "Updating..." : "Update Password"}
+                                {updating ? t("updating") : t("updatePassword")}
                             </Button>
                         </form>
                     </Card>
                 </div>
 
                 <div className="space-y-8">
-                    <Card className="bg-white border-2 border-primary/20">
+                    <Card className="bg-white">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-bold flex items-center gap-2">
-                                <span className="p-2 bg-yellow-100 rounded-lg text-yellow-700">Wallet</span>
-                                Balance
+                                <span className="p-2 bg-yellow-100 rounded-lg text-yellow-700">{t("wallet")}</span>
+                                {t("balance")}
                             </h2>
                         </div>
                         <div className="text-center py-6">
-                            <span className="text-5xl font-black text-primary block mb-2">
-                                {Number(user.user_metadata?.balance || 0).toFixed(2)} <span className="text-xl text-muted-foreground">EUR</span>
+                            <span className="text-4xl md:text-5xl font-black text-primary block mb-2 break-all px-2">
+                                {Number(user.user_metadata?.balance || 0).toFixed(2)} <span className="text-lg md:text-xl text-muted-foreground">EUR</span>
                             </span>
-                            <p className="text-sm text-muted-foreground mb-6">Available to feed animals</p>
+                            <p className="text-sm text-muted-foreground mb-6">{t("availableToFeed")}</p>
                             <Button className="w-full" size="lg" onClick={() => setIsDepositModalOpen(true)}>
-                                Add Funds
+                                {t("addFunds")}
                             </Button>
                         </div>
                     </Card>
@@ -314,25 +351,41 @@ export default function Profile() {
                         <h2 className="text-xl font-bold mb-4">Transaction History</h2>
                         <div className="space-y-3">
                             {transactions.length > 0 ? (
-                                transactions.map((tx) => (
-                                    <div key={tx.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg border border-foreground/10">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${tx.amount_eur > 0 ? "bg-green-100 border-green-300 text-green-700" : "bg-red-100 border-red-300 text-red-700"}`}>
-                                                {tx.amount_eur > 0 ? "↓" : "↑"}
+                                <>
+                                    {transactions.map((tx) => (
+                                        <div key={tx.id} className="flex items-center justify-between gap-2 p-3 bg-muted/20 rounded-lg border-2 border-foreground/10">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center border ${tx.amount_eur > 0 ? "bg-green-100 border-green-300 text-green-700" : "bg-red-100 border-red-300 text-red-700"}`}>
+                                                    {tx.amount_eur > 0 ? "↓" : "↑"}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-sm capitalize truncate">{
+                                                        tx.type.replace("deposit:", t("txTypes.deposit") + " ")
+                                                        .replace("feeding", t("txTypes.feeding"))
+                                                        .replace("live_feed", t("txTypes.live_feed"))
+                                                    }</p>
+                                                    <p className="text-xs text-muted-foreground truncate">{new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString()}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-sm capitalize">{tx.type.replace("deposit:", "Deposit ").replace("feeding", "Feeding").replace("live_feed", "Live feed")}</p>
-                                                <p className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString()}</p>
-                                            </div>
+                                            <span className={`font-bold whitespace-nowrap shrink-0 ${tx.amount_eur > 0 ? "text-green-600" : "text-foreground"}`}>
+                                                {tx.amount_eur > 0 ? "+" : ""}{tx.amount_eur} EUR
+                                            </span>
                                         </div>
-                                        <span className={`font-bold ${tx.amount_eur > 0 ? "text-green-600" : "text-foreground"}`}>
-                                            {tx.amount_eur > 0 ? "+" : ""}{tx.amount_eur} EUR
-                                        </span>
-                                    </div>
-                                ))
+                                    ))}
+                                    {hasMoreTx && (
+                                        <Button
+                                            variant="outline"
+                                            className="w-full mt-4"
+                                            onClick={loadMoreTransactions}
+                                            disabled={loadingTx}
+                                        >
+                                            {loadingTx ? t("loading") : t("loadMore")}
+                                        </Button>
+                                    )}
+                                </>
                             ) : (
                                 <div className="text-sm text-muted-foreground text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                    No transactions yet.
+                                    {t("noTransactions")}
                                 </div>
                             )}
                         </div>
@@ -340,11 +393,11 @@ export default function Profile() {
                 </div>
 
                 <Card className="bg-white">
-                    <h2 className="text-xl font-bold mb-4">Feedings You Helped Fund</h2>
+                    <h2 className="text-xl font-bold mb-4">{t("feedingsFunded")}</h2>
                     <div className="space-y-4">
                         {contributedVideos.length > 0 ? (
                             contributedVideos.map((video) => (
-                                <div key={`${video.mealId}-${video.youtubeUrl}`} className="rounded-2xl overflow-hidden border-2 border-foreground/10 bg-muted/10">
+                                <div key={`${video.mealId}-${video.youtubeUrl}`} className="rounded-2xl overflow-hidden border-2 border-foreground bg-muted/10">
                                     <div className="aspect-video bg-black">
                                         <iframe
                                             className="w-full h-full"
@@ -356,35 +409,35 @@ export default function Profile() {
                                         />
                                     </div>
                                     <div className="p-4 space-y-3">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <h3 className="font-bold text-lg">{video.feederName}</h3>
-                                                <div className="flex items-center gap-2 text-sm text-muted-foreground font-mono">
-                                                    <MapPin className="w-4 h-4" />
-                                                    {video.location}
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="font-bold text-lg truncate">{video.feederName}</h3>
+                                                <div className="flex items-center gap-2 text-sm text-muted-foreground font-mono truncate">
+                                                    <MapPin className="w-4 h-4 shrink-0" />
+                                                    <span className="truncate">{video.location}</span>
                                                 </div>
                                             </div>
-                                            <span className="inline-flex items-center gap-2 bg-accent/20 text-accent-foreground px-3 py-1 rounded-lg text-xs font-bold border border-accent/50 uppercase tracking-wider">
-                                                <PlayCircle className="w-3 h-3" /> Recorded
+                                            <span className="inline-flex shrink-0 items-center gap-2 bg-accent/20 text-accent-foreground px-3 py-1 rounded-lg text-xs font-bold border border-accent/50 uppercase tracking-wider">
+                                                <PlayCircle className="w-3 h-3" /> {t("recorded")}
                                             </span>
                                         </div>
-                                        <div className="flex items-center justify-between text-sm">
+                                        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                                             <span className="font-mono text-muted-foreground">
                                                 {new Date(video.timestamp).toLocaleDateString()} {new Date(video.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                             </span>
                                             <span className="font-bold text-primary">
-                                                You contributed {video.contributionAmount.toFixed(2)} / {video.mealCost.toFixed(2)} EUR
+                                                {t("contributedAmount", { amount: video.contributionAmount.toFixed(2), total: video.mealCost.toFixed(2) })}
                                             </span>
                                         </div>
                                         <Button className="w-full" variant="outline" onClick={() => router.push(`/feeder/${video.feederId}`)}>
-                                            Open Feeder
+                                            {t("openFeeder")}
                                         </Button>
                                     </div>
                                 </div>
                             ))
                         ) : (
                             <div className="text-sm text-muted-foreground text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                No attributed feeding videos yet.
+                                {t("noVideos")}
                             </div>
                         )}
                     </div>

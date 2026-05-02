@@ -17,7 +17,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         const dateStr = label ? new Date(label).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '';
         return (
-            <div className="bg-white border-2 border-foreground rounded-xl p-3 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+            <div className="bg-white border-2 border-foreground rounded-xl p-3 neu-shadow">
                 <p className="text-xs font-bold text-muted-foreground mb-1 font-mono">{dateStr}</p>
                 {payload.map((p: any, i: number) => (
                     <p key={i} className="text-sm font-black" style={{ color: p.color }}>
@@ -90,7 +90,7 @@ export const OverviewTab = ({ data, fmtCurrency, fmtDate, fmtShortDate }: Overvi
 
             {/* Charts */}
             <div className="grid xl:grid-cols-2 gap-6">
-                <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                <div className="bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                     <h3 className="font-black text-lg mb-6">Revenue (14 days)</h3>
                     <ResponsiveContainer width="100%" height={220}>
                         <AreaChart data={data.charts.revenueByDay} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -108,7 +108,7 @@ export const OverviewTab = ({ data, fmtCurrency, fmtDate, fmtShortDate }: Overvi
                     </ResponsiveContainer>
                 </div>
 
-                <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                <div className="bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                     <h3 className="font-black text-lg mb-6">Feedings Triggered (14 days)</h3>
                     <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={data.charts.mealsByDay} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -127,7 +127,7 @@ export const OverviewTab = ({ data, fmtCurrency, fmtDate, fmtShortDate }: Overvi
 
             {/* Status & Donors */}
             <div className="grid xl:grid-cols-3 gap-6">
-                <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                <div className="bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                     <h3 className="font-black text-lg mb-4">Feeder Status</h3>
                     <ResponsiveContainer width="100%" height={200}>
                         <PieChart>
@@ -142,7 +142,7 @@ export const OverviewTab = ({ data, fmtCurrency, fmtDate, fmtShortDate }: Overvi
                     </ResponsiveContainer>
                 </div>
 
-                <div className="xl:col-span-2 bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                <div className="xl:col-span-2 bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                     <h3 className="font-black text-lg mb-5">Top Donors</h3>
                     <div className="space-y-3">
                         {data.topDonors.map((donor, i) => (

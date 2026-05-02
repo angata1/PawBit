@@ -14,7 +14,7 @@ interface StatCardProps {
 export const StatCard = ({
     title, value, subtitle, icon: Icon, color, trend, trendValue
 }: StatCardProps) => (
-    <div className="bg-white border-2 border-foreground rounded-2xl p-5 shadow-[3px_3px_0px_rgba(60,50,30,0.8)] hover:shadow-[5px_5px_0px_rgba(60,50,30,0.8)] hover:-translate-y-0.5 transition-all duration-200">
+    <div className="bg-white border-2 border-foreground rounded-2xl p-5 neu-shadow hover:neu-shadow-lg hover:-translate-y-0.5 transition-all duration-200">
         <div className="flex items-start justify-between mb-3">
             <div className={`p-2.5 rounded-xl border-2 border-foreground ${color}`}>
                 <Icon className="w-5 h-5 text-white" />

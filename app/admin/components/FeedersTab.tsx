@@ -31,7 +31,7 @@ export const FeedersTab = ({
                 </div>
                 <button
                     onClick={() => setShowAddFeeder(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-primary border-2 border-foreground rounded-xl font-bold text-white text-sm shadow-[3px_3px_0px_rgba(60,50,30,0.8)] hover:shadow-[5px_5px_0px_rgba(60,50,30,0.8)] hover:-translate-y-0.5 transition-all"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-primary border-2 border-foreground rounded-xl font-bold text-white text-sm neu-shadow hover:neu-shadow-lg hover:-translate-y-0.5 transition-all"
                 >
                     <Plus className="w-4 h-4" /> Add Feeder
                 </button>
@@ -44,7 +44,7 @@ export const FeedersTab = ({
                     { label: 'Offline', value: data.overview.offlineFeeders, color: 'bg-red-500' },
                     { label: 'Disabled', value: data.overview.disabledFeeders, color: 'bg-gray-500' },
                 ].map(s => (
-                    <div key={s.label} className="bg-white border-2 border-foreground rounded-xl p-4 shadow-[3px_3px_0px_rgba(60,50,30,0.8)] flex items-center gap-3">
+                    <div key={s.label} className="bg-white border-2 border-foreground rounded-xl p-4 neu-shadow flex items-center gap-3">
                         <div className={`w-2 h-10 rounded-full ${s.color}`} />
                         <div>
                             <p className="text-2xl font-black">{s.value}</p>
@@ -72,7 +72,7 @@ export const FeedersTab = ({
                         const isDeleting = deletingId === String(feeder.id);
 
                         return (
-                            <div key={feeder.id} className="bg-white border-2 border-foreground rounded-2xl shadow-[3px_3px_0px_rgba(60,50,30,0.8)] overflow-hidden">
+                            <div key={feeder.id} className="bg-white border-2 border-foreground rounded-2xl neu-shadow overflow-hidden">
                                 <div className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                                     <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
                                         connectionStatus === 'online' ? 'bg-green-500 animate-pulse' :

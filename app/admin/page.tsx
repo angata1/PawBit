@@ -90,7 +90,7 @@ const StatCard = ({
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
 }) => (
-    <div className="bg-white border-2 border-foreground rounded-2xl p-5 shadow-[3px_3px_0px_rgba(60,50,30,0.8)] hover:shadow-[5px_5px_0px_rgba(60,50,30,0.8)] hover:-translate-y-0.5 transition-all duration-200">
+    <div className="bg-white border-2 border-foreground rounded-2xl p-5 neu-shadow hover:neu-shadow-lg hover:-translate-y-0.5 transition-all duration-200">
         <div className="flex items-start justify-between mb-3">
             <div className={`p-2.5 rounded-xl border-2 border-foreground ${color}`}>
                 <Icon className="w-5 h-5 text-white" />
@@ -174,7 +174,7 @@ const AddFeederModal = ({ onClose, onAdd }: { onClose: () => void; onAdd: (feede
     if (createdKey) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                <div className="bg-white rounded-2xl border-2 border-foreground shadow-[6px_6px_0px_rgba(60,50,30,0.8)] w-full max-w-md p-6 text-center space-y-4">
+                <div className="bg-white rounded-2xl border-2 border-foreground neu-shadow-lg w-full max-w-md p-6 text-center space-y-4">
                     <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-500">
                         <CheckCircle className="w-8 h-8" />
                     </div>
@@ -193,7 +193,7 @@ const AddFeederModal = ({ onClose, onAdd }: { onClose: () => void; onAdd: (feede
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl border-2 border-foreground shadow-[6px_6px_0px_rgba(60,50,30,0.8)] w-full max-w-md">
+            <div className="bg-white rounded-2xl border-2 border-foreground neu-shadow-lg w-full max-w-md">
                 <div className="flex items-center justify-between p-6 border-b-2 border-border">
                     <h2 className="text-xl font-black flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> Add New Feeder</h2>
                     <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors"><X className="w-5 h-5" /></button>
@@ -254,7 +254,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         const dateStr = label ? new Date(label).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '';
         return (
-            <div className="bg-white border-2 border-foreground rounded-xl p-3 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+            <div className="bg-white border-2 border-foreground rounded-xl p-3 neu-shadow">
                 <p className="text-xs font-bold text-muted-foreground mb-1 font-mono">{dateStr}</p>
                 {payload.map((p: any, i: number) => (
                     <p key={i} className="text-sm font-black" style={{ color: p.color }}>
@@ -558,7 +558,7 @@ export default function AdminDashboard() {
 
                         {/* Revenue & Meals Charts */}
                         <div className="grid xl:grid-cols-2 gap-6">
-                            <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                            <div className="bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                                 <div className="flex justify-between items-center mb-6">
                                     <div>
                                         <h3 className="font-black text-lg">Revenue (14 days)</h3>
@@ -585,7 +585,7 @@ export default function AdminDashboard() {
                                 </ResponsiveContainer>
                             </div>
 
-                            <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                            <div className="bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                                 <div className="flex justify-between items-center mb-6">
                                     <div>
                                         <h3 className="font-black text-lg">Feedings Triggered (14 days)</h3>
@@ -614,7 +614,7 @@ export default function AdminDashboard() {
                         {/* Feeder status pie + Top donors side-by-side */}
                         <div className="grid xl:grid-cols-3 gap-6">
                             {/* Feeder Status Distribution */}
-                            <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                            <div className="bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                                 <h3 className="font-black text-lg mb-1">Feeder Status</h3>
                                 <p className="text-sm text-muted-foreground font-mono mb-4">Network health overview</p>
                                 {feederStatuses.length > 0 ? (
@@ -637,7 +637,7 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* Top Donors */}
-                            <div className="xl:col-span-2 bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                            <div className="xl:col-span-2 bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                                 <h3 className="font-black text-lg mb-1">Top Donors</h3>
                                 <p className="text-sm text-muted-foreground font-mono mb-5">Highest lifetime deposits</p>
                                 {data.topDonors.length > 0 ? (
@@ -672,7 +672,7 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Recent Activity */}
-                        <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                <div className="bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                             <div className="flex justify-between items-center mb-5">
                                 <div>
                                     <h3 className="font-black text-lg">Recent Transactions</h3>
@@ -730,7 +730,7 @@ export default function AdminDashboard() {
                             </div>
                             <button
                                 onClick={() => setShowAddFeeder(true)}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-primary border-2 border-foreground rounded-xl font-bold text-white text-sm shadow-[3px_3px_0px_rgba(60,50,30,0.8)] hover:shadow-[5px_5px_0px_rgba(60,50,30,0.8)] hover:-translate-y-0.5 transition-all"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-primary border-2 border-foreground rounded-xl font-bold text-white text-sm neu-shadow hover:neu-shadow-lg hover:-translate-y-0.5 transition-all"
                             >
                                 <Plus className="w-4 h-4" /> Add Feeder
                             </button>
@@ -745,7 +745,7 @@ export default function AdminDashboard() {
                                     { label: 'Offline', value: data.overview.offlineFeeders, color: 'bg-red-500' },
                                     { label: 'Disabled', value: data.overview.disabledFeeders, color: 'bg-gray-500' },
                                 ].map(s => (
-                                    <div key={s.label} className="bg-white border-2 border-foreground rounded-xl p-4 shadow-[3px_3px_0px_rgba(60,50,30,0.8)] flex items-center gap-3">
+                                    <div key={s.label} className="bg-white border-2 border-foreground rounded-xl p-4 neu-shadow flex items-center gap-3">
                                         <div className={`w-2 h-10 rounded-full ${s.color}`} />
                                         <div>
                                             <p className="text-2xl font-black">{s.value}</p>
@@ -781,7 +781,7 @@ export default function AdminDashboard() {
                                     const isDeleting = deletingId === String(feeder.id);
 
                                     return (
-                                        <div key={feeder.id} className="bg-white border-2 border-foreground rounded-2xl shadow-[3px_3px_0px_rgba(60,50,30,0.8)] overflow-hidden">
+                                        <div key={feeder.id} className="bg-white border-2 border-foreground rounded-2xl neu-shadow overflow-hidden">
                                             {/* Main row */}
                                             <div className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                                                 {/* Status indicator */}

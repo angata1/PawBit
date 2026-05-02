@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Storage } from "../storage";
 import { User } from "../types";
 import Card from "../components/Card";
+import { useTranslations } from "next-intl";
 import { Trophy, Medal, Star, Crown } from "lucide-react";
 import {
     BarChart,
@@ -17,6 +18,7 @@ import {
 
 export default function Leaderboard() {
     const [users, setUsers] = useState<User[]>([]);
+    const t = useTranslations('Leaderboard');
 
     useEffect(() => {
         setUsers(Storage.getUsers());
@@ -28,7 +30,7 @@ export default function Leaderboard() {
 
     // Data for chart
     const chartData = sortedUsers.slice(0, 6).map((u) => ({
-        name: u.isAnonymous ? "Anonymous" : u.name.split(" ")[0],
+        name: u.isAnonymous ? t('anonymous') : u.name.split(" ")[0],
         amount: u.totalDonated,
     }));
 
@@ -70,18 +72,17 @@ export default function Leaderboard() {
     return (
         <div className="min-h-screen pt-12 px-4 pb-12 container mx-auto max-w-5xl">
             <div className="text-center mb-12">
-                <div className="inline-flex items-center gap-2 bg-white px-4 py-1 rounded-full border-2 border-foreground/10 mb-4 shadow-sm">
+                <div className="inline-flex items-center gap-2 bg-white px-4 py-1 rounded-full border-2 border-foreground neu-shadow-sm mb-4">
                     <Star className="w-4 h-4 text-accent fill-accent" />
                     <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                        Community Heroes
+                        {t('communityHeroes')}
                     </span>
                 </div>
                 <h1 className="text-4xl md:text-6xl font-black mb-4 text-foreground">
-                    Wall of Fame
+                    {t('wallOfFame')}
                 </h1>
                 <p className="text-xl text-muted-foreground font-mono max-w-2xl mx-auto">
-                    Celebrating the top contributors who keep the bowls full and tails
-                    wagging.
+                    {t('subtitle')}
                 </p>
             </div>
 
@@ -93,20 +94,20 @@ export default function Leaderboard() {
                             key={user.id}
                             className={`
                 relative flex items-center gap-6 p-6 rounded-2xl border-2 
-                transition-all duration-300 hover:-translate-y-1 hover:shadow-lg
+                neu-shadow transition-all duration-300 hover:-translate-y-1 hover:neu-shadow-lg
                 ${idx === 0
-                                    ? "bg-yellow-50 border-yellow-400 shadow-md z-10"
-                                    : "bg-white border-foreground/10 shadow-sm"
+                                    ? "bg-yellow-50 border-foreground neu-shadow-lg z-10"
+                                    : "bg-white border-foreground"
                                 }
               `}
                         >
                             <div className="flex-shrink-0">{getRankBadge(idx)}</div>
                             <div className="flex-grow">
                                 <h3 className="text-lg font-bold">
-                                    {user.isAnonymous ? "Secret Hero" : user.name}
+                                    {user.isAnonymous ? t('secretHero') : user.name}
                                 </h3>
                                 <p className="text-xs font-mono opacity-60 uppercase tracking-wider">
-                                    {idx === 0 ? "Top Donator" : "Community Leader"}
+                                    {idx === 0 ? t('topDonator') : t('communityLeader')}
                                 </p>
                             </div>
                             <div className="text-right">
@@ -128,9 +129,9 @@ export default function Leaderboard() {
                 </div>
 
                 {/* Stats Chart */}
-                <div className="bg-white rounded-2xl border-2 border-foreground/10 p-6 shadow-sm">
+                <Card className="bg-white">
                     <h3 className="font-bold text-lg mb-6 text-center font-serif">
-                        Weekly Contribution
+                        {t('weeklyContribution')}
                     </h3>
                     <div style={{ width: "100%", height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -159,7 +160,7 @@ export default function Leaderboard() {
                                         border: "2px solid rgb(var(--foreground))",
                                         borderRadius: "12px",
                                         fontFamily: "Gabriela, serif",
-                                        boxShadow: "4px 4px 0px rgba(0,0,0,0.1)",
+                                        boxShadow: "3px 3px 0px 0px rgba(60, 50, 30, 0.8)",
                                     }}
                                 />
                                 <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
@@ -173,13 +174,13 @@ export default function Leaderboard() {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                </div>
+                </Card>
             </div>
 
             {/* Clean List for Rest */}
-            <div className="bg-white rounded-3xl p-2 md:p-8 shadow-sm border-2 border-foreground/5">
+            <Card className="bg-white rounded-3xl p-2 md:p-8">
                 <h3 className="text-xl font-bold mb-6 px-4 font-serif">
-                    Honorary Feeders
+                    {t('honoraryFeeders')}
                 </h3>
                 <div className="space-y-2">
                     {sortedUsers.slice(3).map((user, idx) => (
@@ -193,7 +194,7 @@ export default function Leaderboard() {
                                 </span>
                                 <div className="flex flex-col">
                                     <span className="font-bold text-foreground group-hover:text-primary transition-colors">
-                                        {user.isAnonymous ? "Anonymous" : user.name}
+                                        {user.isAnonymous ? t('anonymous') : user.name}
                                     </span>
                                 </div>
                             </div>
@@ -204,11 +205,11 @@ export default function Leaderboard() {
                     ))}
                     {sortedUsers.length < 4 && (
                         <div className="text-center py-8 text-muted-foreground italic bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                            Join the ranks! Make your first donation to appear here.
+                            {t('joinTheRanks')}
                         </div>
                     )}
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }

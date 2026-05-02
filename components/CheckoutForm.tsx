@@ -3,8 +3,10 @@
 import React, { useState } from "react";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import Button from "@/app/components/Button";
+import { useTranslations } from "next-intl";
 
 export default function CheckoutForm({ amount }: { amount: number }) {
+    const t = useTranslations("CheckoutForm");
     const stripe = useStripe();
     const elements = useElements();
 
@@ -36,9 +38,9 @@ export default function CheckoutForm({ amount }: { amount: number }) {
         // be redirected to an intermediate site first to authorize the payment, then
         // redirected to the `return_url`.
         if (error.type === "card_error" || error.type === "validation_error") {
-            setMessage(error.message ?? "An unexpected error occurred.");
+            setMessage(error.message ?? t("errorGeneric"));
         } else {
-            setMessage("An unexpected error occurred.");
+            setMessage(t("errorGeneric"));
         }
 
         setIsLoading(false);
@@ -53,7 +55,7 @@ export default function CheckoutForm({ amount }: { amount: number }) {
             <PaymentElement id="payment-element" options={paymentElementOptions} />
             <Button disabled={isLoading || !stripe || !elements} id="submit" className="w-full mt-4">
                 <span id="button-text">
-                    {isLoading ? <div className="spinner" id="spinner">Processing...</div> : `Pay €${amount}`}
+                    {isLoading ? <div className="spinner" id="spinner">{t("processing")}</div> : t("pay", { amount })}
                 </span>
             </Button>
             {/* Show any error or success messages */}

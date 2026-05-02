@@ -47,7 +47,7 @@ export const AddFeederModal = ({ onClose, onAdd }: AddFeederModalProps) => {
     if (createdKey) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                <div className="bg-white rounded-2xl border-2 border-foreground shadow-[6px_6px_0px_rgba(60,50,30,0.8)] w-full max-w-md p-6 text-center space-y-4">
+                <div className="bg-white rounded-2xl border-2 border-foreground neu-shadow-lg w-full max-w-md p-6 text-center space-y-4">
                     <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-500">
                         <CheckCircle className="w-8 h-8" />
                     </div>
@@ -66,7 +66,7 @@ export const AddFeederModal = ({ onClose, onAdd }: AddFeederModalProps) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl border-2 border-foreground shadow-[6px_6px_0px_rgba(60,50,30,0.8)] w-full max-w-md">
+            <div className="bg-white rounded-2xl border-2 border-foreground neu-shadow-lg w-full max-w-md">
                 <div className="flex items-center justify-between p-6 border-b-2 border-border">
                     <h2 className="text-xl font-black flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> Add New Feeder</h2>
                     <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors"><X className="w-5 h-5" /></button>

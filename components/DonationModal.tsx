@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
+import { useTranslations } from "next-intl";
 import CheckoutForm from "./CheckoutForm";
 import Button from "@/app/components/Button";
 import { X } from "lucide-react";
@@ -26,6 +27,7 @@ type DonationModalProps = {
 export default function DonationModal({ isOpen, onClose, feederName, initialAmount = 5, isDeposit = false }: DonationModalProps) {
     const [clientSecret, setClientSecret] = useState("");
     const [amount, setAmount] = useState(initialAmount);
+    const t = useTranslations("DonationModal");
 
     useEffect(() => {
         setAmount(initialAmount);
@@ -67,7 +69,7 @@ export default function DonationModal({ isOpen, onClose, feederName, initialAmou
                 </button>
 
                 <h2 className="text-2xl font-bold mb-4">
-                    {isDeposit ? "Add Funds to Wallet" : `Donate to ${feederName || "Animals"}`}
+                    {isDeposit ? t("addFunds") : t("donateTo", { name: feederName || t("animals") })}
                 </h2>
 
                 <div className="mb-6 flex gap-2">

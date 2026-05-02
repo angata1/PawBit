@@ -8,6 +8,7 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import { KeyRound, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function UpdatePassword() {
     const [password, setPassword] = useState("");
@@ -18,6 +19,7 @@ export default function UpdatePassword() {
     
     const router = useRouter();
     const supabase = createClient();
+    const t = useTranslations('Auth');
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,7 +43,7 @@ export default function UpdatePassword() {
                 setSuccess(true);
             }
         } catch (err) {
-            setError("An unexpected error occurred");
+            setError(t('errorGeneric'));
         } finally {
             setLoading(false);
         }
@@ -54,11 +56,11 @@ export default function UpdatePassword() {
                     <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-500">
                         <CheckCircle className="w-8 h-8" />
                     </div>
-                    <h2 className="text-2xl font-black">Password Updated!</h2>
-                    <p className="text-sm font-mono text-muted-foreground">Your password has been successfully reset.</p>
+                    <h2 className="text-2xl font-black">{t('passwordUpdated')}</h2>
+                    <p className="text-sm font-mono text-muted-foreground">{t('updatePasswordDesc')}</p>
                     <Link href="/login" className="block w-full">
                         <Button className="w-full mt-4" size="lg">
-                            Go to Login
+                            {t('backToLogin')}
                         </Button>
                     </Link>
                 </Card>
@@ -73,9 +75,9 @@ export default function UpdatePassword() {
                     <div className="inline-block bg-primary p-4 rounded-full border-2 border-foreground neu-shadow mb-4">
                         <KeyRound className="w-8 h-8 text-primary-foreground" />
                     </div>
-                    <h1 className="text-3xl font-bold">New Password</h1>
+                    <h1 className="text-3xl font-bold">{t('updatePassword')}</h1>
                     <p className="text-muted-foreground font-mono mt-2">
-                        Please enter your new password below.
+                        {t('updatePasswordDesc')}
                     </p>
                 </div>
 
@@ -87,7 +89,7 @@ export default function UpdatePassword() {
                     )}
                     <div className="space-y-4">
                         <Input
-                            label="New Password"
+                            label={t('newPassword')}
                             type="password"
                             placeholder="••••••••"
                             value={password}
@@ -95,7 +97,7 @@ export default function UpdatePassword() {
                             required
                         />
                         <Input
-                            label="Confirm New Password"
+                            label={t('newPassword')}
                             type="password"
                             placeholder="••••••••"
                             value={confirmPassword}
@@ -105,7 +107,7 @@ export default function UpdatePassword() {
                     </div>
 
                     <Button type="submit" className="w-full mt-8" size="lg" disabled={loading}>
-                        {loading ? "Updating..." : "Update Password"}
+                        {loading ? t('updating') : t('updatePassword')}
                     </Button>
                 </form>
             </Card>

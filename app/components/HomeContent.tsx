@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import React, { useRef, useState, useEffect } from 'react';
 import {
     Heart, Video, MapPinned, Gift, Activity,
@@ -16,38 +18,39 @@ import { createClient } from '@/lib/supabase/client';
 import { GridPattern } from './GridPattern';
 import { cn } from '@/lib/utils';
 
-const RECENT_MOMENTS = [
-    {
-        id: 'v1',
-        youtubeId: '8S2yS0pM_4U',
-        title: 'Lunch time at Central Park Feeder',
-        location: 'Central Park, Sofia',
-        timestamp: new Date().toISOString(),
-    },
-    {
-        id: 'v2',
-        youtubeId: 'h15G27f-Jz0',
-        title: 'Afternoon snack at Vitosha Blvd',
-        location: 'Vitosha Blvd, Sofia',
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-        id: 'v3',
-        youtubeId: 'S-u87C3u_Ew',
-        title: 'Dinner at NDK Park Unit',
-        location: 'National Palace of Culture',
-        timestamp: new Date(Date.now() - 7200000).toISOString(),
+type Moment = {
+    id: string;
+    youtubeId: string;
+    title: string;
+    location: string;
+    timestamp: string;
+    feederId?: string;
+};
+
+function extractYouTubeId(url: string): string {
+    if (!url) return "";
+    try {
+        const parsed = new URL(url);
+        const videoId = parsed.searchParams.get("v");
+        if (videoId) return videoId;
+        const segments = parsed.pathname.split("/").filter(Boolean);
+        return parsed.hostname.includes("youtu.be") ? segments[0] : "";
+    } catch {
+        return "";
     }
-];
+}
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 export default function HomeContent() {
     const container = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const t = useTranslations('Home');
     const [activeFeeders, setActiveFeeders] = useState<number>(3);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [recentMoments, setRecentMoments] = useState<Moment[]>([]);
+    const [loadingMoments, setLoadingMoments] = useState(true);
 
     useEffect(() => {
         const supabase = createClient();
@@ -56,6 +59,41 @@ export default function HomeContent() {
             if (count !== null) setActiveFeeders(count);
         };
         fetchStats();
+
+        const fetchMoments = async () => {
+            const { data } = await supabase
+                .from('meals')
+                .select(`
+                    id,
+                    time_of_meal,
+                    video_link,
+                    feeders (
+                        id,
+                        name,
+                        location
+                    )
+                `)
+                .not('video_link', 'is', null)
+                .order('time_of_meal', { ascending: false })
+                .limit(3);
+
+            if (data && data.length > 0) {
+                const mapped = data.map(meal => {
+                    const feeder = Array.isArray(meal.feeders) ? meal.feeders[0] : meal.feeders;
+                    return {
+                        id: String(meal.id),
+                        youtubeId: extractYouTubeId(meal.video_link || ''),
+                        title: t('mealAt', { feederName: feeder?.name || t('feeder') }),
+                        location: feeder?.location?.address || t('unknownLocation'),
+                        timestamp: meal.time_of_meal || new Date().toISOString(),
+                        feederId: String(feeder?.id || ''),
+                    }
+                }).filter(m => !!m.youtubeId);
+                setRecentMoments(mapped);
+            }
+            setLoadingMoments(false);
+        };
+        fetchMoments();
 
         // Check mobile
         const checkMobile = () => {
@@ -413,21 +451,18 @@ export default function HomeContent() {
                     </div>
 
                     <div className="hero-content-wrapper container mx-auto flex flex-col items-center text-center z-10 max-w-4xl space-y-6 md:space-y-8">
-                        <h1 className="hero-text-element text-5xl sm:text-6xl md:text-8xl font-black leading-[1.1] text-foreground">
-                            Feed a Pet. <br />
-                            <span className="text-primary italic">In Real Time.</span>
-                        </h1>
+                        <h1 className="hero-text-element text-5xl sm:text-6xl md:text-8xl font-black leading-[1.1] text-foreground" dangerouslySetInnerHTML={{ __html: t.raw('heroTitle') }} />
 
                         <p className="hero-text-element text-lg sm:text-xl md:text-2xl text-muted-foreground font-medium leading-relaxed max-w-2xl">
-                            PawBit connects your clicks to real kibble. Watch live as you donate to stray animals across your city.
+                            {t('heroDesc')}
                         </p>
 
                         <div className="hero-text-element flex flex-col sm:flex-row items-center gap-3 md:gap-4">
                             <Button href="/map" variant="primary" size="lg" icon={<Heart className="w-5 h-5 md:w-6 md:h-6 fill-current" />} onClick={(e) => { e.preventDefault(); handleNavigate('/map'); }}>
-                                Feed Now
+                                {t('feedNow')}
                             </Button>
                             <Button href="/leaderboard" variant="outline" size="lg" icon={<Activity className="w-5 h-5 md:w-6 md:h-6" />} onClick={(e) => { e.preventDefault(); handleNavigate('/leaderboard'); }}>
-                                View Impact
+                                {t('viewImpact')}
                             </Button>
                         </div>
 
@@ -436,7 +471,7 @@ export default function HomeContent() {
 
                     {/* ── Scroll indicator ── */}
                     <div className="scroll-indicator absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-10 pointer-events-none select-none opacity-0">
-                        <span className="text-[9px] md:text-[11px] font-black tracking-[0.4em] uppercase text-foreground/40 md:text-foreground/60 mb-1">Scroll</span>
+                        <span className="text-[9px] md:text-[11px] font-black tracking-[0.4em] uppercase text-foreground/40 md:text-foreground/60 mb-1">{t('scroll')}</span>
                         <div className="scroll-indicator-icon relative flex items-center justify-center">
                             <Image
                                 src="/scroll.svg"
@@ -463,7 +498,7 @@ export default function HomeContent() {
                     </div>
                     <div className="container mx-auto px-4 relative z-10">
                         <div className="text-center mb-12 md:mb-16">
-                            <h2 className="text-4xl md:text-5xl font-black mb-4">How It Works</h2>
+                            <h2 className="text-4xl md:text-5xl font-black mb-4">{t('howItWorks')}</h2>
                             <div className="w-24 h-2 bg-accent mx-auto rounded-full" />
                         </div>
 
@@ -474,9 +509,9 @@ export default function HomeContent() {
                                     <span className="text-4xl md:text-5xl font-black text-primary/20">01</span>
                                     <Gift className="feature-icon w-8 h-8 md:w-10 md:h-10 text-primary" />
                                 </div>
-                                <h3 className="text-xl md:text-2xl font-bold mb-2 md:mb-3">Fuel the Pool</h3>
+                                <h3 className="text-xl md:text-2xl font-bold mb-2 md:mb-3">{t('fuelThePool')}</h3>
                                 <p className="text-muted-foreground text-base md:text-lg">
-                                    Top up your wallet and contribute to the Global Pool. Your funds wait securely until a hungry animal arrives.
+                                    {t('fuelThePoolDesc')}
                                 </p>
                             </div>
 
@@ -486,9 +521,9 @@ export default function HomeContent() {
                                     <span className="text-4xl md:text-5xl font-black text-primary/20">02</span>
                                     <Activity className="feature-icon w-8 h-8 md:w-10 md:h-10 text-primary" />
                                 </div>
-                                <h3 className="text-xl md:text-2xl font-bold mb-2 md:mb-3">AI-Powered Feeding</h3>
+                                <h3 className="text-xl md:text-2xl font-bold mb-2 md:mb-3">{t('aiFeeding')}</h3>
                                 <p className="text-muted-foreground text-base md:text-lg">
-                                    Our edge devices detect cats autonomously and dispense meals using the oldest funds in the pool.
+                                    {t('aiFeedingDesc')}
                                 </p>
                             </div>
 
@@ -498,9 +533,9 @@ export default function HomeContent() {
                                     <span className="text-4xl md:text-5xl font-black text-primary/20">03</span>
                                     <Video className="feature-icon w-8 h-8 md:w-10 md:h-10 text-primary" />
                                 </div>
-                                <h3 className="text-xl md:text-2xl font-bold mb-2 md:mb-3">See Your Impact</h3>
+                                <h3 className="text-xl md:text-2xl font-bold mb-2 md:mb-3">{t('seeImpact')}</h3>
                                 <p className="text-muted-foreground text-base md:text-lg">
-                                    Complete transparency! Watch the recorded video of the exact meal your donation funded.
+                                    {t('seeImpactDesc')}
                                 </p>
                             </div>
                         </div>
@@ -512,20 +547,23 @@ export default function HomeContent() {
                     <div className="container mx-auto px-4 relative z-10">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-12 gap-6">
                             <div className="moments-heading max-w-2xl">
-                                <h2 className="text-4xl md:text-5xl font-black mb-3 md:mb-4">
-                                    Moments of <span className="text-primary italic">Joy</span>
-                                </h2>
+                                <h2 className="text-4xl md:text-5xl font-black mb-3 md:mb-4" dangerouslySetInnerHTML={{ __html: t.raw('momentsOfJoy') }} />
                                 <p className="text-lg md:text-xl text-muted-foreground font-medium">
-                                    See the direct impact of our community. Every donation creates a memory.
+                                    {t('momentsDesc')}
                                 </p>
                             </div>
                             <Button href="/feedings" variant="outline" icon={<ChevronRight className="w-4 h-4" />} onClick={(e) => { e.preventDefault(); handleNavigate('/feedings'); }}>
-                                View Full Gallery
+                                {t('viewFullGallery')}
                             </Button>
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-                            {RECENT_MOMENTS.map((moment) => (
+                            {!loadingMoments && recentMoments.length === 0 && (
+                                <div className="col-span-3 text-center py-10 text-muted-foreground font-medium">
+                                    {t('noRecentMeals')}
+                                </div>
+                            )}
+                            {recentMoments.map((moment) => (
                                 <div key={moment.id} className="moment-card group relative bg-white rounded-3xl overflow-hidden border-2 border-foreground neu-shadow hover:neu-shadow-lg hover:-translate-y-1 transition-all duration-300">
                                     <div className="aspect-video bg-black relative overflow-hidden">
                                         <img
@@ -536,7 +574,7 @@ export default function HomeContent() {
                                         />
                                         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-300" />
                                         <div className="absolute bottom-3 left-3 md:bottom-4 md:left-4 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
-                                            <PlayCircle className="w-3 h-3 fill-current" /> REPLAY
+                                            <PlayCircle className="w-3 h-3 fill-current" /> {t('replay')}
                                         </div>
                                     </div>
 
@@ -546,16 +584,16 @@ export default function HomeContent() {
                                         </h3>
                                         <div className="flex flex-col gap-1.5 md:gap-2 text-xs md:text-sm text-muted-foreground font-mono">
                                             <div className="flex items-center gap-2">
-                                                <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4" /> {moment.location}
+                                                <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" /> <span className="truncate">{moment.location}</span>
                                             </div>
                                             <div className="flex items-center gap-2" suppressHydrationWarning>
-                                                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4" /> {new Date(moment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" /> {new Date(moment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
                                     </div>
 
                                     <button
-                                        onClick={() => handleNavigate('/feedings')}
+                                        onClick={() => handleNavigate(moment.feederId ? `/feeder/${moment.feederId}` : '/feedings')}
                                         className="absolute inset-0 z-20 focus:outline-none"
                                     >
                                         <span className="sr-only">View details for {moment.title}</span>
@@ -583,29 +621,24 @@ export default function HomeContent() {
 
                             {/* Left — copy */}
                             <div className="cta-content flex flex-col items-start">
-                                <h2 className="text-4xl sm:text-5xl md:text-6xl font-black leading-[1.1] tracking-tight text-foreground mb-4 md:mb-6">
-                                    Feed any animal,<br />
-                                    <span className="text-primary italic">anywhere in the city.</span>
-                                </h2>
+                                <h2 className="text-4xl sm:text-5xl md:text-6xl font-black leading-[1.1] tracking-tight text-foreground mb-4 md:mb-6" dangerouslySetInnerHTML={{ __html: t.raw('ctaTitle') }} />
 
                                 <p className="text-base md:text-lg text-muted-foreground font-medium leading-relaxed max-w-[38ch] mb-8 md:mb-10">
-                                    Donate to the shared pool — no feeder to pick, no routing to think about.
-                                    When a feeder detects nearby animals, it draws from the pool and dispenses
-                                    food automatically.
+                                    {t('ctaDesc')}
                                 </p>
 
                                 <Button href="/feeder/all" variant="primary" size="lg" icon={<Gift className="w-5 h-5 md:w-6 md:h-6 fill-current" />} onClick={(e) => { e.preventDefault(); handleNavigate('/feeder/all'); }}>
-                                    Contribute to pool
+                                    {t('contributeToPool')}
                                 </Button>
                             </div>
 
                             {/* Right — stats */}
                             <div className="cta-content grid grid-cols-2 gap-3 md:gap-4">
                                 {[
-                                    { label: 'Active feeders', value: `${activeFeeders}`, desc: 'Across parks and shelters', accent: true },
-                                    { label: 'Uptime', value: '24/7', desc: 'Sensor-monitored, always on' },
-                                    { label: 'To food, directly', value: '100%', desc: 'No overhead, no middleman' },
-                                    { label: 'Pool balance', value: '€214', desc: 'Available right now', accent: true },
+                                    { label: t('statActiveFeeders'), value: `${activeFeeders}`, desc: t('statActiveFeedersDesc'), accent: true },
+                                    { label: t('statUptime'), value: '24/7', desc: t('statUptimeDesc') },
+                                    { label: t('statDirect'), value: '100%', desc: t('statDirectDesc') },
+                                    { label: t('statPoolBalance'), value: '€214', desc: t('statPoolBalanceDesc'), accent: true },
                                 ].map(({ label, value, desc, accent }) => (
                                     <div key={label} className="stat-item bg-white border-2 border-foreground rounded-2xl md:rounded-3xl p-4 md:p-6 neu-shadow hover:neu-shadow-lg transition-all duration-300">
                                         <p className="text-[9px] md:text-[10px] font-black tracking-widest uppercase text-muted-foreground mb-1.5 md:mb-2">

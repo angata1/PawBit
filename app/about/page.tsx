@@ -11,11 +11,13 @@ import Card from "@/app/components/Card";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useTranslations } from "next-intl";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 export default function AboutPage() {
     const container = useRef<HTMLDivElement>(null);
+    const t = useTranslations("About");
 
     useGSAP(() => {
         // Hero — fade up
@@ -96,20 +98,16 @@ export default function AboutPage() {
                     <div className="flex-1 space-y-6 text-center lg:text-left">
 
 
-                        <h1 className="about-hero-text text-5xl md:text-6xl font-black leading-[1.1]">
-                            Two Students.<br />
-                            One <span className="text-primary">Mission.</span>
-                        </h1>
+                        <h1 className="about-hero-text text-5xl md:text-6xl font-black leading-[1.1]" dangerouslySetInnerHTML={{ __html: t.raw('heroTitle') }} />
 
                         <p className="about-hero-text text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0">
-                            We&apos;re Angel &amp; Raya — high-school students from Gotse Delchev, Bulgaria who decided
-                            that stray animals in our town deserve better than an empty stomach.
+                            {t('heroSubtitle')}
                         </p>
                     </div>
 
                     {/* illustration */}
                     <div className="about-hero-img flex-1 w-full max-w-md lg:max-w-lg">
-                        <div className="relative rounded-3xl overflow-hidden border-4 border-foreground neu-shadow-lg aspect-[4/3] bg-secondary/20">
+                        <div className="relative rounded-3xl overflow-hidden border-2 border-foreground neu-shadow-lg aspect-[4/3] bg-secondary/20">
                             <Image src="/about-hero.png" alt="Students helping stray animals" fill className="object-cover" />
                         </div>
                     </div>
@@ -119,34 +117,19 @@ export default function AboutPage() {
             {/* ═══════════════  OUR STORY  ═══════════════ */}
             <section className="story-section py-24 bg-card border-y-4 border-foreground px-4">
                 <div className="container mx-auto max-w-3xl space-y-8">
-                    <h2 className="story-block text-4xl md:text-5xl font-bold text-center mb-4">Our Story</h2>
+                    <h2 className="story-block text-4xl md:text-5xl font-bold text-center mb-4">{t('story.title')}</h2>
                     <div className="story-block w-16 h-1.5 bg-primary mx-auto rounded-full" />
 
                     <p className="story-block text-lg text-muted-foreground leading-relaxed">
-                        It started the way most projects start — with a problem we couldn&apos;t stop thinking about.
-                        Every day on our way to school we&apos;d walk past the same strays: skinny cats hiding under parked cars,
-                        a one-eared dog begging near the bakery. Some days someone would leave leftovers.
-                        Most days, nobody did.
+                        {t('story.p1')}
                     </p>
 
-                    <p className="story-block text-lg text-muted-foreground leading-relaxed">
-                        We kept asking ourselves: <strong className="text-foreground">what if feeding them didn&apos;t depend
-                            on who happened to walk by?</strong> What if anyone, anywhere, could press a button and actually
-                        deliver food to an animal that needs it — right now, in real-time?
-                    </p>
+                    <p className="story-block text-lg text-muted-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: t.raw('story.p2') }} />
+
+                    <p className="story-block text-lg text-muted-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: t.raw('story.p3') }} />
 
                     <p className="story-block text-lg text-muted-foreground leading-relaxed">
-                        That question became PawBit. We started prototyping during a school project at
-                        <strong className="text-foreground"> PMG &ldquo;Yane Sandanski&rdquo;</strong> in Gotse Delchev.
-                        A Raspberry Pi, a servo motor, a bag of kibble, and many late nights later — the first feeder worked.
-                        Then we built the website so people could actually use it. Then the live camera feed. Then the donation system.
-                        One thing led to another, and now you&apos;re reading this.
-                    </p>
-
-                    <p className="story-block text-lg text-muted-foreground leading-relaxed">
-                        PawBit isn&apos;t a corporate initiative. It&apos;s not backed by a big organization.
-                        It&apos;s two students who care about the animals they see every day and believe technology
-                        can make a real, tangible difference — one meal at a time.
+                        {t('story.p4')}
                     </p>
                 </div>
             </section>
@@ -155,7 +138,7 @@ export default function AboutPage() {
             <section className="why-section py-24 px-4">
                 <div className="container mx-auto max-w-6xl">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-bold mb-4">What Makes PawBit Different</h2>
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4">{t('why.title')}</h2>
                         <div className="w-20 h-1.5 bg-accent mx-auto rounded-full" />
                     </div>
 
@@ -163,43 +146,43 @@ export default function AboutPage() {
                         {[
                             {
                                 icon: Eye,
-                                title: "Full Transparency",
-                                body: "Watch your donation in action. Every feeder has a live camera — you see the animals eat the moment the motor triggers.",
+                                title: t('why.items.transparency.title'),
+                                body: t('why.items.transparency.body'),
                                 color: "text-primary",
                                 bg: "bg-primary/10"
                             },
                             {
                                 icon: Zap,
-                                title: "Real-Time Feeding",
-                                body: "No middle-men, no delays. Your click triggers a Raspberry Pi that dispenses food within seconds.",
+                                title: t('why.items.realtime.title'),
+                                body: t('why.items.realtime.body'),
                                 color: "text-accent",
                                 bg: "bg-accent/10"
                             },
                             {
                                 icon: Cpu,
-                                title: "Custom Hardware",
-                                body: "Designed and built by us using Raspberry Pi and custom CAD. While not open-source just yet, our goal is to share the finished blueprints soon.",
+                                title: t('why.items.hardware.title'),
+                                body: t('why.items.hardware.body'),
                                 color: "text-secondary-foreground",
                                 bg: "bg-secondary/20"
                             },
                             {
                                 icon: Globe,
-                                title: "Donate From Anywhere",
-                                body: "Whether you're in Gotse Delchev or on the other side of the planet — you can feed a stray in Bulgaria.",
+                                title: t('why.items.global.title'),
+                                body: t('why.items.global.body'),
                                 color: "text-primary",
                                 bg: "bg-primary/10"
                             },
                             {
                                 icon: Target,
-                                title: "Smart Distribution",
-                                body: "The donation pool allocates food where it's needed most — based on hunger levels, time since last meal, and animal activity.",
+                                title: t('why.items.distribution.title'),
+                                body: t('why.items.distribution.body'),
                                 color: "text-accent",
                                 bg: "bg-accent/10"
                             },
                             {
                                 icon: Heart,
-                                title: "100% for Animals",
-                                body: "Every cent goes directly to kibble and feeder maintenance. We don't take salaries — we're students doing this because we care.",
+                                title: t('why.items.animalsfirst.title'),
+                                body: t('why.items.animalsfirst.body'),
                                 color: "text-red-500",
                                 bg: "bg-red-50"
                             },
@@ -220,26 +203,20 @@ export default function AboutPage() {
             <section className="tech-section py-24 bg-foreground text-background px-4">
                 <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-center gap-16">
                     <div className="tech-img flex-1 w-full max-w-md">
-                        <div className="relative rounded-3xl overflow-hidden border-4 border-background/30 aspect-square bg-primary/10">
+                        <div className="relative rounded-3xl overflow-hidden border-2 border-background/30 aspect-square bg-primary/10">
                             <Image src="/about-tech.png" alt="Smart feeder technology" fill className="object-contain p-6" />
                         </div>
                     </div>
 
                     <div className="tech-text flex-1 space-y-6">
-                        <h2 className="text-4xl md:text-5xl font-bold leading-tight">
-                            The Tech <span className="text-primary">Under the Hood</span>
-                        </h2>
-                        <p className="text-lg opacity-90 leading-relaxed">
-                            Each PawBit feeder is powered by a <strong>Raspberry Pi</strong> running a lightweight service
-                            that connects to our backend over Wi-Fi. When a donation comes in, the server sends a command
-                            to the nearest feeder — a servo motor opens and dispenses a measured portion of food.
-                        </p>
+                        <h2 className="text-4xl md:text-5xl font-bold leading-tight" dangerouslySetInnerHTML={{ __html: t.raw('tech.title') }} />
+                        <p className="text-lg opacity-90 leading-relaxed" dangerouslySetInnerHTML={{ __html: t.raw('tech.p1') }} />
 
                         <ul className="space-y-4 pt-2">
                             {[
-                                { icon: Cpu, label: "Raspberry Pi Zero 2W as the brain of each feeder" },
-                                { icon: Wifi, label: "Real-time WebSocket connection to Supabase" },
-                                { icon: Lightbulb, label: "Sensors detect animal presence and food levels" },
+                                { icon: Cpu, label: t('tech.list.brain') },
+                                { icon: Wifi, label: t('tech.list.supabase') },
+                                { icon: Lightbulb, label: t('tech.list.sensors') },
                             ].map((item, i) => (
                                 <li key={i} className="flex items-start gap-3">
                                     <item.icon className="w-5 h-5 text-primary shrink-0 mt-1" />
@@ -257,7 +234,7 @@ export default function AboutPage() {
             <section className="team-section py-24 px-4">
                 <div className="container mx-auto max-w-4xl">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-bold mb-4">Meet the Team</h2>
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4">{t('team.title')}</h2>
                         <div className="w-16 h-1.5 bg-primary mx-auto rounded-full" />
                     </div>
 
@@ -270,16 +247,15 @@ export default function AboutPage() {
                                     A
                                 </div>
                                 <div className="text-center md:text-left">
-                                    <h3 className="text-2xl font-bold">Angel Murtev</h3>
-                                    <p className="text-sm font-mono text-primary mt-1">Programmer, Website Builder &amp; Project Planner</p>
+                                    <h3 className="text-2xl font-bold">{t('team.angel.name')}</h3>
+                                    <p className="text-sm font-mono text-primary mt-1">{t('team.angel.role')}</p>
                                 </div>
                                 <p className="text-muted-foreground leading-relaxed text-center md:text-left">
-                                    Builds the web platform, manages the system architecture, and maps out the project roadmap.
-                                    Believes that code can do more than just live on a screen — it can put food in a hungry animal&apos;s bowl.
+                                    {t('team.angel.bio')}
                                 </p>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center md:justify-start">
                                     <MapPin className="w-4 h-4 text-primary" />
-                                    <span>Gotse Delchev, Bulgaria</span>
+                                    <span>{t('team.location')}</span>
                                 </div>
                             </div>
                         </div>
@@ -292,16 +268,15 @@ export default function AboutPage() {
                                     R
                                 </div>
                                 <div className="text-center md:text-left">
-                                    <h3 className="text-2xl font-bold">Raya Sokolova</h3>
-                                    <p className="text-sm font-mono text-accent mt-1">Hardware Maker &amp; CAD Designer</p>
+                                    <h3 className="text-2xl font-bold">{t('team.raya.name')}</h3>
+                                    <p className="text-sm font-mono text-accent mt-1">{t('team.raya.role')}</p>
                                 </div>
                                 <p className="text-muted-foreground leading-relaxed text-center md:text-left">
-                                    Handles the physical engineering, from 3D modeling the feeder enclosures to wiring the electronics.
-                                    Turning sketches into functional, animal-proof hardware that works in the real world.
+                                    {t('team.raya.bio')}
                                 </p>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center md:justify-start">
                                     <MapPin className="w-4 h-4 text-accent" />
-                                    <span>Gotse Delchev, Bulgaria</span>
+                                    <span>{t('team.location')}</span>
                                 </div>
                             </div>
                         </div>
@@ -317,18 +292,16 @@ export default function AboutPage() {
                     <Heart className="w-10 h-10 text-primary mx-auto mb-6" />
 
                     <h2 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-                        Want to help?
+                        {t('cta.title')}
                     </h2>
                     <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto leading-relaxed">
-                        You don&apos;t need to be in Gotse Delchev. Pick a feeder, donate a meal, and watch it happen live.
-                        Every bit counts.
+                        {t('cta.p1')}
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Button href="/map" variant="primary" size="lg" icon={<ArrowRight className="w-5 h-5" />}>
-                            Find a Feeder
+                            {t('cta.button')}
                         </Button>
-
                     </div>
                 </div>
             </section>

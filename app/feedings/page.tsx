@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 import { Search, MapPin, Filter, ChevronLeft, ChevronRight, PlayCircle, Heart, Loader2 } from "lucide-react";
 
 type GalleryContributionRow = {
@@ -101,6 +102,7 @@ function buildGalleryVideo(row: GalleryMealRow): GalleryVideo | null {
 const Feedings: React.FC = () => {
     const router = useRouter();
     const supabase = createClient();
+    const t = useTranslations('Feedings');
 
     const [videos, setVideos] = useState<GalleryVideo[]>([]);
     const [loading, setLoading] = useState(true);
@@ -192,10 +194,10 @@ const Feedings: React.FC = () => {
         <div className="min-h-screen pt-12 px-4 pb-12 bg-background container mx-auto max-w-6xl">
             <div className="text-center mb-12">
                 <h1 className="text-4xl md:text-6xl font-black mb-4 text-foreground font-serif">
-                    Feeding Moments
+                    {t('title')}
                 </h1>
                 <p className="text-xl text-muted-foreground font-mono max-w-2xl mx-auto">
-                    Recorded feedings funded by the community.
+                    {t('subtitle')}
                 </p>
             </div>
 
@@ -204,7 +206,7 @@ const Feedings: React.FC = () => {
                     <div className="relative w-full md:w-96">
                         <input
                             type="text"
-                            placeholder="Search donor, feeder..."
+                            placeholder={t('searchPlaceholder')}
                             className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-all font-mono text-sm"
                             value={searchQuery}
                             onChange={(event) => {
@@ -224,7 +226,7 @@ const Feedings: React.FC = () => {
                             }}
                             className={`px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap transition-colors border-2 ${selectedLocation === "all" ? "bg-primary text-white border-primary" : "bg-white border-foreground/10 hover:border-primary"}`}
                         >
-                            All Locations
+                            {t('allLocations')}
                         </button>
                         {locations.map((location) => (
                             <button
@@ -245,11 +247,11 @@ const Feedings: React.FC = () => {
             {loading ? (
                 <div className="py-20 flex flex-col items-center gap-4 text-muted-foreground">
                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                    <p className="font-mono">Loading recorded feedings...</p>
+                    <p className="font-mono">{t('loading')}</p>
                 </div>
             ) : error ? (
                 <div className="text-center py-20 bg-muted/10 rounded-3xl border-2 border-dashed border-foreground/20">
-                    <h3 className="text-xl font-bold text-foreground">Could not load gallery</h3>
+                    <h3 className="text-xl font-bold text-foreground">{t('errorLoad')}</h3>
                     <p className="text-sm text-muted-foreground font-mono mt-2">{error}</p>
                 </div>
             ) : (
@@ -274,7 +276,7 @@ const Feedings: React.FC = () => {
                                             <div>
                                                 <div className="flex justify-between items-start mb-4 gap-4">
                                                     <span className="inline-flex items-center gap-2 bg-accent/20 text-accent-foreground px-3 py-1 rounded-lg text-xs font-bold border border-accent/50 uppercase tracking-wider">
-                                                        <PlayCircle className="w-3 h-3" /> Recorded Feed
+                                                        <PlayCircle className="w-3 h-3" /> {t('recordedBadge')}
                                                     </span>
                                                     <span className="font-mono text-xs text-muted-foreground text-right">
                                                         {new Date(video.timestamp).toLocaleDateString()} {" "}
@@ -291,7 +293,7 @@ const Feedings: React.FC = () => {
 
                                                 <div className="bg-white/50 rounded-xl p-4 border-2 border-foreground/5 mb-6">
                                                     <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3 flex items-center gap-2">
-                                                        <Heart className="w-4 h-4 text-primary" fill="currentColor" /> Made Possible By
+                                                        <Heart className="w-4 h-4 text-primary" fill="currentColor" /> {t('madePossibleBy')}
                                                     </h4>
                                                     <div className="space-y-2">
                                                         {video.donors.length > 0 ? (
@@ -305,7 +307,7 @@ const Feedings: React.FC = () => {
                                                             ))
                                                         ) : (
                                                             <div className="text-sm text-muted-foreground font-mono">
-                                                                No contribution breakdown available for this meal.
+                                                                {t('noDonors')}
                                                             </div>
                                                         )}
                                                     </div>
@@ -321,7 +323,7 @@ const Feedings: React.FC = () => {
                                                     className="w-full"
                                                     size="lg"
                                                 >
-                                                    Feed Here Again
+                                                    {t('feedHereAgain')}
                                                 </Button>
                                             </div>
                                         </div>
@@ -330,7 +332,7 @@ const Feedings: React.FC = () => {
                             ))
                         ) : (
                             <div className="text-center py-20 bg-muted/10 rounded-3xl border-2 border-dashed border-foreground/20">
-                                <h3 className="text-xl font-bold text-muted-foreground">No recorded feedings match the current filters.</h3>
+                                <h3 className="text-xl font-bold text-muted-foreground">{t('noResults')}</h3>
                                 <Button
                                     variant="outline"
                                     className="mt-4"
@@ -340,7 +342,7 @@ const Feedings: React.FC = () => {
                                         setCurrentPage(1);
                                     }}
                                 >
-                                    Clear Filters
+                                    {t('clearFilters')}
                                 </Button>
                             </div>
                         )}
@@ -354,11 +356,11 @@ const Feedings: React.FC = () => {
                                 onClick={() => handlePageChange(currentPage - 1)}
                                 icon={<ChevronLeft className="w-5 h-5" />}
                             >
-                                Prev
+                                {t('prev')}
                             </Button>
 
                             <div className="font-mono font-bold text-lg">
-                                Page {currentPage} of {totalPages}
+                                {t('pagination', { current: currentPage, total: totalPages })}
                             </div>
 
                             <Button
@@ -366,7 +368,7 @@ const Feedings: React.FC = () => {
                                 disabled={currentPage === totalPages}
                                 onClick={() => handlePageChange(currentPage + 1)}
                             >
-                                Next <ChevronRight className="w-5 h-5 ml-2" />
+                                {t('next')} <ChevronRight className="w-5 h-5 ml-2" />
                             </Button>
                         </div>
                     )}
