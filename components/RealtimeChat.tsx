@@ -102,11 +102,11 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
     return (
         <div className="flex flex-col h-[400px] bg-white border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] rounded-3xl overflow-hidden relative">
             {!hasAcceptedTerms && (
-                <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center border-b-2 border-foreground">
+                <div className="absolute inset-0 z-10 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center border-b-2 border-foreground">
                     <AlertTriangle className="w-12 h-12 text-yellow-500 mb-4" />
                     <h3 className="font-black text-xl mb-2">Chat Rules & Privacy</h3>
                     <p className="text-sm font-mono text-muted-foreground mb-6">
-                        This live chat is unmoderated and messages are not permanently stored. 
+                        This live chat is unmoderated and messages are not permanently stored.
                         Please be respectful, do not share personal information, and follow community guidelines.
                     </p>
                     <Button variant="primary" onClick={acceptTerms}>
@@ -133,8 +133,8 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
                                     {msg.user_name}
                                 </span>
                                 <div className={`px-4 py-2 rounded-2xl max-w-[85%] break-words border-2 ${msg.user_id === currentUser?.id
-                                        ? 'bg-primary text-primary-foreground border-foreground rounded-tr-sm'
-                                        : 'bg-white border-foreground rounded-tl-sm shadow-[2px_2px_0px_rgba(0,0,0,1)]'
+                                    ? 'bg-primary text-primary-foreground border-foreground rounded-tr-sm'
+                                    : 'bg-white border-foreground rounded-tl-sm shadow-[2px_2px_0px_rgba(0,0,0,1)]'
                                     }`}>
                                     {msg.message}
                                 </div>
