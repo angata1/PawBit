@@ -12,7 +12,8 @@ export async function POST(req: Request) {
     try {
         const { amount } = await req.json();
 
-        if (!amount) {
+        const feedAmount = Number(amount);
+        if (!Number.isFinite(feedAmount) || feedAmount <= 0) {
             return NextResponse.json(
                 { message: "Invalid amount" },
                 { status: 400 }
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
         }
 
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: formatAmountForStripe(amount, "eur"),
+            amount: formatAmountForStripe(feedAmount, "eur"),
             currency: "eur",
         });
 
@@ -28,8 +29,9 @@ export async function POST(req: Request) {
             clientSecret: paymentIntent.client_secret,
         });
     } catch (err: any) {
+        console.error("Payment intent creation error:", err);
         return NextResponse.json(
-            { message: err.message },
+            { message: "Internal server error" },
             { status: 500 }
         );
     }

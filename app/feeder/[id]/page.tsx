@@ -10,6 +10,27 @@ import DonationModal from '@/components/DonationModal';
 import RealtimeChat from '@/components/RealtimeChat';
 import { Video, ArrowLeft, Brain, Activity, Heart, AlertCircle, MapPin, ArrowRight, Loader2, WifiOff, PlayCircle } from 'lucide-react';
 
+function getSafeYouTubeUrl(url: string) {
+    if (!url) return '';
+    try {
+        const urlObj = new URL(url);
+        if (['youtube.com', 'www.youtube.com', 'youtu.be'].includes(urlObj.hostname)) {
+            let videoId = '';
+            if (urlObj.hostname === 'youtu.be') {
+                videoId = urlObj.pathname.slice(1);
+            } else {
+                videoId = urlObj.searchParams.get('v') || '';
+            }
+            if (videoId) {
+                return `https://www.youtube.com/embed/${videoId}`;
+            }
+        }
+    } catch (e) {
+        return '';
+    }
+    return '';
+}
+
 export default function FeederDetails() {
     const params = useParams();
     const id = params?.id as string;
@@ -55,7 +76,7 @@ export default function FeederDetails() {
         const supabase = createClient();
 
         if (id === 'all') {
-            const { data: allFeeders } = await supabase.from('feeders').select('*');
+            const { data: allFeeders } = await supabase.from('feeders').select('id, name, location, stock_level, left_overs, active, enabled, last_seen_at, status, is_streaming, dispense_price_eur, created_at');
             if (allFeeders) {
                 const totalAnimals = allFeeders.reduce((acc, f) => acc + (f.left_overs || 0), 0);
                 const avgFood = allFeeders.length > 0
@@ -86,7 +107,7 @@ export default function FeederDetails() {
         } else {
             const { data: feederData } = await supabase
                 .from('feeders')
-                .select('*')
+                .select('id, name, location, stock_level, left_overs, active, enabled, last_seen_at, status, is_streaming, dispense_price_eur, created_at')
                 .eq('id', id)
                 .single();
 
@@ -189,24 +210,27 @@ export default function FeederDetails() {
         };
     }, [id]);
 
-    const handleStartStream = () => {
+    const handleStartStream = async () => {
         if (!currentUser) {
             router.push('/login');
             return;
         }
         setStreamStatus('connecting');
-        const supabase = createClient();
-        const channel = supabase.channel(`feeder_commands_${id}`);
-        channel.subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-                channel.send({
-                    type: 'broadcast',
-                    event: 'start_stream',
-                    payload: { requested_by: currentUser.id }
-                });
-                // We wait for the hardware to update the 'is_streaming' flag via Supabase Realtime
+        
+        try {
+            const res = await fetch('/api/feeder/start-stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ feederId: id })
+            });
+            if (!res.ok) {
+                console.error('Failed to start stream');
+                setStreamStatus('offline');
             }
-        });
+        } catch (e) {
+            console.error(e);
+            setStreamStatus('offline');
+        }
     };
 
     const handleDonate = async (amount: number, mode = donationMode) => {
@@ -376,13 +400,11 @@ export default function FeederDetails() {
                                 {/* LIVE */}
                                 {streamStatus === 'live' && !isOffline && (
                                     <>
-                                        {feeder.liveStreamUrl ? (
+                                        {feeder.liveStreamUrl && getSafeYouTubeUrl(feeder.liveStreamUrl) ? (
                                             <iframe
                                                 width="100%"
                                                 height="100%"
-                                                src={feeder.liveStreamUrl.includes('watch?v=') 
-                                                    ? feeder.liveStreamUrl.replace('watch?v=', 'embed/').split('&')[0]
-                                                    : feeder.liveStreamUrl}
+                                                src={getSafeYouTubeUrl(feeder.liveStreamUrl)}
                                                 title="Live Feeder Stream"
                                                 frameBorder="0"
                                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

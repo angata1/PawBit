@@ -61,10 +61,10 @@ function getYouTubeEmbedUrl(url: string): string {
         const shortId = parsed.hostname.includes("youtu.be") ? segments[0] : "";
         if (shortId) return `https://www.youtube.com/embed/${shortId}`;
     } catch {
-        return url;
+        return "";
     }
 
-    return url;
+    return "";
 }
 
 export default function Profile() {

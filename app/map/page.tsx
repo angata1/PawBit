@@ -8,6 +8,15 @@ import Button from '../components/Button';
 import { createClient } from '@/lib/supabase/client';
 import { Search, Battery, Brain, ArrowRight, List, Map as MapIcon, MapPin, Loader2 } from 'lucide-react';
 
+const escapeHtml = (unsafe: string) => {
+    return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
+
 export default function MapPage() {
     const navigate = useRouter();
     const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +61,7 @@ export default function MapPage() {
                 const supabase = createClient();
                 const { data, error } = await supabase
                     .from('feeders')
-                    .select('*');
+                    .select('id, name, location, stock_level, left_overs, active, enabled, last_seen_at, status, is_streaming, dispense_price_eur, created_at');
 
                 if (error) throw error;
 
@@ -153,8 +162,8 @@ export default function MapPage() {
                 .bindPopup(`
           <div class="p-0 font-sans text-foreground min-w-[220px]">
             <div class="bg-primary/10 p-3 border-b-2 border-foreground/10">
-              <h3 class="font-bold text-lg leading-tight">${feeder.name}</h3>
-              <p class="text-xs opacity-70 mt-1 truncate">${feeder.location.address}</p>
+              <h3 class="font-bold text-lg leading-tight">${escapeHtml(feeder.name || '')}</h3>
+              <p class="text-xs opacity-70 mt-1 truncate">${escapeHtml(feeder.location.address || '')}</p>
             </div>
             <div class="p-3">
                <div class="flex justify-between items-center mb-3 text-xs font-mono font-bold">

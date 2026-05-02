@@ -17,7 +17,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const { id } = await params;
     const body = await request.json();
-    const updatePayload = { ...body };
+    const allowedFields = ['name', 'location', 'enabled', 'active', 'dispense_price_eur', 'pi_auth_key', 'stock_level', 'left_overs', 'importance_rank', 'status', 'is_streaming'];
+    const updatePayload: any = {};
+    for (const key of allowedFields) {
+        if (body[key] !== undefined) {
+            updatePayload[key] = body[key];
+        }
+    }
 
     if (updatePayload.dispense_price_eur !== undefined) {
         const price = Number(updatePayload.dispense_price_eur);

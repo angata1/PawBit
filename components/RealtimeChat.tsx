@@ -92,7 +92,7 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
         <div className="flex flex-col h-[400px] bg-white border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] rounded-3xl overflow-hidden">
             <div className="bg-foreground text-background p-3 sm:p-4 flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
-                <h3 className="font-bold font-mono text-sm sm:text-base">Live Chat (No History)</h3>
+                <h3 className="font-bold font-mono text-sm sm:text-base">Live Chat (Untrusted)</h3>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/10">
@@ -127,6 +127,7 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
                     <input
                         type="text"
                         value={input}
+                        maxLength={200}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Type a message..."
                         className="flex-1 px-4 py-2 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono"
