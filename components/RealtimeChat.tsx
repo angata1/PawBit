@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@/app/types';
 import Button from '@/app/components/Button';
-import { Send, MessageSquare } from 'lucide-react';
+import { Send, MessageSquare, AlertTriangle } from 'lucide-react';
 
 interface ChatMessage {
     id: string;
@@ -18,11 +18,22 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [channel, setChannel] = useState<any>(null);
-
+    const [hasAcceptedTerms, setHasAcceptedTerms] = useState(true);
 
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const accepted = localStorage.getItem('chat_terms_accepted') === 'true';
+            setHasAcceptedTerms(accepted);
+        }
+    }, []);
+
+    const acceptTerms = () => {
+        localStorage.setItem('chat_terms_accepted', 'true');
+        setHasAcceptedTerms(true);
+    };
+    useEffect(() => {
         const supabase = createClient();
-        
+
         // Create a unique channel for this feeder room
         const roomChannel = supabase.channel(`chat_feeder_${roomId}`, {
             config: {
@@ -55,7 +66,7 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
 
     const handleSendMessage = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        
+
         if (!input.trim() || !channel) return;
 
         const newMessage: ChatMessage = {
@@ -89,12 +100,25 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
     }, [messages]);
 
     return (
-        <div className="flex flex-col h-[400px] bg-white border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] rounded-3xl overflow-hidden">
+        <div className="flex flex-col h-[400px] bg-white border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] rounded-3xl overflow-hidden relative">
+            {!hasAcceptedTerms && (
+                <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center border-b-2 border-foreground">
+                    <AlertTriangle className="w-12 h-12 text-yellow-500 mb-4" />
+                    <h3 className="font-black text-xl mb-2">Chat Rules & Privacy</h3>
+                    <p className="text-sm font-mono text-muted-foreground mb-6">
+                        This live chat is unmoderated and messages are not permanently stored. 
+                        Please be respectful, do not share personal information, and follow community guidelines.
+                    </p>
+                    <Button variant="primary" onClick={acceptTerms}>
+                        I Understand
+                    </Button>
+                </div>
+            )}
             <div className="bg-foreground text-background p-3 sm:p-4 flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
-                <h3 className="font-bold font-mono text-sm sm:text-base">Live Chat (Untrusted)</h3>
+                <h3 className="font-bold font-mono text-sm sm:text-base">Live Chat</h3>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/10">
                 {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50 space-y-2">
@@ -108,11 +132,10 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
                                 <span className="text-xs font-bold text-muted-foreground mb-1 ml-1">
                                     {msg.user_name}
                                 </span>
-                                <div className={`px-4 py-2 rounded-2xl max-w-[85%] break-words border-2 ${
-                                    msg.user_id === currentUser?.id 
-                                    ? 'bg-primary text-primary-foreground border-foreground rounded-tr-sm' 
-                                    : 'bg-white border-foreground rounded-tl-sm shadow-[2px_2px_0px_rgba(0,0,0,1)]'
-                                }`}>
+                                <div className={`px-4 py-2 rounded-2xl max-w-[85%] break-words border-2 ${msg.user_id === currentUser?.id
+                                        ? 'bg-primary text-primary-foreground border-foreground rounded-tr-sm'
+                                        : 'bg-white border-foreground rounded-tl-sm shadow-[2px_2px_0px_rgba(0,0,0,1)]'
+                                    }`}>
                                     {msg.message}
                                 </div>
                             </div>
@@ -132,8 +155,8 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
                         placeholder="Type a message..."
                         className="flex-1 px-4 py-2 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono"
                     />
-                    <Button 
-                        type="submit" 
+                    <Button
+                        type="submit"
                         disabled={!input.trim()}
                         className="flex-shrink-0 !px-3"
                     >

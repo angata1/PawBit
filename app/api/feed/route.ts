@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 export async function POST(request: Request) {
     const supabase = await createClient();
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
 
     const { data: feeder, error: feederError } = await supabase
         .from('feeders')
-        .select('id, enabled, dispense_price_eur')
+        .select('id, enabled, dispense_price_eur, pi_auth_key')
         .eq('id', feederId)
         .single();
 
@@ -131,14 +132,25 @@ export async function POST(request: Request) {
             commandChannel.subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
                     clearTimeout(timeout);
+                    const payloadObj = {
+                        amount_eur: feedAmount,
+                        meal_id: mealData?.id ?? null,
+                        feeder_id: feederId,
+                        triggered_at: new Date().toISOString(),
+                    };
+                    
+                    const rawPayload = JSON.stringify(payloadObj);
+                    const signature = crypto
+                        .createHmac('sha256', feeder.pi_auth_key || 'fallback')
+                        .update(rawPayload)
+                        .digest('hex');
+
                     await commandChannel.send({
                         type: 'broadcast',
                         event: 'dispense',
                         payload: {
-                            amount_eur: feedAmount,
-                            meal_id: mealData?.id ?? null,
-                            feeder_id: feederId,
-                            triggered_at: new Date().toISOString(),
+                            raw: rawPayload,
+                            signature
                         }
                     });
                     resolve();

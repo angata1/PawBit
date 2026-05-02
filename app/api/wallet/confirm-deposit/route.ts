@@ -24,6 +24,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Payment not successful' }, { status: 400 });
         }
 
+        if (paymentIntent.metadata?.user_id !== user.id) {
+            return NextResponse.json({ error: 'Forbidden: Payment intent ownership mismatch' }, { status: 403 });
+        }
+
         // 2. Check if already processed (this is a simple check, a robust one needs a transaction ID column)
         // For MVP, we'll assume if we haven't logged this specific payment intent in donations metadata/notes
         // or just trust the flow. 
