@@ -1,0 +1,493 @@
+{
+  "Home": {
+    "heroTitle": "Feed a Pet. <br/> <span class=\"text-primary italic\">In Real Time.</span>",
+    "heroDesc": "PawBit connects your clicks to real kibble. Watch live as you donate to stray animals across your city.",
+    "feedNow": "Feed Now",
+    "viewImpact": "View Impact",
+    "scroll": "Scroll",
+    "howItWorks": "How It Works",
+    "fuelThePool": "Fuel the Pool",
+    "fuelThePoolDesc": "Top up your wallet and contribute to the Global Pool. Your funds wait securely until a hungry animal arrives.",
+    "aiFeeding": "AI-Powered Feeding",
+    "aiFeedingDesc": "Our edge devices detect cats autonomously and dispense meals using the oldest funds in the pool.",
+    "seeImpact": "See Your Impact",
+    "seeImpactDesc": "Complete transparency! Watch the recorded video of the exact meal your donation funded.",
+    "momentsOfJoy": "Moments of <span class=\"text-primary italic\">Joy</span>",
+    "momentsDesc": "See the direct impact of our community. Every donation creates a memory.",
+    "viewFullGallery": "View Full Gallery",
+    "noRecentMeals": "No recent meals recorded yet.",
+    "mealAt": "Meal at {feederName}",
+    "feeder": "Feeder",
+    "unknownLocation": "Unknown location",
+    "replay": "REPLAY",
+    "ctaTitle": "Feed any animal,<br/> <span class=\"text-primary italic\">anywhere in the city.</span>",
+    "ctaDesc": "Donate to the shared pool — no feeder to pick, no routing to think about. When a feeder detects nearby animals, it draws from the pool and dispenses food automatically.",
+    "contributeToPool": "Contribute to pool",
+    "statActiveFeeders": "Active feeders",
+    "statActiveFeedersDesc": "Across parks and shelters",
+    "statUptime": "Uptime",
+    "statUptimeDesc": "Sensor-monitored, always on",
+    "statDirect": "To food, directly",
+    "statDirectDesc": "No overhead, no middleman",
+    "statPoolBalance": "Pool balance",
+    "statPoolBalanceDesc": "Available right now"
+  },
+  "Navbar": {
+    "home": "Home",
+    "map": "Map",
+    "gallery": "Gallery",
+    "rankings": "Rankings",
+    "about": "About",
+    "profile": "Profile",
+    "admin": "Admin",
+    "adminPanel": "Admin Panel",
+    "logout": "Logout",
+    "login": "Log In",
+    "joinNow": "Join Now"
+  },
+  "Footer": {
+    "desc": "Connecting animal lovers with street animals through technology. Feed, donate, and watch live.",
+    "navigation": "Navigation",
+    "home": "Home",
+    "gallery": "Gallery",
+    "leaderboard": "Leaderboard",
+    "legal": "Legal",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "cookiePolicy": "Cookie Policy",
+    "contact": "Contact",
+    "location": "Gotse Delchev, Blagoevgrad, Bulgaria",
+    "rights": "All rights reserved.",
+    "madeWith": "Made with",
+    "forAnimals": "for animals"
+  },
+  "CookieBanner": {
+    "title": "This site uses cookies 🍪",
+    "desc": "We use essential cookies to keep feeders running and your session alive.",
+    "privacy": "Privacy Policy",
+    "accept": "Accept"
+  },
+  "Login": {
+    "title": "Welcome Back",
+    "desc": "Sign in to track your furry friends.",
+    "errorGeneric": "An unexpected error occurred",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "••••••••",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot Password?",
+    "loginBtn": "Log In",
+    "loggingInBtn": "Logging in...",
+    "orContinueWith": "Or continue with",
+    "dontHaveAccount": "Don't have an account?",
+    "registerNow": "Register now"
+  },
+  "Register": {
+    "passwordsDoNotMatch": "Passwords do not match",
+    "errorGeneric": "An unexpected error occurred",
+    "accountCreated": "Account created! Please check your email to confirm.",
+    "title": "Join PawBit",
+    "desc": "Become a hero for street animals.",
+    "fullNameLabel": "Full Name",
+    "fullNamePlaceholder": "John Doe",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "••••••••",
+    "confirmPasswordLabel": "Confirm Password",
+    "createAccountBtn": "Create Account",
+    "creatingAccountBtn": "Creating Account...",
+    "orContinueWith": "Or continue with",
+    "alreadyAccount": "Already have an account? Login",
+    "back": "Back"
+  },
+  "Auth": {
+    "resetPassword": "Reset Password",
+    "resetPasswordDesc": "Enter your email and we'll send you a link to reset your password.",
+    "checkEmail": "Check your email for a password reset link.",
+    "emailLabel": "Email Address",
+    "sendResetLink": "Send Reset Link",
+    "sending": "Sending...",
+    "errorGeneric": "An unexpected error occurred",
+    "updatePassword": "Update Password",
+    "updatePasswordDesc": "Enter your new password below.",
+    "newPassword": "New Password",
+    "updating": "Updating...",
+    "passwordUpdated": "Password updated successfully!",
+    "backToLogin": "Back to Login"
+  },
+  "Profile": {
+    "title": "My Profile",
+    "privacyMode": "Privacy Mode",
+    "anonymous": "Anonymous",
+    "public": "Public",
+    "nameHidden": "Your name is hidden from leaderboards and feeds.",
+    "nameVisible": "Your name appears on leaderboards and donations.",
+    "switchToPublic": "Switch to Public",
+    "switchToAnonymous": "Switch to Anonymous",
+    "updating": "Updating...",
+    "updateSuccess": "Profile updated successfully!",
+    "changePassword": "Change Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "minChars": "Min. 6 characters",
+    "repeatPassword": "Repeat password",
+    "updatePassword": "Update Password",
+    "wallet": "Wallet",
+    "balance": "Balance",
+    "availableToFeed": "Available to feed animals",
+    "addFunds": "Add Funds",
+    "transactionHistory": "Transaction History",
+    "noTransactions": "No transactions yet.",
+    "loadMore": "Load More Transactions",
+    "feedingsFunded": "Feedings You Helped Fund",
+    "recorded": "Recorded",
+    "contributedAmount": "Contributed {amount} / {total} EUR",
+    "openFeeder": "Open Feeder",
+    "noVideos": "No attributed feeding videos yet.",
+    "loading": "Loading...",
+    "errorPasswords": "Passwords do not match",
+    "unknownLocation": "Unknown location",
+    "unknownFeeder": "Unknown feeder",
+    "txTypes": {
+      "deposit": "Deposit",
+      "feeding": "Feeding",
+      "live_feed": "Live feed"
+    }
+  },
+  "Chat": {
+    "rulesTitle": "Chat Rules & Privacy",
+    "rulesDesc": "This live chat is unmoderated and messages are not permanently stored. Please be respectful, do not share personal information, and follow community guidelines.",
+    "understandBtn": "I Understand",
+    "liveChatTitle": "Live Chat",
+    "noMessages": "No messages yet. Start chatting!",
+    "placeholder": "Type a message...",
+    "anonymous": "Anonymous"
+  },
+  "DonationModal": {
+    "addFunds": "Add Funds to Wallet",
+    "donateTo": "Donate to {name}",
+    "animals": "Animals"
+  },
+  "CheckoutForm": {
+    "processing": "Processing...",
+    "pay": "Pay €{amount}",
+    "errorGeneric": "An unexpected error occurred."
+  },
+  "MapPage": {
+    "sidebarTitle": "Find a Hungry Pal",
+    "searchPlaceholder": "Search park or street...",
+    "globalPool": "Global Pool",
+    "loading": "Loading feeders...",
+    "noFeeders": "No feeders found here.",
+    "legendTitle": "Feeder Status",
+    "online": "Online",
+    "offline": "Offline",
+    "disabled": "Disabled",
+    "feedNow": "FEED NOW",
+    "food": "FOOD",
+    "list": "List",
+    "map": "Map"
+  },
+  "FeederDetails": {
+    "backToMap": "Back to Map",
+    "online": "ONLINE",
+    "offline": "OFFLINE",
+    "disabled": "DISABLED",
+    "food": "Food",
+    "mealPrice": "Meal Price",
+    "globalPool": "Global Donation Pool",
+    "globalPoolDesc": "Donations are pooled together and distributed across all active feeders in the network.",
+    "accessingSecureNode": "Accessing secure IoT node...",
+    "feederNotFound": "Feeder not found.",
+    "offlineStatus": "Offline",
+    "offlineDesc": "This feeder is currently unreachable. Live stream and donations are temporarily paused.",
+    "establishingTunnel": "Establishing secure IoT tunnel...",
+    "cameraReady": "Camera Ready",
+    "startStreamDesc": "Start the live stream to view the feeder area in real-time.",
+    "startLiveStream": "Start Live Stream",
+    "liveFeed": "LIVE FEED",
+    "sensorData": "Sensor Data: Monitoring area...",
+    "supportFeeder": "Support This Feeder",
+    "donationsPaused": "Donations paused — feeder offline",
+    "chooseModeDesc": "Choose whether this goes to the live feeder, this feeder's pool, or the shared global pool.",
+    "modes": {
+      "live": "Live feed",
+      "feeder_pool": "Feeder pool",
+      "global_pool": "Global pool"
+    },
+    "customAmount": "Custom amount",
+    "donate": "Donate",
+    "impactGuarantee": "Impact Guarantee",
+    "impactDesc": "We record every feeding. You can view your impact history and recorded clips in your profile.",
+    "makeDonation": "Make a Donation",
+    "globalPoolCtaDesc": "Your contribution is added to the global pool and distributed across all feeders that need restocking.",
+    "recentActivity": "Recent Activity",
+    "communityMember": "Community Member",
+    "dispensedFood": "Dispensed {amount}€ worth of food",
+    "noRecentFeedings": "No recent feedings recorded.",
+    "beTheFirst": "Be the first to fuel this station!",
+    "donateToGlobal": "Donate to Global Pool",
+    "globalPoolSidebarDesc": "Your donation is pooled with others and split across all feeders that need restocking.",
+    "viewGlobalPool": "View Global Pool",
+    "walletDeposit": "Wallet Deposit"
+  },
+  "NotFound": {
+    "title": "Page Not Found",
+    "description": "Uh oh! It seems this page has gone chasing butterflies and can't be found.",
+    "returnHome": "Return Home"
+  },
+  "PaymentSuccess": {
+    "verifying": "Verifying your deposit...",
+    "invalidInfo": "Invalid payment information.",
+    "processed": "Already processed",
+    "walletUpdateFailed": "Failed to update wallet.",
+    "connectionError": "Connection error.",
+    "processing": "Processing...",
+    "successTitle": "Success!",
+    "successDesc": "Funds have been added to your wallet. You can now start feeding animals.",
+    "goWallet": "Go to Wallet",
+    "errorTitle": "Something went wrong",
+    "returnProfile": "Return to Profile"
+  },
+  "Feedings": {
+    "title": "Feeding Moments",
+    "subtitle": "Recorded feedings funded by the community.",
+    "searchPlaceholder": "Search donor, feeder...",
+    "allLocations": "All Locations",
+    "loading": "Loading recorded feedings...",
+    "errorLoad": "Could not load gallery",
+    "recordedBadge": "Recorded Feed",
+    "madePossibleBy": "Made Possible By",
+    "noDonors": "No contribution breakdown available for this meal.",
+    "anonymous": "Anonymous",
+    "recordedDescription": "Recorded {triggeredBy} meal worth {amount} EUR.",
+    "feedHereAgain": "Feed Here Again",
+    "noResults": "No recorded feedings match the current filters.",
+    "clearFilters": "Clear Filters",
+    "pagination": "Page {current} of {total}",
+    "prev": "Prev",
+    "next": "Next"
+  },
+  "Leaderboard": {
+    "communityHeroes": "Community Heroes",
+    "wallOfFame": "Wall of Fame",
+    "subtitle": "Celebrating the top contributors who keep the bowls full and tails wagging.",
+    "secretHero": "Secret Hero",
+    "topDonator": "Top Donator",
+    "communityLeader": "Community Leader",
+    "weeklyContribution": "Weekly Contribution",
+    "honoraryFeeders": "Honorary Feeders",
+    "anonymous": "Anonymous",
+    "joinTheRanks": "Join the ranks! Make your first donation to appear here."
+  },
+  "About": {
+    "heroTitle": "Two Students.<br />One <span class=\"text-primary\">Mission.</span>",
+    "heroSubtitle": "We're Angel & Raya — high-school students from Gotse Delchev, Bulgaria who decided that stray animals in our town deserve better than an empty stomach.",
+    "story": {
+      "title": "Our Story",
+      "p1": "It started the way most projects start — with a problem we couldn't stop thinking about. Every day on our way to school we'd walk past the same strays: skinny cats hiding under parked cars, a one-eared dog begging near the bakery. Some days someone would leave leftovers. Most days, nobody did.",
+      "p2": "We kept asking ourselves: <strong class=\"text-foreground\">what if feeding them didn't depend on who happened to walk by?</strong> What if anyone, anywhere, could press a button and actually deliver food to an animal that needs it — right now, in real-time?",
+      "p3": "That question became PawBit. We started prototyping during a school project at <strong class=\"text-foreground\"> PMG “Yane Sandanski”</strong> in Gotse Delchev. A Raspberry Pi, a servo motor, a bag of kibble, and many late nights later — the first feeder worked. Then we built the website so people could actually use it. Then the live camera feed. Then the donation system. One thing led to another, and now you're reading this.",
+      "p4": "PawBit isn't a corporate initiative. It's not backed by a big organization. It's two students who care about the animals they see every day and believe technology can make a real, tangible difference — one meal at a time."
+    },
+    "why": {
+      "title": "What Makes PawBit Different",
+      "items": {
+        "transparency": {
+          "title": "Full Transparency",
+          "body": "Watch your donation in action. Every feeder has a live camera — you see the animals eat the moment the moment the motor triggers."
+        },
+        "realtime": {
+          "title": "Real-Time Feeding",
+          "body": "No middle-men, no delays. Your click triggers a Raspberry Pi that dispenses food within seconds."
+        },
+        "hardware": {
+          "title": "Custom Hardware",
+          "body": "Designed and built by us using Raspberry Pi and custom CAD. While not open-source just yet, our goal is to share the finished blueprints soon."
+        },
+        "global": {
+          "title": "Donate From Anywhere",
+          "body": "Whether you're in Gotse Delchev or on the other side of the planet — you can feed a stray in Bulgaria."
+        },
+        "distribution": {
+          "title": "Smart Distribution",
+          "body": "The donation pool allocates food where it's needed most — based on hunger levels, time since last meal, and animal activity."
+        },
+        "animalsfirst": {
+          "title": "100% for Animals",
+          "body": "Every cent goes directly to kibble and feeder maintenance. We don't take salaries — we're students doing this because we care."
+        }
+      }
+    },
+    "tech": {
+      "title": "The Tech <span class=\"text-primary\">Under the Hood</span>",
+      "p1": "Each PawBit feeder is powered by a <strong>Raspberry Pi</strong> running a lightweight service that connects to our backend over Wi-Fi. When a donation comes in, the server sends a command to the nearest feeder — a servo motor opens and dispenses a measured portion of food.",
+      "list": {
+        "brain": "Raspberry Pi Zero 2W as the brain of each feeder",
+        "supabase": "Real-time WebSocket connection to Supabase",
+        "sensors": "Sensors detect animal presence and food levels"
+      }
+    },
+    "team": {
+      "title": "Meet the Team",
+      "angel": {
+        "name": "Angel Murtev",
+        "role": "Programmer, Website Builder & Project Planner",
+        "bio": "Builds the web platform, manages the system architecture, and maps out the project roadmap. Believes that code can do more than just live on a screen — it can put food in a hungry animal's bowl."
+      },
+      "raya": {
+        "name": "Raya Sokolova",
+        "role": "Hardware Maker & CAD Designer",
+        "bio": "Handles the physical engineering, from 3D modeling the feeder enclosures to wiring the electronics. Turning sketches into functional, animal-proof hardware that works in the real world."
+      },
+      "location": "Gotse Delchev, Bulgaria"
+    },
+    "cta": {
+      "title": "Want to help?",
+      "p1": "You don't need to be in Gotse Delchev. Pick a feeder, donate a meal, and watch it happen live. Every bit counts.",
+      "button": "Find a Feeder"
+    }
+  },
+  "Privacy": {
+    "title": "Privacy Policy",
+    "updated": "Last updated: February 23, 2026",
+    "intro": "At PawBit we take your privacy seriously. This policy explains what data we collect, why we collect it, and how we keep it safe.",
+    "footer": "By using PawBit you agree to this Privacy Policy. We may update it from time to time; continued use of the platform constitutes acceptance of any changes.",
+    "sections": {
+      "collect": {
+        "title": "Information We Collect",
+        "p1": "**Account data:** When you register, we collect your name, email address, and a hashed password.",
+        "p2": "**Usage data:** We log interactions such as feeding events, donations, and pages visited in order to improve the service.",
+        "p3": "**Payment data:** Donation payments are processed by Stripe. PawBit never stores your full card number, CVV, or billing address on our servers.",
+        "p4": "**Device & technical data:** IP address, browser type, and operating system may be collected automatically for security and analytics purposes."
+      },
+      "use": {
+        "title": "How We Use Your Information",
+        "p1": "To create and manage your PawBit account.",
+        "p2": "To process donations and send payment confirmations.",
+        "p3": "To display your activity on the public leaderboard (only if you have not opted out).",
+        "p4": "To send transactional emails such as donation receipts and important notices.",
+        "p5": "To detect and prevent fraud or abuse of the platform.",
+        "p6": "To improve our services through anonymised analytics."
+      },
+      "sharing": {
+        "title": "Sharing Your Information",
+        "p1": "We do **not** sell, rent, or trade your personal data to third parties.",
+        "p2": "We share data with **Stripe** (payment processing) and **Supabase** (database hosting) solely to operate the service. These providers are contractually obligated to keep your data secure.",
+        "p3": "We may disclose information if required by law or to protect the rights and safety of users or animals in our care."
+      },
+      "security": {
+        "title": "Data Security",
+        "p1": "All data in transit is encrypted via TLS/HTTPS.",
+        "p2": "Passwords are hashed using industry-standard bcrypt before storage.",
+        "p3": "We conduct regular security reviews of our infrastructure.",
+        "p4": "In the event of a data breach, we will notify affected users within 72 hours in accordance with applicable law."
+      },
+      "rights": {
+        "title": "Your Rights",
+        "p1": "**Access:** You may request a copy of the personal data we hold about you.",
+        "p2": "**Correction:** You may update inaccurate information at any time via your profile settings.",
+        "p3": "**Deletion:** You may request deletion of your account and associated data by contacting us.",
+        "p4": "**Opt-out:** You may opt out of the leaderboard and non-essential emails in your account settings."
+      },
+      "contact": {
+        "title": "Contact Us",
+        "p1": "If you have any questions or concerns about this Privacy Policy, please reach out to us:"
+      }
+    }
+  },
+  "Terms": {
+    "title": "Terms of Service",
+    "updated": "Last updated: February 23, 2026",
+    "intro": "Please read these terms carefully before using PawBit. They set out your rights and responsibilities as a user of our platform.",
+    "footer": "By using PawBit you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.",
+    "sections": {
+      "acceptance": {
+        "title": "Acceptance of Terms",
+        "p1": "By accessing or using PawBit (the \"Service\") you confirm that you are at least 13 years old and agree to be bound by these Terms of Service.",
+        "p2": "If you are using the Service on behalf of an organisation, you represent that you have authority to bind that organisation to these terms.",
+        "p3": "We reserve the right to update these terms at any time. Continued use of the Service after changes are posted constitutes your acceptance of the revised terms."
+      },
+      "use": {
+        "title": "Use of the Service",
+        "p1": "You may use PawBit solely for personal, non-commercial purposes related to the welfare of street animals, unless you have a written agreement with us for commercial use.",
+        "p2": "You agree **not** to: impersonate another person, upload false or misleading content, attempt to reverse-engineer the Service, or interfere with its normal operation.",
+        "p3": "You are responsible for keeping your account credentials secure. Notify us immediately at angel.murtev@pmggd.bg if you suspect unauthorised access.",
+        "p4": "We may suspend or terminate your account if you violate these terms or misuse the platform."
+      },
+      "donations": {
+        "title": "Donations & Payments",
+        "p1": "All monetary donations made through PawBit are **voluntary and non-refundable** unless a technical error resulted in an incorrect charge.",
+        "p2": "Payments are processed securely by Stripe. PawBit does not store full card details.",
+        "p3": "Donations go toward purchasing food supplies and maintaining the smart feeder network. We publish periodic impact reports to demonstrate fund usage.",
+        "p4": "If you believe you were charged incorrectly, contact us within 14 days at angel.murtev@pmggd.bg."
+      },
+      "content": {
+        "title": "User Content",
+        "p1": "By submitting content (photos, comments, etc.) you grant PawBit a worldwide, royalty-free licence to display and distribute that content within the Service.",
+        "p2": "You retain ownership of your content. We will not sell it to third parties.",
+        "p3": "You agree not to upload content that is unlawful, harmful, abusive, or infringes on another's intellectual property.",
+        "p4": "We reserve the right to remove any content that violates these terms or our community guidelines without prior notice."
+      },
+      "disclaimers": {
+        "title": "Disclaimers & Limitation of Liability",
+        "p1": "The Service is provided **\"as is\"** without warranties of any kind, express or implied.",
+        "p2": "PawBit is not liable for any indirect, incidental, or consequential damages arising from your use of the Service.",
+        "p3": "We do not guarantee uninterrupted access to the Service; maintenance windows and outages may occur.",
+        "p4": "Our total liability to you for any claim arising out of these terms shall not exceed the amount you donated to PawBit in the 12 months preceding the claim."
+      },
+      "governing": {
+        "title": "Governing Law",
+        "p1": "These terms are governed by the laws of the Republic of Bulgaria.",
+        "p2": "Any disputes shall be resolved in the competent courts of Blagoevgrad, Bulgaria.",
+        "p3": "If any provision of these terms is found to be unenforceable, the remaining provisions shall continue in full force and effect."
+      },
+      "contact": {
+        "title": "Contact Us",
+        "p1": "If you have questions about these Terms of Service, please reach out:"
+      }
+    }
+  },
+  "Cookies": {
+    "title": "Cookie Policy",
+    "updated": "Last updated: February 23, 2026",
+    "intro": "This Cookie Policy explains how PawBit uses cookies and similar technologies when you visit our platform and how you can manage your preferences.",
+    "footer": "By continuing to use PawBit after reading this policy you agree to our use of cookies as described above.",
+    "sections": {
+      "what": {
+        "title": "What Are Cookies?",
+        "p1": "Cookies are small text files placed on your device by websites you visit. They are widely used to make websites work efficiently and to provide reporting information.",
+        "p2": "Cookies set by the website owner (PawBit) are called 'first-party cookies'. Cookies set by parties other than the website owner are called 'third-party cookies'."
+      },
+      "essential": {
+        "title": "Essential Cookies",
+        "p1": "**Session & authentication cookies** – Managed by Supabase, these cookies store a secure token that keeps you logged in while you browse PawBit. Without them, the site cannot function.",
+        "p2": "**Cookie-consent cookie** – We store your accept/decline choice for this banner in `localStorage` under the key `pawbit-cookie-consent` so we don't show the banner again on your next visit.",
+        "p3": "These cookies are strictly necessary for the operation of the platform and cannot be disabled without breaking core functionality."
+      },
+      "functional": {
+        "title": "Functional Cookies",
+        "p1": "**Real-time preferences** – Supabase's WebSocket connection may store a small token in a session cookie to maintain the live feed and donation status updates.",
+        "p2": "These cookies enhance your experience but are not strictly required. If you decline cookies via our banner, these may not be set."
+      },
+      "thirdParty": {
+        "title": "Third-Party Cookies",
+        "p1": "**Stripe** – When you make a donation, Stripe (our payment processor) may set cookies to detect fraud and remember your payment session. Please see the [Stripe Privacy Policy](https://stripe.com/privacy) for details.",
+        "p2": "**YouTube** – Feeding recap videos are embedded from YouTube. YouTube may set cookies when you interact with those iframes. Please see [Google's Privacy Policy](https://policies.google.com/privacy) for details.",
+        "p3": "PawBit does not use any advertising or tracking cookies and does not sell your data to third-party advertisers."
+      },
+      "control": {
+        "title": "How to Control Cookies",
+        "p1": "**Cookie banner** – Use the Accept / Decline buttons on the banner that appears when you first visit PawBit. You can change your preference at any time by clearing your browser's `localStorage` for this site.",
+        "p2": "**Browser settings** – All modern browsers let you block or delete cookies. Note that blocking essential cookies will prevent you from logging in and using the platform.",
+        "p3": "**Opt-out tools** – For third-party cookies you can use opt-out tools provided by Stripe and Google via their respective privacy dashboards."
+      },
+      "contact": {
+        "title": "Contact Us",
+        "p1": "If you have questions about how we use cookies, please reach out:"
+      }
+    }
+  }
+}
