@@ -1,10 +1,10 @@
-import { ScrollText, CreditCard, ShieldAlert, Gavel, AlertTriangle, Mail } from "lucide-react";
+import { Cookie, ShieldCheck, Settings, BarChart2, Lock, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export const metadata = {
-    title: "Terms of Service – PawBit",
+    title: "Cookie Policy – PawBit",
     description:
-        "Read the terms and conditions that govern your use of PawBit.",
+        "Learn how PawBit uses cookies and similar technologies to keep your session alive and improve the platform.",
 };
 
 function renderLine(line: string) {
@@ -17,76 +17,60 @@ function renderLine(line: string) {
     });
 }
 
-export default function TermsPage() {
-    const t = useTranslations("Terms");
+export default function CookiesPage() {
+    const t = useTranslations("Cookies");
 
     const sections = [
         {
-            icon: ScrollText,
-            title: t('sections.acceptance.title'),
+            icon: Cookie,
+            title: t("sections.what.title"),
             content: [
-                t('sections.acceptance.p1'),
-                t('sections.acceptance.p2'),
-                t('sections.acceptance.p3'),
+                t("sections.what.p1"),
+                t("sections.what.p2"),
             ],
         },
         {
-            icon: ScrollText,
-            title: t('sections.use.title'),
+            icon: ShieldCheck,
+            title: t("sections.essential.title"),
             content: [
-                t('sections.use.p1'),
-                t('sections.use.p2'),
-                t('sections.use.p3'),
-                t('sections.use.p4'),
+                t("sections.essential.p1"),
+                t("sections.essential.p2"),
+                t("sections.essential.p3"),
             ],
         },
         {
-            icon: CreditCard,
-            title: t('sections.donations.title'),
+            icon: BarChart2,
+            title: t("sections.functional.title"),
             content: [
-                t('sections.donations.p1'),
-                t('sections.donations.p2'),
-                t('sections.donations.p3'),
-                t('sections.donations.p4'),
+                t("sections.functional.p1"),
+                t("sections.functional.p2"),
             ],
         },
         {
-            icon: ShieldAlert,
-            title: t('sections.content.title'),
+            icon: Settings,
+            title: t("sections.thirdParty.title"),
             content: [
-                t('sections.content.p1'),
-                t('sections.content.p2'),
-                t('sections.content.p3'),
-                t('sections.content.p4'),
+                t("sections.thirdParty.p1"),
+                t("sections.thirdParty.p2"),
+                t("sections.thirdParty.p3"),
             ],
         },
         {
-            icon: AlertTriangle,
-            title: t('sections.disclaimers.title'),
+            icon: Lock,
+            title: t("sections.control.title"),
             content: [
-                t('sections.disclaimers.p1'),
-                t('sections.disclaimers.p2'),
-                t('sections.disclaimers.p3'),
-                t('sections.disclaimers.p4'),
-            ],
-        },
-        {
-            icon: Gavel,
-            title: t('sections.governing.title'),
-            content: [
-                t('sections.governing.p1'),
-                t('sections.governing.p2'),
-                t('sections.governing.p3'),
+                t("sections.control.p1"),
+                t("sections.control.p2"),
+                t("sections.control.p3"),
             ],
         },
         {
             icon: Mail,
-            title: t('sections.contact.title'),
+            title: t("sections.contact.title"),
             content: [
-                t('sections.contact.p1'),
+                t("sections.contact.p1"),
                 "📧 angel.murtev@pmggd.bg",
                 "📧 raya.sokolova@pmggd.bg",
-                "📞 +359888940560 / +359877202811",
                 "📍 Gotse Delchev, Blagoevgrad, Bulgaria",
             ],
         },
@@ -98,14 +82,14 @@ export default function TermsPage() {
                 {/* Header */}
                 <div className="text-center mb-12">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/20 border-2 border-accent mb-6 neu-shadow-sm">
-                        <Gavel className="w-8 h-8 text-accent-foreground" />
+                        <Cookie className="w-8 h-8 text-accent-foreground" />
                     </div>
-                    <h1 className="text-4xl font-bold mb-3">{t('title')}</h1>
+                    <h1 className="text-4xl font-bold mb-3">{t("title")}</h1>
                     <p className="text-muted-foreground font-mono text-sm">
-                        {t('updated')}
+                        {t("updated")}
                     </p>
                     <p className="mt-4 text-muted-foreground font-mono leading-relaxed max-w-xl mx-auto">
-                        {t('intro')}
+                        {t("intro")}
                     </p>
                 </div>
 
@@ -138,7 +122,7 @@ export default function TermsPage() {
                 </div>
 
                 <p className="mt-8 text-center text-xs text-muted-foreground font-mono">
-                    {t('footer')}
+                    {t("footer")}
                 </p>
             </div>
         </div>

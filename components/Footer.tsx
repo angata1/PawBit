@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Heart, Mail, Phone, MapPin } from "lucide-react";
 import Image from "next/image";
+import { useTranslations } from 'next-intl';
 
 export default function Footer() {
+    const t = useTranslations('Footer');
     return (
         <footer className="bg-white border-t border-border mt-auto">
             <div className="max-w-6xl mx-auto px-4 py-8">
@@ -22,27 +24,27 @@ export default function Footer() {
                             <span className="text-xl font-bold">PawBit</span>
                         </div>
                         <p className="text-muted-foreground text-sm font-mono leading-relaxed">
-                            Connecting animal lovers with street animals through technology. Feed, donate, and watch live.
+                            {t('desc')}
                         </p>
                     </div>
 
                     {/* Quick Links */}
                     <div>
-                        <h3 className="font-bold mb-4 font-mono uppercase tracking-wider text-sm">Navigation</h3>
+                        <h3 className="font-bold mb-4 font-mono uppercase tracking-wider text-sm">{t('navigation')}</h3>
                         <ul className="space-y-2 text-sm">
                             <li>
                                 <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
-                                    Home
+                                    {t('home')}
                                 </Link>
                             </li>
                             <li>
                                 <Link href="/feedings" className="text-muted-foreground hover:text-primary transition-colors">
-                                    Gallery
+                                    {t('gallery')}
                                 </Link>
                             </li>
                             <li>
                                 <Link href="/leaderboard" className="text-muted-foreground hover:text-primary transition-colors">
-                                    Leaderboard
+                                    {t('leaderboard')}
                                 </Link>
                             </li>
 
@@ -51,21 +53,21 @@ export default function Footer() {
 
                     {/* Legal */}
                     <div>
-                        <h3 className="font-bold mb-4 font-mono uppercase tracking-wider text-sm">Legal</h3>
+                        <h3 className="font-bold mb-4 font-mono uppercase tracking-wider text-sm">{t('legal')}</h3>
                         <ul className="space-y-2 text-sm">
                             <li>
                                 <Link href="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
-                                    Privacy Policy
+                                    {t('privacyPolicy')}
                                 </Link>
                             </li>
                             <li>
                                 <Link href="/terms" className="text-muted-foreground hover:text-primary transition-colors">
-                                    Terms of Service
+                                    {t('termsOfService')}
                                 </Link>
                             </li>
                             <li>
-                                <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                                    Cookie Policy
+                                <Link href="/cookies" className="text-muted-foreground hover:text-primary transition-colors">
+                                    {t('cookiePolicy')}
                                 </Link>
                             </li>
                         </ul>
@@ -73,7 +75,7 @@ export default function Footer() {
 
                     {/* Contact */}
                     <div>
-                        <h3 className="font-bold mb-4 font-mono uppercase tracking-wider text-sm">Contact</h3>
+                        <h3 className="font-bold mb-4 font-mono uppercase tracking-wider text-sm">{t('contact')}</h3>
                         <ul className="space-y-3 text-sm">
                             <li className="flex flex-col gap-1 text-muted-foreground">
                                 <div className="flex items-center gap-2">
@@ -95,7 +97,7 @@ export default function Footer() {
                             </li>
                             <li className="flex items-center gap-2 text-muted-foreground">
                                 <MapPin size={16} className="text-primary" />
-                                <span>Gotse Delchev, Blagoevgrad, Bulgaria</span>
+                                <span>{t('location')}</span>
                             </li>
                         </ul>
                     </div>
@@ -103,12 +105,12 @@ export default function Footer() {
 
                 <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-sm text-muted-foreground font-mono">
-                        © {new Date().getFullYear()} PawBit. All rights reserved.
+                        © {new Date().getFullYear()} PawBit. {t('rights')}
                     </p>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>Made with</span>
+                        <span>{t('madeWith')}</span>
                         <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-                        <span>for animals</span>
+                        <span>{t('forAnimals')}</span>
                     </div>
                 </div>
             </div>

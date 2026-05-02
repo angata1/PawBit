@@ -1,74 +1,11 @@
 import { Shield, Lock, Eye, Database, UserCheck, Mail } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export const metadata = {
     title: "Privacy Policy – PawBit",
     description:
         "Learn how PawBit collects, uses, and protects your personal information.",
 };
-
-const sections = [
-    {
-        icon: Eye,
-        title: "Information We Collect",
-        content: [
-            "**Account data:** When you register, we collect your name, email address, and a hashed password.",
-            "**Usage data:** We log interactions such as feeding events, donations, and pages visited in order to improve the service.",
-            "**Payment data:** Donation payments are processed by Stripe. PawBit never stores your full card number, CVV, or billing address on our servers.",
-            "**Device & technical data:** IP address, browser type, and operating system may be collected automatically for security and analytics purposes.",
-        ],
-    },
-    {
-        icon: Database,
-        title: "How We Use Your Information",
-        content: [
-            "To create and manage your PawBit account.",
-            "To process donations and send payment confirmations.",
-            "To display your activity on the public leaderboard (only if you have not opted out).",
-            "To send transactional emails such as donation receipts and important notices.",
-            "To detect and prevent fraud or abuse of the platform.",
-            "To improve our services through anonymised analytics.",
-        ],
-    },
-    {
-        icon: UserCheck,
-        title: "Sharing Your Information",
-        content: [
-            "We do **not** sell, rent, or trade your personal data to third parties.",
-            "We share data with **Stripe** (payment processing) and **Supabase** (database hosting) solely to operate the service. These providers are contractually obligated to keep your data secure.",
-            "We may disclose information if required by law or to protect the rights and safety of users or animals in our care.",
-        ],
-    },
-    {
-        icon: Lock,
-        title: "Data Security",
-        content: [
-            "All data in transit is encrypted via TLS/HTTPS.",
-            "Passwords are hashed using industry-standard bcrypt before storage.",
-            "We conduct regular security reviews of our infrastructure.",
-            "In the event of a data breach, we will notify affected users within 72 hours in accordance with applicable law.",
-        ],
-    },
-    {
-        icon: Shield,
-        title: "Your Rights",
-        content: [
-            "**Access:** You may request a copy of the personal data we hold about you.",
-            "**Correction:** You may update inaccurate information at any time via your profile settings.",
-            "**Deletion:** You may request deletion of your account and associated data by contacting us.",
-            "**Opt-out:** You may opt out of the leaderboard and non-essential emails in your account settings.",
-        ],
-    },
-    {
-        icon: Mail,
-        title: "Contact Us",
-        content: [
-            "If you have any questions or concerns about this Privacy Policy, please reach out to us:",
-            "📧 angel.murtev@pmggd.bg",
-            "📧 raya.sokolova@pmggd.bg",
-            "📍 Gotse Delchev, Blagoevgrad, Bulgaria",
-        ],
-    },
-];
 
 function renderLine(line: string) {
     // Bold markdown (**text**) → <strong>
@@ -82,6 +19,72 @@ function renderLine(line: string) {
 }
 
 export default function PrivacyPage() {
+    const t = useTranslations("Privacy");
+
+    const sections = [
+        {
+            icon: Eye,
+            title: t('sections.collect.title'),
+            content: [
+                t('sections.collect.p1'),
+                t('sections.collect.p2'),
+                t('sections.collect.p3'),
+                t('sections.collect.p4'),
+            ],
+        },
+        {
+            icon: Database,
+            title: t('sections.use.title'),
+            content: [
+                t('sections.use.p1'),
+                t('sections.use.p2'),
+                t('sections.use.p3'),
+                t('sections.use.p4'),
+                t('sections.use.p5'),
+                t('sections.use.p6'),
+            ],
+        },
+        {
+            icon: UserCheck,
+            title: t('sections.sharing.title'),
+            content: [
+                t('sections.sharing.p1'),
+                t('sections.sharing.p2'),
+                t('sections.sharing.p3'),
+            ],
+        },
+        {
+            icon: Lock,
+            title: t('sections.security.title'),
+            content: [
+                t('sections.security.p1'),
+                t('sections.security.p2'),
+                t('sections.security.p3'),
+                t('sections.security.p4'),
+            ],
+        },
+        {
+            icon: Shield,
+            title: t('sections.rights.title'),
+            content: [
+                t('sections.rights.p1'),
+                t('sections.rights.p2'),
+                t('sections.rights.p3'),
+                t('sections.rights.p4'),
+            ],
+        },
+        {
+            icon: Mail,
+            title: t('sections.contact.title'),
+            content: [
+                t('sections.contact.p1'),
+                "📧 angel.murtev@pmggd.bg",
+                "📧 raya.sokolova@pmggd.bg",
+                "📍 Gotse Delchev, Blagoevgrad, Bulgaria",
+            ],
+        },
+    ];
+
     return (
         <div className="min-h-screen bg-background py-12 px-4">
             <div className="max-w-3xl mx-auto">
@@ -90,13 +93,12 @@ export default function PrivacyPage() {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border-2 border-primary mb-6 neu-shadow-sm">
                         <Shield className="w-8 h-8 text-primary" />
                     </div>
-                    <h1 className="text-4xl font-bold mb-3">Privacy Policy</h1>
+                    <h1 className="text-4xl font-bold mb-3">{t('title')}</h1>
                     <p className="text-muted-foreground font-mono text-sm">
-                        Last updated: February 23, 2026
+                        {t('updated')}
                     </p>
                     <p className="mt-4 text-muted-foreground font-mono leading-relaxed max-w-xl mx-auto">
-                        At PawBit we take your privacy seriously. This policy explains what data
-                        we collect, why we collect it, and how we keep it safe.
+                        {t('intro')}
                     </p>
                 </div>
 
@@ -105,7 +107,7 @@ export default function PrivacyPage() {
                     {sections.map(({ icon: Icon, title, content }, idx) => (
                         <div
                             key={idx}
-                            className="bg-card border-2 border-border rounded-xl p-6 neu-shadow"
+                            className="bg-card border-2 border-foreground rounded-xl p-6 neu-shadow"
                         >
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2 rounded-lg bg-primary/10 border border-primary/30">
@@ -129,9 +131,7 @@ export default function PrivacyPage() {
                 </div>
 
                 <p className="mt-8 text-center text-xs text-muted-foreground font-mono">
-                    By using PawBit you agree to this Privacy Policy. We may update it from
-                    time to time; continued use of the platform constitutes acceptance of any
-                    changes.
+                    {t('footer')}
                 </p>
             </div>
         </div>

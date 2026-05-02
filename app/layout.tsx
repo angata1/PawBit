@@ -5,10 +5,12 @@ import Navbar from "./components/Navbar";
 import Footer from "../components/Footer";
 import CookieBanner from "../components/CookieBanner";
 import { createClient } from "@/lib/supabase/server";
+import {NextIntlClientProvider} from 'next-intl';
+import {getMessages, getLocale} from 'next-intl/server';
 
 const gabriela = Gabriela({
   weight: "400",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
   variable: "--font-gabriela",
   display: "swap",
 });
@@ -27,6 +29,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const messages = await getMessages();
+  const locale = await getLocale();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -45,7 +49,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en">
+    <html lang={locale}>
       <head>
         <link
           rel="stylesheet"
@@ -63,14 +67,16 @@ export default async function RootLayout({
       <body
         className={`${gabriela.variable} antialiased flex flex-col min-h-screen`}
       >
-        <Navbar user={userWithRole} />
+        <NextIntlClientProvider messages={messages}>
+          <Navbar user={userWithRole} />
 
-        <main className="flex-1">
-          {children}
-        </main>
+          <main className="flex-1">
+            {children}
+          </main>
 
-        <Footer />
-        <CookieBanner />
+          <Footer />
+          <CookieBanner />
+        </NextIntlClientProvider>
       </body>
     </html>
   );
