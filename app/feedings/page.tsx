@@ -48,16 +48,18 @@ const ITEMS_PER_PAGE = 10;
 function getYouTubeEmbedUrl(url: string): string {
     if (!url) return "";
 
-    if (url.includes("/embed/")) return url;
+    if (url.includes("/embed/")) {
+        return url.replace('youtube.com', 'youtube-nocookie.com').replace('www.youtube.com', 'www.youtube-nocookie.com');
+    }
 
     try {
         const parsed = new URL(url);
         const videoId = parsed.searchParams.get("v");
-        if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+        if (videoId) return `https://www.youtube-nocookie.com/embed/${videoId}`;
 
         const segments = parsed.pathname.split("/").filter(Boolean);
         const shortId = parsed.hostname.includes("youtu.be") ? segments[0] : "";
-        if (shortId) return `https://www.youtube.com/embed/${shortId}`;
+        if (shortId) return `https://www.youtube-nocookie.com/embed/${shortId}`;
     } catch {
         return url;
     }
