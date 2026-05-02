@@ -8,7 +8,7 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import DonationModal from '@/components/DonationModal';
 import RealtimeChat from '@/components/RealtimeChat';
-import { Video, ArrowLeft, Brain, Activity, Heart, AlertCircle, MapPin, ArrowRight, Loader2, WifiOff, PlayCircle } from 'lucide-react';
+import { Video, ArrowLeft, Activity, Heart, AlertCircle, MapPin, ArrowRight, Loader2, WifiOff, PlayCircle } from 'lucide-react';
 
 function getSafeYouTubeUrl(url: string) {
     if (!url) return '';
@@ -321,9 +321,11 @@ export default function FeederDetails() {
                         <div className="flex items-center flex-wrap gap-2 sm:gap-3 mb-2">
                             <h1 className="text-2xl sm:text-4xl font-bold break-words">{feeder.name}</h1>
                             {feeder.connectionStatus === 'online' ? (
-                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-green-100 text-green-800 rounded-full text-[10px] sm:text-xs font-bold border border-green-300 animate-pulse">ONLINE</span>
+                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-green-100 text-green-800 rounded-full text-[10px] sm:text-xs font-bold border border-green-300 animate-pulse uppercase">ONLINE</span>
+                            ) : feeder.connectionStatus === 'offline' ? (
+                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-red-100 text-red-800 rounded-full text-[10px] sm:text-xs font-bold border border-red-300 uppercase">OFFLINE</span>
                             ) : (
-                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-red-100 text-red-800 rounded-full text-[10px] sm:text-xs font-bold border border-red-300">OFFLINE</span>
+                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-zinc-100 text-zinc-800 rounded-full text-[10px] sm:text-xs font-bold border border-zinc-300 uppercase">DISABLED</span>
                             )}
                         </div>
                         <p className="text-sm sm:text-lg text-muted-foreground font-mono flex items-center gap-2">
@@ -352,11 +354,11 @@ export default function FeederDetails() {
 
                         {/* Stream / AI block */}
                         {id === 'all' ? (
-                            <Card className="h-[300px] sm:h-[400px] flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-foreground neu-shadow">
-                                <Brain className="w-16 h-16 sm:w-24 sm:h-24 text-primary mb-4" />
-                                <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2 px-4">Donation Pool Active</h2>
-                                <p className="text-center max-w-md text-muted-foreground font-medium px-6 text-sm sm:text-base">
-                                    Donations are intelligently distributed to the hungriest animals across our global network of IoT feeding stations.
+                            <Card className="h-[300px] sm:h-[400px] flex flex-col items-center justify-center bg-white border-2 border-foreground neu-shadow">
+                                <Heart className="w-16 h-16 sm:w-24 sm:h-24 text-primary mb-4" fill="currentColor" />
+                                <h2 className="text-2xl sm:text-3xl font-black text-center mb-2 px-4 uppercase">Global Donation Pool</h2>
+                                <p className="text-center max-w-md text-muted-foreground font-mono px-6 text-sm sm:text-base">
+                                    Donations are pooled together and distributed across all active feeders in the network.
                                 </p>
                             </Card>
                         ) : (
@@ -534,7 +536,7 @@ export default function FeederDetails() {
                                 )}
                                 <h2 className="text-2xl font-black mb-2">Make a Donation</h2>
                                 <p className="text-muted-foreground text-sm mb-6 font-mono leading-relaxed">
-                                    Funds are automatically distributed to the hungriest feeders in the network.
+                                    Your contribution is added to the global pool and distributed across all feeders that need restocking.
                                 </p>
                                 <div className="grid grid-cols-3 gap-3 mb-4">
                                     {[2, 5, 10].map(amt => (
@@ -601,20 +603,21 @@ export default function FeederDetails() {
 
                         {id !== 'all' && (
                             <div
-                                className="bg-gradient-to-br from-primary to-green-600 p-6 sm:p-8 rounded-2xl text-white border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all"
+                                className="bg-white border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] rounded-2xl p-6 cursor-pointer hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all duration-200"
                                 onClick={() => router.push('/feeder/all')}
                             >
-                                <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-700" />
-                                <div className="relative z-10">
-                                    <div className="flex items-center gap-2 mb-2 opacity-90">
-                                        <Brain className="w-6 h-6" />
-                                        <span className="text-xs font-bold uppercase tracking-widest">Recommended Path</span>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-8 h-8 bg-primary rounded-lg border-2 border-foreground flex items-center justify-center flex-shrink-0">
+                                        <Heart className="w-4 h-4 text-white" fill="currentColor" />
                                     </div>
-                                    <h3 className="text-3xl font-black mb-2">Donate to Pool</h3>
-                                    <p className="text-sm opacity-90 mb-6 font-mono leading-relaxed">Let our system determine which animals need your help the most right now.</p>
-                                    <div className="flex items-center gap-2 font-bold text-sm bg-white/20 w-fit px-4 py-2 rounded-xl backdrop-blur-md border border-white/30 group-hover:bg-white/30 transition-colors">
-                                        Switch to AI Flow <ArrowRight className="w-4 h-4" />
-                                    </div>
+                                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Global Pool</span>
+                                </div>
+                                <h3 className="text-xl font-black mb-1">Donate to Global Pool</h3>
+                                <p className="text-sm text-muted-foreground font-mono leading-relaxed mb-4">
+                                    Your donation is pooled with others and split across all feeders that need restocking.
+                                </p>
+                                <div className="flex items-center gap-2 font-bold text-sm border-2 border-foreground w-fit px-3 py-1.5 rounded-xl bg-background hover:bg-primary hover:text-white hover:border-primary transition-colors">
+                                    View Global Pool <ArrowRight className="w-4 h-4" />
                                 </div>
                             </div>
                         )}

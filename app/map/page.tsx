@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Feeder, deriveConnectionStatus, formatLastSeen } from '../types';
 import Button from '../components/Button';
 import { createClient } from '@/lib/supabase/client';
-import { Search, Battery, Brain, ArrowRight, List, Map as MapIcon, MapPin, Loader2 } from 'lucide-react';
+import { Search, Battery, Heart, ArrowRight, List, Map as MapIcon, MapPin, Loader2 } from 'lucide-react';
 
 const escapeHtml = (unsafe: string) => {
     return String(unsafe)
@@ -29,6 +29,7 @@ export default function MapPage() {
 
     // Mobile View State: 'map' or 'list' (Only applies to screens < md)
     const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
+    const hasCenteredRef = useRef(false);
 
     // Map Supabase row to Feeder type
     const mapFeederRow = (f: any): Feeder => {
@@ -110,6 +111,7 @@ export default function MapPage() {
         const sofiaLat = 42.6977;
         const sofiaLng = 23.3219;
 
+        // Initial view in Sofia
         const map = L.map(mapContainerRef.current).setView([sofiaLat, sofiaLng], 12);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -130,6 +132,33 @@ export default function MapPage() {
         };
     }, []);
 
+    // Auto-center map based on most concurrent "feeders" (animals detected)
+    useEffect(() => {
+        if (!mapInstanceRef.current || feeders.length === 0 || loadingFeeders || hasCenteredRef.current) return;
+
+        // Find the feeder with the most concurrent animals detected
+        // If multiple have the same, it picks the first one found
+        const topFeeder = feeders.reduce((prev, current) => {
+            return (current.animalsDetected > prev.animalsDetected) ? current : prev;
+        }, feeders[0]);
+
+        if (topFeeder && topFeeder.animalsDetected > 0) {
+            // Zoom in on the most active spot
+            mapInstanceRef.current.setView([topFeeder.location.lat, topFeeder.location.lng], 15);
+            hasCenteredRef.current = true;
+        } else if (feeders.length > 0) {
+            // Optional: fit bounds to all feeders if no specific activity
+            const L = (window as any).L;
+            if (L) {
+                const group = new L.FeatureGroup(
+                    feeders.map(f => L.marker([f.location.lat, f.location.lng]))
+                );
+                mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
+                hasCenteredRef.current = true;
+            }
+        }
+    }, [feeders, loadingFeeders]);
+
     // Update Markers
     useEffect(() => {
         const L = (window as any).L;
@@ -143,8 +172,12 @@ export default function MapPage() {
         });
 
         feeders.forEach(feeder => {
+            const statusColor = feeder.connectionStatus === 'online' ? 'bg-green-500' :
+                feeder.connectionStatus === 'offline' ? 'bg-red-500' :
+                    'bg-zinc-400';
+
             const iconHtml = `
-        <div class="w-10 h-10 bg-primary rounded-full border-2 border-foreground flex items-center justify-center shadow-lg relative hover:scale-110 transition-transform cursor-pointer">
+        <div class="w-10 h-10 ${statusColor} rounded-full border-2 border-foreground flex items-center justify-center shadow-lg relative hover:scale-110 transition-transform cursor-pointer">
            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
       `;
@@ -166,14 +199,13 @@ export default function MapPage() {
               <p class="text-xs opacity-70 mt-1 truncate">${escapeHtml(feeder.location.address || '')}</p>
             </div>
             <div class="p-3">
-               <div class="flex justify-between items-center mb-3 text-xs font-mono font-bold">
-                   <span class="px-2 py-1 rounded ${
-                       feeder.connectionStatus === 'online' ? 'text-green-700 bg-green-100' :
-                       feeder.connectionStatus === 'offline' ? 'text-red-700 bg-red-100' :
-                       'text-gray-700 bg-gray-100'
-                   }">${feeder.connectionStatus.replace('_', ' ').toUpperCase()}</span>
-                   <span class="text-yellow-700 bg-yellow-100 px-2 py-1 rounded">${feeder.foodLevel}% FOOD</span>
-               </div>
+                <div class="flex justify-between items-center mb-3 text-xs font-mono font-bold">
+                    <span class="px-2 py-1 rounded border ${feeder.connectionStatus === 'online' ? 'text-green-700 bg-green-100 border-green-200' :
+                        feeder.connectionStatus === 'offline' ? 'text-red-700 bg-red-100 border-red-200' :
+                            'text-zinc-700 bg-zinc-100 border-zinc-200'
+                        }">${feeder.connectionStatus.replace('_', ' ').toUpperCase()}</span>
+                    <span class="text-orange-700 bg-orange-50 px-2 py-1 rounded border border-orange-100">${feeder.foodLevel}% FOOD</span>
+                </div>
                ${renderToStaticMarkup(
                     <Button
                         id={`btn-${feeder.id}`}
@@ -242,7 +274,7 @@ export default function MapPage() {
                         className="w-full flex justify-between items-center bg-accent text-accent-foreground border-accent-foreground"
                         size="md"
                     >
-                        <span className="flex items-center gap-2"><Brain className="w-5 h-5" /> Donation Pool</span>
+                        <span className="flex items-center gap-2"><Heart className="w-5 h-5" fill="currentColor" /> Global Pool</span>
                         <ArrowRight className="w-5 h-5" />
                     </Button>
                 </div>
@@ -267,16 +299,14 @@ export default function MapPage() {
                         >
                             <div className="flex justify-between items-start mb-1">
                                 <h3 className="font-bold text-lg text-foreground">{feeder.name}</h3>
-                                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${
-                                    feeder.connectionStatus === 'online' ? 'bg-green-100 text-green-700 border-green-200' :
+                                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${feeder.connectionStatus === 'online' ? 'bg-green-100 text-green-700 border-green-200' :
                                     feeder.connectionStatus === 'offline' ? 'bg-red-100 text-red-700 border-red-200' :
-                                    'bg-gray-100 text-gray-600 border-gray-200'
-                                }`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full ${
-                                        feeder.connectionStatus === 'online' ? 'bg-green-500 animate-pulse' :
+                                        'bg-zinc-100 text-zinc-600 border-zinc-200'
+                                    }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${feeder.connectionStatus === 'online' ? 'bg-green-500 animate-pulse' :
                                         feeder.connectionStatus === 'offline' ? 'bg-red-500' :
-                                        'bg-gray-400'
-                                    }`}></span>
+                                            'bg-zinc-400'
+                                        }`}></span>
                                     {feeder.connectionStatus.replace('_', ' ')}
                                 </div>
                             </div>
@@ -307,7 +337,7 @@ export default function MapPage() {
                 <div className="hidden md:block absolute top-4 right-4 bg-white/90 backdrop-blur px-4 py-3 rounded-xl border-2 border-foreground z-[400] text-xs font-mono shadow-xl">
                     <h4 className="font-bold mb-2 border-b border-gray-200 pb-1">Feeder Status</h4>
                     <div className="flex items-center gap-2 mb-1.5">
-                        <span className="w-3 h-3 bg-primary rounded-full border border-foreground"></span>
+                        <span className="w-3 h-3 bg-green-500 rounded-full border border-foreground"></span>
                         <span>Online</span>
                     </div>
                     <div className="flex items-center gap-2 mb-1.5">
