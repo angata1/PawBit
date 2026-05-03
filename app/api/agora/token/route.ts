@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { data: activeStream, error } = await supabase
         .from("livestreams")
-        .select("id, stream_channel, stream_provider, is_active")
+        .select("id, stream_channel, stream_provider, is_active, viewer_count")
         .eq("feeder_id", feederId)
         .eq("stream_provider", "agora")
         .eq("stream_channel", channel)
@@ -61,6 +61,8 @@ export async function GET(request: Request) {
         channel,
         uid,
         token,
+        streamId: String(activeStream.id),
+        viewerCount: Number(activeStream.viewer_count ?? 0),
         expiresIn: TOKEN_TTL_SECONDS,
     });
 }

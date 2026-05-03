@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Feeder, Donation, User, deriveConnectionStatus } from '../../types';
+import { Feeder, User, deriveConnectionStatus } from '../../types';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import AgoraLivePlayer from '../../components/AgoraLivePlayer';
@@ -11,6 +11,39 @@ import DonationModal from '@/components/DonationModal';
 import RealtimeChat from '@/components/RealtimeChat';
 import { useTranslations } from 'next-intl';
 import { Video, ArrowLeft, Activity, Heart, AlertCircle, MapPin, ArrowRight, Loader2, WifiOff, PlayCircle } from 'lucide-react';
+
+type FeederRow = {
+    id: string | number;
+    name: string;
+    location?: {
+        lat?: number;
+        lng?: number;
+        address?: string;
+    } | null;
+    enabled?: boolean | null;
+    last_seen_at?: string | null;
+    stock_level?: number | null;
+    left_overs?: number | null;
+    dispense_price_eur?: number | null;
+    created_at?: string | null;
+    is_streaming?: boolean | null;
+};
+
+type MealRow = {
+    id: string | number;
+    total_cost_eur?: number | null;
+    time_of_meal?: string | null;
+};
+
+type PendingDonationState = {
+    amount: number;
+    mode: 'live' | 'feeder_pool' | 'global_pool';
+    feederId?: string;
+    returnPath?: string;
+    paymentIntentId?: string;
+};
+
+const PENDING_DONATION_KEY = 'pawbit:pending-donation-ready';
 
 function getSafeYouTubeUrl(url: string) {
     if (!url) return '';
@@ -27,7 +60,7 @@ function getSafeYouTubeUrl(url: string) {
                 return `https://www.youtube-nocookie.com/embed/${videoId}`;
             }
         }
-    } catch (e) {
+    } catch {
         return '';
     }
     return '';
@@ -40,7 +73,7 @@ export default function FeederDetails() {
     const t = useTranslations('FeederDetails');
 
     const [feeder, setFeeder] = useState<Feeder | null>(null);
-    const [donations, setDonations] = useState<any[]>([]);
+    const [donations, setDonations] = useState<MealRow[]>([]);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -51,8 +84,10 @@ export default function FeederDetails() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [donationAmount, setDonationAmount] = useState(5);
+    const [pendingDonationMode, setPendingDonationMode] = useState<'live' | 'feeder_pool' | 'global_pool'>(donationMode);
+    const pendingDonationHandledRef = useRef<string | null>(null);
 
-    const mapFeederRow = (f: any): Feeder => {
+    const mapFeederRow = (f: FeederRow): Feeder => {
         const enabled = f.enabled ?? true;
         const lastSeenAt = f.last_seen_at ?? null;
         return {
@@ -69,7 +104,7 @@ export default function FeederDetails() {
             foodLevel: f.stock_level ?? 0,
             animalsDetected: f.left_overs ?? 0,
             dispensePriceEur: Number(f.dispense_price_eur ?? 2),
-            lastFeeding: f.created_at,
+            lastFeeding: f.created_at || undefined,
             liveStreamUrl: '',
             streamProvider: undefined,
             streamChannel: undefined,
@@ -78,7 +113,7 @@ export default function FeederDetails() {
         };
     };
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         const supabase = createClient();
 
         if (id === 'all') {
@@ -163,7 +198,7 @@ export default function FeederDetails() {
             if (feederMeals) setDonations(feederMeals);
         }
         setLoading(false);
-    };
+    }, [id]);
 
     useEffect(() => {
         const supabase = createClient();
@@ -223,7 +258,7 @@ export default function FeederDetails() {
             supabase.removeChannel(feedersChannel);
             supabase.removeChannel(livestreamsChannel);
         };
-    }, [id]);
+    }, [fetchData, t, id]);
 
     const handleStartStream = async () => {
         if (!currentUser) {
@@ -248,31 +283,17 @@ export default function FeederDetails() {
         }
     };
 
-    const handleDonate = async (amount: number, mode = donationMode) => {
-        if (!currentUser) {
-            router.push('/login');
-            return;
-        }
-
-        const donationAmount = Number(amount);
-        if (!Number.isFinite(donationAmount) || donationAmount <= 0) return;
-
-        if ((currentUser.balance || 0) < donationAmount) {
-            setIsModalOpen(true);
-            setDonationAmount(donationAmount);
-            return;
-        }
-
+    const performDonation = useCallback(async (amount: number, mode: 'live' | 'feeder_pool' | 'global_pool') => {
         setIsAnimating(true);
 
         try {
             const isLiveFeed = mode === 'live' && id !== 'all';
             const endpoint = isLiveFeed ? '/api/feed' : '/api/donate-pool';
             const bodyPayload = isLiveFeed
-                ? { amount: donationAmount, feederId: id }
+                ? { amount, feederId: id }
                 : mode === 'feeder_pool' && id !== 'all'
-                    ? { amount: donationAmount, feederId: id }
-                    : { amount: donationAmount };
+                    ? { amount, feederId: id }
+                    : { amount };
 
             const res = await fetch(endpoint, {
                 method: 'POST',
@@ -294,11 +315,67 @@ export default function FeederDetails() {
             setCurrentUser(prev => prev ? ({ ...prev, balance: data.newBalance }) : null);
             if (isLiveFeed) setStreamStatus('live');
             setTimeout(() => { setIsAnimating(false); }, 2000);
+            return true;
 
         } catch (err) {
             console.error(err);
             setIsAnimating(false);
+            return false;
         }
+    }, [id]);
+
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const rawPending = sessionStorage.getItem(PENDING_DONATION_KEY);
+        if (!rawPending) return;
+
+        let pendingDonation: PendingDonationState;
+        try {
+            pendingDonation = JSON.parse(rawPending) as PendingDonationState;
+        } catch {
+            sessionStorage.removeItem(PENDING_DONATION_KEY);
+            return;
+        }
+
+        const token = pendingDonation.paymentIntentId || `${pendingDonation.amount}:${pendingDonation.mode}:${pendingDonation.feederId || ''}`;
+        if (pendingDonationHandledRef.current === token) return;
+
+        const expectedReturnPath = pendingDonation.returnPath || (id === 'all' ? '/feeder/all' : `/feeder/${id}`);
+        const currentPath = id === 'all' ? '/feeder/all' : `/feeder/${id}`;
+        if (expectedReturnPath !== currentPath) return;
+        if ((currentUser.balance || 0) < pendingDonation.amount) return;
+
+        pendingDonationHandledRef.current = token;
+        sessionStorage.removeItem(PENDING_DONATION_KEY);
+        setDonationMode(pendingDonation.mode);
+        setPendingDonationMode(pendingDonation.mode);
+        setDonationAmount(pendingDonation.amount);
+        void performDonation(pendingDonation.amount, pendingDonation.mode).then((success) => {
+            if (!success) {
+                pendingDonationHandledRef.current = null;
+                sessionStorage.setItem(PENDING_DONATION_KEY, rawPending);
+            }
+        });
+    }, [currentUser, id, performDonation]);
+
+    const handleDonate = async (amount: number, mode = donationMode) => {
+        if (!currentUser) {
+            router.push('/login');
+            return;
+        }
+
+        const donationAmount = Number(amount);
+        if (!Number.isFinite(donationAmount) || donationAmount <= 0) return;
+
+        if ((currentUser.balance || 0) < donationAmount) {
+            setDonationAmount(donationAmount);
+            setPendingDonationMode(mode);
+            setIsModalOpen(true);
+            return;
+        }
+
+        await performDonation(donationAmount, mode);
     };
 
     if (loading) return (
@@ -456,8 +533,9 @@ export default function FeederDetails() {
                             <Card className={`relative overflow-hidden transition-all duration-500 border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] ${isAnimating ? 'ring-4 ring-accent scale-[1.01]' : ''}`}>
                                 {isAnimating && (
                                     <div className="absolute inset-0 bg-accent/20 flex items-center justify-center z-10 backdrop-blur-md animate-in fade-in">
-                                        <div className="bg-white p-8 rounded-full border-4 border-accent shadow-2xl transform animate-bounce">
-                                            <Heart className="w-16 h-16 text-accent fill-accent" />
+                                        <div className="donation-success-burst bg-white p-8 rounded-full border-4 border-accent shadow-2xl">
+                                            <span className="absolute inset-0 rounded-full border-4 border-accent/40 animate-ping" />
+                                            <Heart className="relative w-16 h-16 text-accent fill-accent" />
                                         </div>
                                     </div>
                                 )}
@@ -506,7 +584,7 @@ export default function FeederDetails() {
                                                 key={amt}
                                                 variant="outline"
                                                 onClick={() => handleDonate(amt)}
-                                                className="bg-white border-2 hover:bg-primary/5 transition-colors"
+                                                className="donation-amount-button bg-white border-2"
                                             >
                                                 {amt}€
                                             </Button>
@@ -546,8 +624,9 @@ export default function FeederDetails() {
                             <Card className={`relative overflow-hidden transition-all duration-500 border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_rgba(0,0,0,1)] ${isAnimating ? 'ring-4 ring-accent scale-[1.01]' : ''}`}>
                                 {isAnimating && (
                                     <div className="absolute inset-0 bg-accent/20 flex items-center justify-center z-10 backdrop-blur-md animate-in fade-in">
-                                        <div className="bg-white p-8 rounded-full border-4 border-accent shadow-2xl transform animate-bounce">
-                                            <Heart className="w-16 h-16 text-accent fill-accent" />
+                                        <div className="donation-success-burst bg-white p-8 rounded-full border-4 border-accent shadow-2xl">
+                                            <span className="absolute inset-0 rounded-full border-4 border-accent/40 animate-ping" />
+                                            <Heart className="relative w-16 h-16 text-accent fill-accent" />
                                         </div>
                                     </div>
                                 )}
@@ -557,7 +636,7 @@ export default function FeederDetails() {
                                 </p>
                                 <div className="grid grid-cols-3 gap-3 mb-4">
                                     {[2, 5, 10].map(amt => (
-                                        <Button key={amt} variant="outline" onClick={() => handleDonate(amt, 'global_pool')} className="bg-white border-2 hover:bg-primary/5 transition-colors">
+                                        <Button key={amt} variant="outline" onClick={() => handleDonate(amt, 'global_pool')} className="donation-amount-button bg-white border-2">
                                             {amt}€
                                         </Button>
                                     ))}
@@ -594,13 +673,13 @@ export default function FeederDetails() {
                                             </div>
                                             <div>
                                                 <p className="font-bold text-sm">{t('communityMember')}</p>
-                                                <p className="text-xs text-muted-foreground font-mono">{t('dispensedFood', { amount: d.total_cost_eur })}</p>
+                                                <p className="text-xs text-muted-foreground font-mono">{t('dispensedFood', { amount: d.total_cost_eur ?? 0 })}</p>
                                             </div>
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <span className="block font-black text-primary text-sm sm:text-base">+{d.total_cost_eur}€</span>
                                             <span className="text-[9px] sm:text-[10px] text-muted-foreground font-mono opacity-70">
-                                                {new Date(d.time_of_meal).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(d.time_of_meal || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
                                     </div>
@@ -647,9 +726,14 @@ export default function FeederDetails() {
             <DonationModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                feederName={t('walletDeposit')}
+                feederName={feeder?.id === 'all' ? t('globalPool') : feeder?.name || t('walletDeposit')}
                 initialAmount={donationAmount}
                 isDeposit={true}
+                directDonation={{
+                    feederId: id !== 'all' && pendingDonationMode !== 'global_pool' ? id : undefined,
+                    mode: pendingDonationMode,
+                    returnPath: id === 'all' ? '/feeder/all' : `/feeder/${id}`,
+                }}
             />
         </div>
     );
