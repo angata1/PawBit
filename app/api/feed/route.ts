@@ -2,6 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
+function isInsufficientFundsError(message: string | undefined) {
+    return typeof message === 'string' && message.includes('INSUFFICIENT_FUNDS');
+}
+
 export async function POST(request: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -44,8 +48,6 @@ export async function POST(request: Request) {
         }, { status: 400 });
     }
 
-    // 1. Get current balance
-    // Ensure user exists using Upsert (Idempotent)
     const { error: upsertError } = await supabase
         .from('users')
         .upsert(
@@ -57,71 +59,28 @@ export async function POST(request: Request) {
             { onConflict: 'auth_id', ignoreDuplicates: true }
         );
 
-    let userData = null;
-    let currentBalance = 0;
-
-    const { data: existingUser, error: userError } = await supabase
-        .from('users')
-        .select('balance')
-        .eq('auth_id', user.id)
-        .single();
-
-    if (existingUser) {
-        userData = existingUser;
-        currentBalance = existingUser.balance || 0;
-    } else {
-        // If we still can't find it after upsert, something is wrong with DB reading
-        console.error('Error fetching user profile after ensure:', userError);
+    if (upsertError) {
+        console.error('Error ensuring user profile before feed:', upsertError);
         return NextResponse.json({ error: 'Failed to access user profile' }, { status: 500 });
     }
 
-    if (currentBalance < feedAmount) {
-        return NextResponse.json({ error: 'Insufficient funds' }, { status: 402 });
-    }
-
-    // 2. Transact: Deduct Balance & Record Meal
-    // In a real scenario, this should be a transaction or stored procedure.
-
-    // a. Update Balance
-    const { error: updateError } = await supabase
-        .from('users')
-        .update({ balance: currentBalance - feedAmount })
-        .eq('auth_id', user.id);
-
-    if (updateError) {
-        return NextResponse.json({ error: 'Failed to update balance' }, { status: 500 });
-    }
-
-    // b. Record Meal (Expenditure)
-    const { data: mealData, error: mealError } = await supabase
-        .from('meals')
-        .insert({
-            feeder_id: feederId,
-            total_cost_eur: feedAmount,
-            triggered_by: 'live',
-        })
-        .select('id')
-        .single();
-
-    // Recording the "Spending" event for history
-    await supabase.from('donations').insert({
-        user_auth_id: user.id,
-        amount_eur: -feedAmount,
-        type: 'live_feed'
+    const { data: feedResult, error: feedError } = await supabase.rpc('process_live_feed', {
+        p_user_auth_id: user.id,
+        p_feeder_id: Number(feederId),
+        p_amount: feedAmount,
     });
 
-    if (mealError) {
-        // Rollback balance? Complex without stored procedures. 
-        // For MVP agent demo, proceed.
+    if (feedError) {
+        if (isInsufficientFundsError(feedError.message)) {
+            return NextResponse.json({ error: 'Insufficient funds' }, { status: 402 });
+        }
+
+        console.error('Atomic live feed failed:', feedError);
+        return NextResponse.json({ error: 'Failed to process feeding' }, { status: 500 });
     }
 
-    if (mealData?.id) {
-        await supabase.from('meal_contributions').insert({
-            meal_id: mealData.id,
-            user_id: user.id,
-            amount_contributed: feedAmount
-        });
-    }
+    const mealId = feedResult?.meal_id ?? null;
+    const newBalance = Number(feedResult?.new_balance ?? 0);
 
     // c. Broadcast "dispense" command to the Raspberry Pi via Realtime
     //    The Pi simulator listens on channel `feeder_commands_{feederId}`
@@ -134,7 +93,7 @@ export async function POST(request: Request) {
                     clearTimeout(timeout);
                     const payloadObj = {
                         amount_eur: feedAmount,
-                        meal_id: mealData?.id ?? null,
+                        meal_id: mealId,
                         feeder_id: feederId,
                         triggered_at: new Date().toISOString(),
                     };
@@ -165,9 +124,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
         success: true,
-        newBalance: currentBalance - feedAmount,
+        newBalance,
         amount: feedAmount,
         minimumPrice,
-        mealId: mealData?.id ?? null
+        mealId
     });
 }

@@ -46,52 +46,16 @@ export async function POST(request: Request) {
         const feederId = paymentIntent.metadata?.feeder_id || null;
         const isPendingDonation = paymentIntent.metadata?.intent_type === 'pending_donation';
         const depositKey = `deposit:${payment_intent_id}`;
-        await supabase
-            .from('users')
-            .upsert(
-                {
-                    auth_id: user.id,
-                    email: user.email,
-                    name: user.user_metadata?.full_name || 'User'
-                },
-                { onConflict: 'auth_id', ignoreDuplicates: true }
-            );
+        const { data: depositResult, error: depositError } = await supabase.rpc('confirm_wallet_deposit_atomic', {
+            p_user_auth_id: user.id,
+            p_amount: amountToAdd,
+            p_deposit_key: depositKey,
+            p_email: user.email ?? null,
+            p_name: user.user_metadata?.full_name || 'User',
+        });
 
-        const { data: existingUser, error: fetchError } = await supabase
-            .from('users')
-            .select('balance')
-            .eq('auth_id', user.id)
-            .single();
-
-        if (fetchError || !existingUser) {
-            throw new Error('Failed to fetch user balance.');
-        }
-
-        const currentBalance = existingUser.balance || 0;
-
-        const { data: existingDeposit } = await supabase
-            .from('donations')
-            .select('id')
-            .eq('type', depositKey)
-            .maybeSingle();
-
-        let creditedBalance = currentBalance;
-
-        if (!existingDeposit) {
-            creditedBalance = currentBalance + amountToAdd;
-
-            const { error: updateError } = await supabase
-                .from('users')
-                .update({ balance: creditedBalance })
-                .eq('auth_id', user.id);
-
-            if (updateError) throw updateError;
-
-            await supabase.from('donations').insert({
-                user_auth_id: user.id,
-                amount_eur: amountToAdd,
-                type: depositKey
-            });
+        if (depositError) {
+            throw new Error(depositError.message);
         }
 
         return NextResponse.json({
@@ -101,7 +65,7 @@ export async function POST(request: Request) {
             amount: amountToAdd,
             mode: donationMode,
             feederId,
-            newBalance: creditedBalance
+            newBalance: Number(depositResult?.new_balance ?? 0)
         });
 
     } catch (error: unknown) {

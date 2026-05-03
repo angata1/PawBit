@@ -1,6 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
+function isInsufficientFundsError(message: string | undefined) {
+    return typeof message === 'string' && message.includes('INSUFFICIENT_FUNDS');
+}
+
 /**
  * POST /api/donate-pool
  * 
@@ -24,8 +28,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
     }
 
-    // 1. Get current user balance
-    // Ensure user exists using Upsert (Idempotent)
     const { error: upsertError } = await supabase
         .from('users')
         .upsert(
@@ -37,62 +39,32 @@ export async function POST(request: Request) {
             { onConflict: 'auth_id', ignoreDuplicates: true }
         );
 
-    const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('balance')
-        .eq('auth_id', user.id)
-        .single();
-
-    if (userError || !userData) {
-        return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 });
+    if (upsertError) {
+        console.error('Error ensuring user profile before pool donation:', upsertError);
+        return NextResponse.json({ error: 'Failed to access user profile' }, { status: 500 });
     }
 
-    const currentBalance = userData.balance || 0;
-
-    if (currentBalance < donationAmount) {
-        return NextResponse.json({ error: 'Insufficient funds' }, { status: 402 });
-    }
-
-    // 2. Deduct from user balance
-    const { error: updateError } = await supabase
-        .from('users')
-        .update({ balance: currentBalance - donationAmount })
-        .eq('auth_id', user.id);
-
-    if (updateError) {
-        return NextResponse.json({ error: 'Failed to update balance' }, { status: 500 });
-    }
-
-    // 3. Add to Donation Pool (global or feeder-specific)
-    const rpcParams: { p_amount: number; p_feeder_id?: number } = { p_amount: donationAmount };
-    if (feederId) {
-        rpcParams.p_feeder_id = parseInt(feederId);
-    }
-
-    const { error: poolError } = await supabase.rpc('add_to_donation_pool', rpcParams);
-
-    if (poolError) {
-        console.error('Pool credit error:', poolError);
-        // Attempt rollback of balance
-        await supabase
-            .from('users')
-            .update({ balance: currentBalance })
-            .eq('auth_id', user.id);
-        return NextResponse.json({ error: poolError.message || 'Failed to credit pool' }, { status: 500 });
-    }
-
-    // 4. Record the donation for history & attribution
-    await supabase.from('donations').insert({
-        user_auth_id: user.id,
-        amount_eur: donationAmount,
-        type: 'pool'
+    const normalizedFeederId = feederId ? Number.parseInt(String(feederId), 10) : null;
+    const { data: donationResult, error: donationError } = await supabase.rpc('donate_to_pool_atomic', {
+        p_user_auth_id: user.id,
+        p_amount: donationAmount,
+        p_feeder_id: normalizedFeederId,
     });
+
+    if (donationError) {
+        if (isInsufficientFundsError(donationError.message)) {
+            return NextResponse.json({ error: 'Insufficient funds' }, { status: 402 });
+        }
+
+        console.error('Atomic pool donation failed:', donationError);
+        return NextResponse.json({ error: donationError.message || 'Failed to credit pool' }, { status: 500 });
+    }
 
     const target = feederId ? `Feeder #${feederId}'s pool` : 'Global Donation Pool';
 
     return NextResponse.json({
         success: true,
-        newBalance: currentBalance - donationAmount,
+        newBalance: Number(donationResult?.new_balance ?? 0),
         message: `${donationAmount} EUR donated to ${target}!`
     });
 }
