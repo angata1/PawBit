@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 
 import React, { useRef, useState, useEffect } from 'react';
 import {
-    Heart, Video, MapPinned, Gift, Activity,
+    Heart, Video, Gift, Activity,
     ChevronRight, PlayCircle, Clock, MapPin
 } from 'lucide-react';
 import Button from './Button';
@@ -13,7 +13,6 @@ import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Storage } from '../storage';
 import { createClient } from '@/lib/supabase/client';
 import { GridPattern } from './GridPattern';
 import { cn } from '@/lib/utils';
@@ -40,7 +39,7 @@ function extractYouTubeId(url: string): string {
     }
 }
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger);
 
 export default function HomeContent() {
     const container = useRef<HTMLDivElement>(null);
@@ -48,7 +47,6 @@ export default function HomeContent() {
     const t = useTranslations('Home');
     const [activeFeeders, setActiveFeeders] = useState<number>(3);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
     const [recentMoments, setRecentMoments] = useState<Moment[]>([]);
     const [loadingMoments, setLoadingMoments] = useState(true);
 
@@ -94,14 +92,6 @@ export default function HomeContent() {
             setLoadingMoments(false);
         };
         fetchMoments();
-
-        // Check mobile
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     const handleNavigate = (href: string) => {
@@ -112,311 +102,237 @@ export default function HomeContent() {
     };
 
     useGSAP(() => {
-        // Kill all ScrollTriggers on cleanup
-        return () => {
-            ScrollTrigger.getAll().forEach(t => t.kill());
-        };
-    }, []);
-
-    useGSAP(() => {
+        const q = gsap.utils.selector(container);
         const mm = gsap.matchMedia();
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-        // Desktop animations
-        mm.add("(min-width: 768px)", () => {
-            // Hero text — parallax scroll effect
-            gsap.fromTo(".hero-text-element", {
-                y: 80,
-                opacity: 0,
-            }, {
+        if (reduceMotion) {
+            gsap.set(q(".hero-text-element, .hero-bg-img, .scroll-indicator, .feature-card, .feature-icon, .moments-heading, .moment-card, .cta-content, .stat-item"), {
+                clearProps: "all",
+                autoAlpha: 1,
+                x: 0,
                 y: 0,
-                opacity: 1,
-                duration: 1.2,
-                stagger: 0.18,
-                ease: "elastic.out(1, 0.5)",
-                delay: 0.15
+                scale: 1,
+                rotation: 0,
             });
+            return;
+        }
 
-            // Hero elements parallax on scroll
-            gsap.to(".hero-content-wrapper", {
-                y: -100,
-                opacity: 0,
-                ease: "power2.inOut",
-                scrollTrigger: {
-                    trigger: ".hero-section",
-                    start: "top top",
-                    end: "bottom top",
-                    scrub: 1,
-                }
-            });
-
-            // Hero background parallax
-            gsap.to(".hero-bg-img", {
-                y: 100,
-                scale: 1.15,
-                ease: "none",
-                scrollTrigger: {
-                    trigger: ".hero-section",
-                    start: "top top",
-                    end: "bottom top",
-                    scrub: 1,
-                }
-            });
-
-            // Feature cards — scroll-driven reveal
-            gsap.fromTo(".feature-card",
-                { y: 120, opacity: 0, scale: 0.85 },
+        const reveal = (
+            targets: gsap.TweenTarget,
+            vars: {
+                from?: gsap.TweenVars;
+                to?: gsap.TweenVars;
+                scrollTrigger?: ScrollTrigger.Vars;
+            } = {},
+        ) => {
+            gsap.fromTo(targets,
                 {
+                    autoAlpha: 0,
+                    y: 48,
+                    ...vars.from,
+                },
+                {
+                    autoAlpha: 1,
                     y: 0,
-                    opacity: 1,
-                    scale: 1,
-                    duration: 0.9,
-                    stagger: 0.15,
-                    ease: "back.out(2.5)",
-                    scrollTrigger: {
-                        trigger: ".feature-cards-container",
-                        start: "top 80%",
-                        end: "top 30%",
-                        toggleActions: "play none none reverse",
-                    }
-                }
-            );
-
-            // Feature icons rotation tied to scroll
-            gsap.fromTo(".feature-icon",
-                { rotation: -180, scale: 0 },
-                {
-                    rotation: 0,
-                    scale: 1,
-                    duration: 0.8,
-                    stagger: 0.15,
-                    ease: "back.out(3)",
-                    scrollTrigger: {
-                        trigger: ".feature-cards-container",
-                        start: "top 70%",
-                        end: "top 30%",
-                        toggleActions: "play none none reverse",
-                    }
-                }
-            );
-
-            // Feature section parallax
-            gsap.to(".feature-background-pattern", {
-                y: -50,
-                ease: "none",
-                scrollTrigger: {
-                    trigger: ".feature-cards-container",
-                    start: "top bottom",
-                    end: "bottom top",
-                    scrub: 0.5,
-                }
-            });
-
-            // Moments heading — slide in and parallax
-            gsap.fromTo(".moments-heading",
-                { x: -60, opacity: 0 },
-                {
-                    x: 0,
-                    opacity: 1,
-                    duration: 1,
-                    ease: "elastic.out(1, 0.6)",
-                    scrollTrigger: {
-                        trigger: ".moments-section",
-                        start: "top 80%",
-                        end: "top 40%",
-                        toggleActions: "play none none reverse",
-                    }
-                }
-            );
-
-            // Moment cards — staggered with scroll smoothing
-            gsap.fromTo(".moment-card",
-                { y: 100, opacity: 0 },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.8,
-                    stagger: 0.12,
-                    ease: "back.out(1.8)",
-                    scrollTrigger: {
-                        trigger: ".moments-section",
-                        start: "top 75%",
-                        end: "top 35%",
-                        toggleActions: "play none none reverse",
-                    }
-                }
-            );
-
-            // CTA section — scale and reveal on scroll
-            gsap.fromTo(".cta-content",
-                { y: 60, opacity: 0, scale: 0.95 },
-                {
-                    y: 0,
-                    opacity: 1,
-                    scale: 1,
-                    duration: 1,
+                    duration: 0.7,
                     ease: "power3.out",
+                    stagger: 0.1,
+                    overwrite: "auto",
+                    ...vars.to,
                     scrollTrigger: {
-                        trigger: ".cta-section",
-                        start: "top 80%",
-                        end: "top 40%",
-                        toggleActions: "play none none reverse",
-                    }
+                        start: "top 82%",
+                        once: true,
+                        ...vars.scrollTrigger,
+                    },
                 }
             );
+        };
 
-            // Stats — pop with scroll
-            gsap.fromTo(".stat-item",
-                { scale: 0, opacity: 0 },
+        const addParallax = (targets: Element[], amount = -5) => {
+            targets.forEach((target, index) => {
+                gsap.to(target, {
+                    yPercent: amount + (index % 2 === 0 ? 1 : -1),
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: target,
+                        start: "top bottom",
+                        end: "bottom top",
+                        scrub: 0.8,
+                        invalidateOnRefresh: true,
+                    },
+                });
+            });
+        };
+
+        gsap.timeline({ defaults: { ease: "power3.out" } })
+            .fromTo(q(".hero-bg-img"),
+                { autoAlpha: 0 },
+                { autoAlpha: 0.2, duration: 1.1 }
+            )
+            .fromTo(q(".hero-text-element"),
+                { y: 42, autoAlpha: 0 },
                 {
-                    scale: 1,
-                    opacity: 1,
-                    duration: 0.7,
+                    y: 0,
+                    autoAlpha: 1,
+                    duration: 0.9,
                     stagger: 0.12,
-                    ease: "elastic.out(1, 0.5)",
-                    scrollTrigger: {
-                        trigger: ".cta-section",
-                        start: "top 70%",
-                        end: "top 30%",
-                        toggleActions: "play none none reverse",
-                    }
-                }
+                },
+                0.15
+            )
+            .fromTo(q(".scroll-indicator"),
+                { y: 14, autoAlpha: 0 },
+                { y: 0, autoAlpha: 1, duration: 0.8 },
+                0.95
             );
 
-            // CTA background pattern parallax
-            gsap.to(".cta-background-pattern", {
-                y: -30,
-                ease: "none",
-                scrollTrigger: {
-                    trigger: ".cta-section",
-                    start: "top bottom",
-                    end: "bottom top",
-                    scrub: 0.5,
-                }
-            });
-        });
-
-        // Mobile animations (simplified, lighter)
-        mm.add("(max-width: 767px)", () => {
-            // Simplified hero animations
-            gsap.fromTo(".hero-text-element", {
-                y: 30,
-                opacity: 0,
-            }, {
-                y: 0,
-                opacity: 1,
-                duration: 0.8,
-                stagger: 0.1,
-                ease: "power2.out",
-                delay: 0.1
-            });
-
-            // Feature cards - simple fade up
-            gsap.fromTo(".feature-card",
-                { y: 60, opacity: 0 },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.6,
-                    stagger: 0.1,
-                    ease: "power2.out",
-                    scrollTrigger: {
-                        trigger: ".feature-cards-container",
-                        start: "top 85%",
-                    }
-                }
-            );
-
-            // Moments - simple animations
-            gsap.fromTo(".moments-heading",
-                { y: 30, opacity: 0 },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.6,
-                    ease: "power2.out",
-                    scrollTrigger: {
-                        trigger: ".moments-section",
-                        start: "top 85%",
-                    }
-                }
-            );
-
-            gsap.fromTo(".moment-card",
-                { y: 60, opacity: 0 },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.5,
-                    stagger: 0.08,
-                    ease: "power2.out",
-                    scrollTrigger: {
-                        trigger: ".moments-section",
-                        start: "top 80%",
-                    }
-                }
-            );
-
-            // CTA - simple reveal
-            gsap.fromTo(".cta-content",
-                { y: 40, opacity: 0 },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.7,
-                    ease: "power2.out",
-                    scrollTrigger: {
-                        trigger: ".cta-section",
-                        start: "top 85%",
-                    }
-                }
-            );
-
-            gsap.fromTo(".stat-item",
-                { scale: 0.9, opacity: 0 },
-                {
-                    scale: 1,
-                    opacity: 1,
-                    duration: 0.5,
-                    stagger: 0.1,
-                    ease: "power2.out",
-                    scrollTrigger: {
-                        trigger: ".cta-section",
-                        start: "top 80%",
-                    }
-                }
-            );
-        });
-
-        // Universal animations (work on both mobile and desktop)
-        // Hero background image — gentle scale-in
-        gsap.from(".hero-bg-img", {
-            opacity: 0,
-            scale: 1.08,
-            duration: 2.2,
-            ease: "power2.out",
-        });
-
-        // Scroll indicator — floating & fade in
-        gsap.fromTo(".scroll-indicator",
-            { y: 20, opacity: 0 },
-            {
-                y: 0,
-                opacity: 1,
-                duration: 1.2,
-                delay: 1.5,
-                ease: "power3.out"
-            }
-        );
-
-        gsap.to(".scroll-indicator-icon", {
+        gsap.to(q(".scroll-indicator-icon"), {
             y: 8,
             repeat: -1,
             yoyo: true,
-            duration: 2,
-            ease: "sine.inOut"
+            duration: 1.8,
+            ease: "sine.inOut",
         });
 
+        reveal(q(".feature-card"), {
+            from: { y: 70, scale: 0.96 },
+            to: { scale: 1, stagger: 0.12 },
+            scrollTrigger: { trigger: q(".feature-cards-container")[0], start: "top 78%" },
+        });
+
+        reveal(q(".feature-icon"), {
+            from: { y: 0, scale: 0.7, rotation: -20 },
+            to: { scale: 1, rotation: 0, duration: 0.55, stagger: 0.12, ease: "back.out(1.8)" },
+            scrollTrigger: { trigger: q(".feature-cards-container")[0], start: "top 72%" },
+        });
+
+        reveal(q(".moments-heading"), {
+            from: { y: 34 },
+            to: { duration: 0.65 },
+            scrollTrigger: { trigger: q(".moments-section")[0], start: "top 76%" },
+        });
+
+        reveal(q(".cta-content"), {
+            from: { y: 46 },
+            to: { stagger: 0.08 },
+            scrollTrigger: { trigger: q(".cta-section")[0], start: "top 78%" },
+        });
+
+        reveal(q(".stat-item"), {
+            from: { y: 30, scale: 0.94 },
+            to: { scale: 1, duration: 0.55, stagger: 0.08 },
+            scrollTrigger: { trigger: q(".cta-section")[0], start: "top 68%" },
+        });
+
+        mm.add("(min-width: 768px)", () => {
+            gsap.to(q(".hero-content-wrapper"), {
+                yPercent: -10,
+                autoAlpha: 0,
+                ease: "none",
+                scrollTrigger: {
+                    trigger: q(".hero-section")[0],
+                    start: "top top",
+                    end: "bottom 35%",
+                    scrub: 0.4,
+                    invalidateOnRefresh: true,
+                }
+            });
+
+            gsap.to(q(".hero-bg-img"), {
+                yPercent: 8,
+                ease: "none",
+                scrollTrigger: {
+                    trigger: q(".hero-section")[0],
+                    start: "top top",
+                    end: "bottom top",
+                    scrub: 0.6,
+                    invalidateOnRefresh: true,
+                }
+            });
+
+            addParallax(q(".feature-card"), -5);
+            addParallax(q(".moment-card"), -4);
+            addParallax(q(".cta-content"), -5);
+            addParallax(q(".stat-item"), -3);
+
+            gsap.to(q(".feature-background-pattern"), {
+                yPercent: -8,
+                ease: "none",
+                scrollTrigger: {
+                    trigger: q(".feature-cards-container")[0],
+                    start: "top bottom",
+                    end: "bottom top",
+                    scrub: 0.6,
+                    invalidateOnRefresh: true,
+                }
+            });
+
+            gsap.to(q(".cta-background-pattern"), {
+                yPercent: -6,
+                ease: "none",
+                scrollTrigger: {
+                    trigger: q(".cta-section")[0],
+                    start: "top bottom",
+                    end: "bottom top",
+                    scrub: 0.6,
+                    invalidateOnRefresh: true,
+                }
+            });
+        });
+
+        ScrollTrigger.refresh();
+
+        return () => mm.revert();
+
     }, { scope: container });
+
+    useGSAP(() => {
+        const q = gsap.utils.selector(container);
+        const cards = q(".moment-card");
+
+        if (!cards.length) return;
+
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            gsap.set(cards, { clearProps: "all", autoAlpha: 1, y: 0, scale: 1 });
+            return;
+        }
+
+        gsap.fromTo(cards,
+            { autoAlpha: 0, y: 56, scale: 0.98 },
+            {
+                autoAlpha: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.7,
+                ease: "power3.out",
+                stagger: 0.1,
+                overwrite: "auto",
+                scrollTrigger: {
+                    trigger: q(".moments-section")[0],
+                    start: "top 72%",
+                    once: true,
+                },
+            }
+        );
+
+        if (window.matchMedia("(min-width: 768px)").matches) {
+            cards.forEach((card, index) => {
+                gsap.to(card, {
+                    yPercent: -4 + (index % 2 === 0 ? 1 : -1),
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: card,
+                        start: "top bottom",
+                        end: "bottom top",
+                        scrub: 0.8,
+                        invalidateOnRefresh: true,
+                    },
+                });
+            });
+        }
+
+        ScrollTrigger.refresh();
+    }, { scope: container, dependencies: [loadingMoments, recentMoments.length] });
 
     return (
         <>

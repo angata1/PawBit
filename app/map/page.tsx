@@ -214,7 +214,7 @@ export default function MapPage() {
                         className="w-full pointer-events-auto"
                         variant="primary"
                     >
-                        ${t('feedNow')}
+                        {t('feedNow')}
                     </Button>
                 )}
             </div>

@@ -31,6 +31,14 @@ type GalleryMealRow = {
     meal_contributions: GalleryContributionRow[] | null;
 };
 
+type GalleryFeederRow = {
+    id: number;
+    name: string | null;
+    location: {
+        address?: string;
+    } | string | null;
+};
+
 type GalleryVideo = {
     id: number;
     youtubeUrl: string;
@@ -73,13 +81,40 @@ function getContributorName(userField: GalleryContributionRow["users"]): string 
     return userField.name || "Anonymous";
 }
 
-function buildGalleryVideo(row: GalleryMealRow): GalleryVideo | null {
-    const feeder = row.feeders?.[0] || null;
+function unwrapFeeder(feeders: GalleryMealRow["feeders"]): GalleryFeederRow | null {
+    if (!feeders) return null;
+    return Array.isArray(feeders) ? (feeders[0] || null) : feeders;
+}
+
+function resolveLocation(location: GalleryFeederRow["location"], fallback: string): string {
+    if (!location) return fallback;
+
+    if (typeof location === "string") {
+        const trimmed = location.trim();
+        if (!trimmed) return fallback;
+
+        try {
+            const parsed = JSON.parse(trimmed) as { address?: string };
+            if (parsed && typeof parsed === "object" && parsed.address) {
+                return parsed.address;
+            }
+        } catch {
+            // Keep the raw string if it is not JSON.
+        }
+
+        return trimmed;
+    }
+
+    return location.address?.trim() || fallback;
+}
+
+function buildGalleryVideo(row: GalleryMealRow, feederLookup: Map<string, GalleryFeederRow>): GalleryVideo | null {
+    const feeder = unwrapFeeder(row.feeders) || feederLookup.get(String(row.feeder_id)) || null;
 
     if (!row.video_link) return null;
 
-    const feederName = feeder?.name || `Feeder #${row.feeder_id}`;
-    const location = feeder?.location?.address || "Unknown location";
+    const feederName = feeder?.name?.trim() || `Feeder #${row.feeder_id}`;
+    const location = resolveLocation(feeder?.location || null, feederName);
     const timestamp = row.time_of_meal || new Date().toISOString();
     const donors = (row.meal_contributions || [])
         .filter((entry) => Number(entry.amount_contributed || 0) > 0)
@@ -150,8 +185,28 @@ const Feedings: React.FC = () => {
                 return;
             }
 
+            const feederIds = Array.from(
+                new Set(
+                    ((data || []) as GalleryMealRow[])
+                        .map((row) => row.feeder_id)
+                        .filter((id): id is number => Number.isFinite(id))
+                )
+            );
+            const feederLookup = new Map<string, GalleryFeederRow>();
+
+            if (feederIds.length > 0) {
+                const { data: feederRows } = await supabase
+                    .from("feeders")
+                    .select("id, name, location")
+                    .in("id", feederIds);
+
+                (feederRows || []).forEach((feeder) => {
+                    feederLookup.set(String(feeder.id), feeder as GalleryFeederRow);
+                });
+            }
+
             const mapped = ((data || []) as GalleryMealRow[])
-                .map(buildGalleryVideo)
+                .map((row) => buildGalleryVideo(row, feederLookup))
                 .filter((video): video is GalleryVideo => video !== null);
 
             setVideos(mapped);
@@ -314,7 +369,7 @@ const Feedings: React.FC = () => {
                                                         )}
                                                     </div>
                                                     <div className="mt-4 pt-3 border-t border-foreground/10 text-xs italic text-muted-foreground">
-                                                        "{video.description}"
+                                                        <span>&quot;{video.description}&quot;</span>
                                                     </div>
                                                 </div>
                                             </div>

@@ -124,7 +124,7 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
                 {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50 space-y-2">
                         <MessageSquare className="w-8 h-8" />
-                        <p className="font-mono text-sm">{t('noMessages')}</p>
+                        <p className="font-mono text-center text-sm">{t('noMessages')}</p>
                     </div>
                 ) : (
                     <>
