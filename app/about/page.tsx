@@ -108,7 +108,7 @@ export default function AboutPage() {
                     {/* illustration */}
                     <div className="about-hero-img flex-1 w-full max-w-md lg:max-w-lg">
                         <div className="relative rounded-3xl overflow-hidden border-2 border-foreground neu-shadow-lg aspect-[4/3] bg-secondary/20">
-                            <Image src="/about-hero.png" alt="Students helping stray animals" fill className="object-cover" />
+                            <Image src="/about-hero.png" alt="Students helping stray cats" fill className="object-cover" />
                         </div>
                     </div>
                 </div>

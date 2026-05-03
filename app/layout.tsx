@@ -17,8 +17,8 @@ const gabriela = Gabriela({
 
 
 export const metadata: Metadata = {
-  title: "PawBit - Interactive Animal Feeding",
-  description: "Connect your clicks to real kibble. Watch live video as you donate to stray animals in your city.",
+  title: "PawBit - Interactive Cat Feeding",
+  description: "Connect your clicks to real kibble. Watch live video as you donate to stray cats in your city.",
   icons: {
     icon: "/logo.svg",
   },

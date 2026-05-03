@@ -547,7 +547,7 @@ export default function AdminDashboard() {
                                     color={data.overview.avgFoodLevel < 30 ? 'bg-red-500' : data.overview.avgFoodLevel < 60 ? 'bg-yellow-500' : 'bg-green-500'}
                                 />
                                 <StatCard
-                                    title="Animals Detected"
+                                    title="Cats Detected"
                                     value={data.overview.totalAnimalsDetected}
                                     subtitle="Live across network"
                                     icon={Activity}

@@ -1,13 +1,13 @@
 {
   "Home": {
-    "heroTitle": "Feed a Pet. <br/> <span class=\"text-primary italic\">In Real Time.</span>",
-    "heroDesc": "PawBit connects your clicks to real kibble. Watch live as you donate to stray animals across your city.",
+    "heroTitle": "Feed a Cat. <br/> <span class=\"text-primary italic\">In Real Time.</span>",
+    "heroDesc": "PawBit connects your clicks to real kibble. Watch live as you donate to stray cats across your city.",
     "feedNow": "Feed Now",
     "viewImpact": "View Impact",
     "scroll": "Scroll",
     "howItWorks": "How It Works",
     "fuelThePool": "Fuel the Pool",
-    "fuelThePoolDesc": "Top up your wallet and contribute to the Global Pool. Your funds wait securely until a hungry animal arrives.",
+    "fuelThePoolDesc": "Top up your wallet and contribute to the Global Pool. Your funds wait securely until a hungry cat arrives.",
     "aiFeeding": "AI-Powered Feeding",
     "aiFeedingDesc": "Our edge devices detect cats autonomously and dispense meals using the oldest funds in the pool.",
     "seeImpact": "See Your Impact",
@@ -20,8 +20,8 @@
     "feeder": "Feeder",
     "unknownLocation": "Unknown location",
     "replay": "REPLAY",
-    "ctaTitle": "Feed any animal,<br/> <span class=\"text-primary italic\">anywhere in the city.</span>",
-    "ctaDesc": "Donate to the shared pool — no feeder to pick, no routing to think about. When a feeder detects nearby animals, it draws from the pool and dispenses food automatically.",
+    "ctaTitle": "Feed any cat,<br/> <span class=\"text-primary italic\">anywhere in the city.</span>",
+    "ctaDesc": "Donate to the shared pool — no feeder to pick, no routing to think about. When a feeder detects nearby cats, it draws from the pool and dispenses food automatically.",
     "contributeToPool": "Contribute to pool",
     "statActiveFeeders": "Active feeders",
     "statActiveFeedersDesc": "Across parks and shelters",
@@ -46,7 +46,7 @@
     "joinNow": "Join Now"
   },
   "Footer": {
-    "desc": "Connecting animal lovers with street animals through technology. Feed, donate, and watch live.",
+    "desc": "Connecting cat lovers with street cats through technology. Feed, donate, and watch live.",
     "navigation": "Navigation",
     "home": "Home",
     "gallery": "Gallery",
@@ -59,7 +59,7 @@
     "location": "Gotse Delchev, Blagoevgrad, Bulgaria",
     "rights": "All rights reserved.",
     "madeWith": "Made with",
-    "forAnimals": "for animals"
+    "forAnimals": "for cats"
   },
   "CookieBanner": {
     "title": "This site uses cookies 🍪",
@@ -88,7 +88,7 @@
     "errorGeneric": "An unexpected error occurred",
     "accountCreated": "Account created! Please check your email to confirm.",
     "title": "Join PawBit",
-    "desc": "Become a hero for street animals.",
+    "desc": "Become a hero for street cats.",
     "fullNameLabel": "Full Name",
     "fullNamePlaceholder": "John Doe",
     "emailLabel": "Email Address",
@@ -136,7 +136,7 @@
     "updatePassword": "Update Password",
     "wallet": "Wallet",
     "balance": "Balance",
-    "availableToFeed": "Available to feed animals",
+    "availableToFeed": "Available to feed cats",
     "addFunds": "Add Funds",
     "transactionHistory": "Transaction History",
     "noTransactions": "No transactions yet.",
@@ -168,7 +168,7 @@
   "DonationModal": {
     "addFunds": "Add Funds to Wallet",
     "donateTo": "Donate to {name}",
-    "animals": "Animals"
+    "animals": "Cats"
   },
   "CheckoutForm": {
     "processing": "Processing...",
@@ -246,7 +246,7 @@
     "connectionError": "Connection error.",
     "processing": "Processing...",
     "successTitle": "Success!",
-    "successDesc": "Funds have been added to your wallet. You can now start feeding animals.",
+    "successDesc": "Funds have been added to your wallet. You can now start feeding cats.",
     "goWallet": "Go to Wallet",
     "errorTitle": "Something went wrong",
     "returnProfile": "Return to Profile"
@@ -284,20 +284,20 @@
   },
   "About": {
     "heroTitle": "Two Students.<br />One <span class=\"text-primary\">Mission.</span>",
-    "heroSubtitle": "We're Angel & Raya — high-school students from Gotse Delchev, Bulgaria who decided that stray animals in our town deserve better than an empty stomach.",
+    "heroSubtitle": "We're Angel & Raya — high-school students from Gotse Delchev, Bulgaria who decided that stray cats in our town deserve better than an empty stomach.",
     "story": {
       "title": "Our Story",
       "p1": "It started the way most projects start — with a problem we couldn't stop thinking about. Every day on our way to school we'd walk past the same strays: skinny cats hiding under parked cars, a one-eared dog begging near the bakery. Some days someone would leave leftovers. Most days, nobody did.",
-      "p2": "We kept asking ourselves: <strong class=\"text-foreground\">what if feeding them didn't depend on who happened to walk by?</strong> What if anyone, anywhere, could press a button and actually deliver food to an animal that needs it — right now, in real-time?",
+      "p2": "We kept asking ourselves: <strong class=\"text-foreground\">what if feeding them didn't depend on who happened to walk by?</strong> What if anyone, anywhere, could press a button and actually deliver food to a cat that needs it — right now, in real-time?",
       "p3": "That question became PawBit. We started prototyping during a school project at <strong class=\"text-foreground\"> PMG “Yane Sandanski”</strong> in Gotse Delchev. A Raspberry Pi, a servo motor, a bag of kibble, and many late nights later — the first feeder worked. Then we built the website so people could actually use it. Then the live camera feed. Then the donation system. One thing led to another, and now you're reading this.",
-      "p4": "PawBit isn't a corporate initiative. It's not backed by a big organization. It's two students who care about the animals they see every day and believe technology can make a real, tangible difference — one meal at a time."
+      "p4": "PawBit isn't a corporate initiative. It's not backed by a big organization. It's two students who care about the cats they see every day and believe technology can make a real, tangible difference — one meal at a time."
     },
     "why": {
       "title": "What Makes PawBit Different",
       "items": {
         "transparency": {
           "title": "Full Transparency",
-          "body": "Watch your donation in action. Every feeder has a live camera — you see the animals eat the moment the moment the motor triggers."
+          "body": "Watch your donation in action. Every feeder has a live camera — you see the cats eat the moment the moment the motor triggers."
         },
         "realtime": {
           "title": "Real-Time Feeding",
@@ -313,10 +313,10 @@
         },
         "distribution": {
           "title": "Smart Distribution",
-          "body": "The donation pool allocates food where it's needed most — based on hunger levels, time since last meal, and animal activity."
+          "body": "The donation pool allocates food where it's needed most — based on hunger levels, time since last meal, and cat activity."
         },
         "animalsfirst": {
-          "title": "100% for Animals",
+          "title": "100% for Cats",
           "body": "Every cent goes directly to kibble and feeder maintenance. We don't take salaries — we're students doing this because we care."
         }
       }
@@ -327,7 +327,7 @@
       "list": {
         "brain": "Raspberry Pi Zero 2W as the brain of each feeder",
         "supabase": "Real-time WebSocket connection to Supabase",
-        "sensors": "Sensors detect animal presence and food levels"
+        "sensors": "Sensors detect cat presence and food levels"
       }
     },
     "team": {
@@ -335,12 +335,12 @@
       "angel": {
         "name": "Angel Murtev",
         "role": "Programmer, Website Builder & Project Planner",
-        "bio": "Builds the web platform, manages the system architecture, and maps out the project roadmap. Believes that code can do more than just live on a screen — it can put food in a hungry animal's bowl."
+        "bio": "Builds the web platform, manages the system architecture, and maps out the project roadmap. Believes that code can do more than just live on a screen — it can put food in a hungry cat's bowl."
       },
       "raya": {
         "name": "Raya Sokolova",
         "role": "Hardware Maker & CAD Designer",
-        "bio": "Handles the physical engineering, from 3D modeling the feeder enclosures to wiring the electronics. Turning sketches into functional, animal-proof hardware that works in the real world."
+        "bio": "Handles the physical engineering, from 3D modeling the feeder enclosures to wiring the electronics. Turning sketches into functional, cat-proof hardware that works in the real world."
       },
       "location": "Gotse Delchev, Bulgaria"
     },
@@ -376,7 +376,7 @@
         "title": "Sharing Your Information",
         "p1": "We do **not** sell, rent, or trade your personal data to third parties.",
         "p2": "We share data with **Stripe** (payment processing) and **Supabase** (database hosting) solely to operate the service. These providers are contractually obligated to keep your data secure.",
-        "p3": "We may disclose information if required by law or to protect the rights and safety of users or animals in our care."
+        "p3": "We may disclose information if required by law or to protect the rights and safety of users or cats in our care."
       },
       "security": {
         "title": "Data Security",
@@ -412,7 +412,7 @@
       },
       "use": {
         "title": "Use of the Service",
-        "p1": "You may use PawBit solely for personal, non-commercial purposes related to the welfare of street animals, unless you have a written agreement with us for commercial use.",
+        "p1": "You may use PawBit solely for personal, non-commercial purposes related to the welfare of street cats, unless you have a written agreement with us for commercial use.",
         "p2": "You agree **not** to: impersonate another person, upload false or misleading content, attempt to reverse-engineer the Service, or interfere with its normal operation.",
         "p3": "You are responsible for keeping your account credentials secure. Notify us immediately at angel.murtev@pmggd.bg if you suspect unauthorised access.",
         "p4": "We may suspend or terminate your account if you violate these terms or misuse the platform."
