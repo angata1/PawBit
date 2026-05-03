@@ -17,6 +17,9 @@ export interface Feeder {
     dispensePriceEur?: number;
     lastFeeding?: string;
     liveStreamUrl?: string;
+    streamProvider?: 'youtube' | 'agora' | string;
+    streamChannel?: string;
+    streamUid?: string;
     isStreaming?: boolean;
 }
 

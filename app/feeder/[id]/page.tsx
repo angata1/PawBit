@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Feeder, Donation, User, deriveConnectionStatus } from '../../types';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import AgoraLivePlayer from '../../components/AgoraLivePlayer';
 import DonationModal from '@/components/DonationModal';
 import RealtimeChat from '@/components/RealtimeChat';
 import { useTranslations } from 'next-intl';
@@ -70,6 +71,9 @@ export default function FeederDetails() {
             dispensePriceEur: Number(f.dispense_price_eur ?? 2),
             lastFeeding: f.created_at,
             liveStreamUrl: '',
+            streamProvider: undefined,
+            streamChannel: undefined,
+            streamUid: undefined,
             isStreaming: f.is_streaming ?? false,
         };
     };
@@ -116,7 +120,7 @@ export default function FeederDetails() {
             if (feederData) {
                 const { data: streamData } = await supabase
                     .from('livestreams')
-                    .select('stream_url')
+                    .select('stream_url, stream_provider, stream_channel, stream_uid')
                     .eq('feeder_id', id)
                     .eq('is_active', true)
                     .order('created_at', { ascending: false })
@@ -126,6 +130,15 @@ export default function FeederDetails() {
                 const mapped = mapFeederRow(feederData);
                 if (streamData?.stream_url) {
                     mapped.liveStreamUrl = streamData.stream_url;
+                }
+                if (streamData?.stream_provider) {
+                    mapped.streamProvider = streamData.stream_provider;
+                }
+                if (streamData?.stream_channel) {
+                    mapped.streamChannel = streamData.stream_channel;
+                }
+                if (streamData?.stream_uid) {
+                    mapped.streamUid = streamData.stream_uid;
                 }
 
                 setFeeder(mapped);
@@ -404,7 +417,9 @@ export default function FeederDetails() {
                                 {/* LIVE */}
                                 {streamStatus === 'live' && !isOffline && (
                                     <>
-                                        {feeder.liveStreamUrl && getSafeYouTubeUrl(feeder.liveStreamUrl) ? (
+                                        {feeder.streamProvider === 'agora' && feeder.streamChannel ? (
+                                            <AgoraLivePlayer feederId={feeder.id} channelName={feeder.streamChannel} />
+                                        ) : feeder.liveStreamUrl && getSafeYouTubeUrl(feeder.liveStreamUrl) ? (
                                             <iframe
                                                 width="100%"
                                                 height="100%"
@@ -419,7 +434,7 @@ export default function FeederDetails() {
                                             <div className="w-full h-full bg-zinc-900 flex flex-col items-center justify-center text-muted-foreground font-mono text-sm">
                                                 <Video className="w-10 h-10 mb-2 opacity-50" />
                                                 <p>Live stream signal connected</p>
-                                                <p className="text-xs opacity-50 mt-1">(No YouTube URL configured in backend)</p>
+                                                <p className="text-xs opacity-50 mt-1">(No Agora channel configured in backend)</p>
                                             </div>
                                         )}
                                         <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded flex items-center gap-2 font-bold text-sm border-2 border-black shadow-lg z-20 pointer-events-none">
