@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
+import type { StripeElementsOptions } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { useTranslations } from "next-intl";
 import CheckoutForm from "./CheckoutForm";
-import Button from "@/app/components/Button";
 import { X } from "lucide-react";
 // If Dialog component doesn't exist, we'll build a simple custom one for now or use the existing Card component in a fixed overlay.
 
@@ -22,9 +22,14 @@ type DonationModalProps = {
     feederName?: string;
     initialAmount?: number;
     isDeposit?: boolean;
+    directDonation?: {
+        feederId?: string;
+        mode: "live" | "feeder_pool" | "global_pool";
+        returnPath: string;
+    };
 };
 
-export default function DonationModal({ isOpen, onClose, feederName, initialAmount = 5, isDeposit = false }: DonationModalProps) {
+export default function DonationModal({ isOpen, onClose, feederName, initialAmount = 5, isDeposit = false, directDonation }: DonationModalProps) {
     const [clientSecret, setClientSecret] = useState("");
     const [amount, setAmount] = useState(initialAmount);
     const t = useTranslations("DonationModal");
@@ -35,25 +40,23 @@ export default function DonationModal({ isOpen, onClose, feederName, initialAmou
 
     useEffect(() => {
         if (isOpen) {
-            // IF isDeposit is true, we might call a different endpoint or pass metadata
-            // For now, reusing the same endpoint but ideally we'd pass { type: 'deposit' }
-            // Let's assume the backend handles it or we just create a generic payment intent
+            setClientSecret("");
             fetch("/api/create-payment-intent", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ amount: amount, isDeposit }),
+                body: JSON.stringify({ amount, isDeposit, directDonation }),
             })
                 .then((res) => res.json())
                 .then((data) => setClientSecret(data.clientSecret));
         }
-    }, [amount, isOpen, isDeposit]);
+    }, [amount, isOpen, isDeposit, directDonation]);
 
     if (!isOpen) return null;
 
     const appearance = {
         theme: 'stripe',
-    };
-    const options: any = {
+    } as const;
+    const options: StripeElementsOptions = {
         clientSecret,
         appearance,
     };
@@ -69,7 +72,9 @@ export default function DonationModal({ isOpen, onClose, feederName, initialAmou
                 </button>
 
                 <h2 className="text-2xl font-bold mb-4">
-                    {isDeposit ? t("addFunds") : t("donateTo", { name: feederName || t("animals") })}
+                    {directDonation
+                        ? t("donateTo", { name: feederName || t("animals") })
+                        : isDeposit ? t("addFunds") : t("donateTo", { name: feederName || t("animals") })}
                 </h2>
 
                 <div className="mb-6 flex gap-2">
@@ -99,8 +104,7 @@ export default function DonationModal({ isOpen, onClose, feederName, initialAmou
 
                 {clientSecret && (
                     <Elements key={clientSecret} options={options} stripe={stripePromise}>
-                        <CheckoutForm amount={amount} />
-                        {/* Note: CheckoutForm needs to handle success by calling an API to credit the user if relying on client-side confirmation for MVP */}
+                        <CheckoutForm amount={amount} returnPath={directDonation?.returnPath} />
                     </Elements>
                 )}
             </div>

@@ -191,6 +191,31 @@
 
 @layer components {
   /* Utilities */
+  .donation-amount-button {
+    transition:
+      transform 160ms ease,
+      box-shadow 160ms ease,
+      background-color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  .donation-amount-button:hover {
+    background: rgb(var(--primary) / 0.09);
+    border-color: rgb(var(--foreground));
+    transform: translateY(-2px);
+    box-shadow: 5px 5px 0 0 rgba(40, 32, 18, 0.72);
+  }
+
+  .donation-amount-button:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 1px 1px 0 0 rgba(40, 32, 18, 0.85);
+  }
+
+  .donation-success-burst {
+    position: relative;
+    animation: donation-success-pop 900ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -215,6 +240,24 @@
 
   .mt-safe {
     margin-top: env(safe-area-inset-top);
+  }
+}
+
+@keyframes donation-success-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) rotate(-10deg);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.12) rotate(5deg);
+  }
+  70% {
+    transform: scale(0.98) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
   }
 }
 

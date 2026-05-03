@@ -1,28 +1,43 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+const PENDING_DONATION_KEY = 'pawbit:pending-donation-ready';
+
 function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const paymentIntentId = searchParams.get('payment_intent');
     const redirectStatus = searchParams.get('redirect_status');
+    const fallbackReturnPath = searchParams.get('return_path');
 
     const t = useTranslations('PaymentSuccess');
     const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
     const [message, setMessage] = useState(t('verifying'));
+    const [returnPath, setReturnPath] = useState('/profile');
+    const processedRef = useRef(false);
 
     useEffect(() => {
+        if (processedRef.current) return;
+        processedRef.current = true;
+
         if (!paymentIntentId || redirectStatus !== 'succeeded') {
             setStatus('error');
             setMessage(t('invalidInfo'));
             return;
         }
+
+        const getSafeReturnPath = (path: unknown) => {
+            return typeof path === 'string' && path.startsWith('/') && !path.startsWith('//')
+                ? path
+                : '/profile';
+        };
+        setReturnPath(getSafeReturnPath(fallbackReturnPath));
 
         const confirmDeposit = async () => {
             try {
@@ -36,6 +51,18 @@ function PaymentSuccessContent() {
 
                 if (res.ok) {
                     setStatus('success');
+                    const nextReturnPath = getSafeReturnPath(data.redirectPath || fallbackReturnPath);
+                    setReturnPath(nextReturnPath);
+
+                    if (data.paymentKind === 'pending_donation') {
+                        sessionStorage.setItem(PENDING_DONATION_KEY, JSON.stringify({
+                            amount: data.amount,
+                            mode: data.mode,
+                            feederId: data.feederId,
+                            returnPath: nextReturnPath,
+                            paymentIntentId,
+                        }));
+                    }
                 } else {
                     if (data.message === 'Already processed') {
                         setStatus('success'); // Still show success if refreshed
@@ -44,14 +71,14 @@ function PaymentSuccessContent() {
                         setMessage(data.error || t('walletUpdateFailed'));
                     }
                 }
-            } catch (err) {
+            } catch {
                 setStatus('error');
                 setMessage(t('connectionError'));
             }
         };
 
         confirmDeposit();
-    }, [paymentIntentId, redirectStatus]);
+    }, [paymentIntentId, redirectStatus, fallbackReturnPath, router, t]);
 
     return (
         <div className="min-h-screen pt-12 pb-12 bg-background flex items-center justify-center p-4">
@@ -71,10 +98,10 @@ function PaymentSuccessContent() {
                         </div>
                         <h1 className="text-3xl font-black mb-2 text-foreground">{t('successTitle')}</h1>
                         <p className="text-muted-foreground mb-8">
-                            {t('successDesc')}
+                            {returnPath === '/profile' ? t('successDesc') : t('walletReadyDesc')}
                         </p>
-                        <Button onClick={() => router.push('/profile')} size="lg" className="w-full">
-                            {t('goWallet')}
+                        <Button onClick={() => router.push(returnPath)} size="lg" className="w-full">
+                            {returnPath === '/profile' ? t('goWallet') : t('returnAndDonate')}
                         </Button>
                     </div>
                 )}
@@ -86,7 +113,7 @@ function PaymentSuccessContent() {
                         </div>
                         <h1 className="text-2xl font-bold mb-2">{t('errorTitle')}</h1>
                         <p className="text-muted-foreground mb-8">{message}</p>
-                        <Button onClick={() => router.push('/profile')} variant="outline" className="w-full">
+                        <Button onClick={() => router.push(returnPath)} variant="outline" className="w-full">
                             {t('returnProfile')}
                         </Button>
                     </div>

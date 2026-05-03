@@ -1,6 +1,19 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    // @ts-expect-error Stripe package may lag the pinned dashboard API version.
+    apiVersion: '2024-12-18.acacia',
+    typescript: true,
+});
+
+function sanitizeReturnPath(path: unknown) {
+    if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) {
+        return '/profile';
+    }
+    return path;
+}
 
 export async function POST(request: Request) {
     const supabase = await createClient();
@@ -17,7 +30,6 @@ export async function POST(request: Request) {
     }
 
     try {
-        // 1. Verify Payment Intent with Stripe
         const paymentIntent = await stripe.paymentIntents.retrieve(payment_intent_id);
 
         if (paymentIntent.status !== 'succeeded') {
@@ -28,81 +40,72 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Forbidden: Payment intent ownership mismatch' }, { status: 403 });
         }
 
-        // 2. Check if already processed (this is a simple check, a robust one needs a transaction ID column)
-        // For MVP, we'll assume if we haven't logged this specific payment intent in donations metadata/notes
-        // or just trust the flow. 
-        // BETTER: We should store the payment_intent_id in the 'donations' table to enforce uniqueness.
-        // I will add it to the 'type' or a new column if I could, but let's use the 'message' or similar?
-        // The schema provided by user has: id, user_id, amount_eur, created_at, type.
-        // I'll assume 'type' can store "deposit:pi_xxxx..."
-
-        const intentKey = `deposit:${payment_intent_id}`;
-
-        const { data: existingDonation } = await supabase
-            .from('donations')
-            .select('id')
-            .eq('type', intentKey)
-            .single();
-
-        if (existingDonation) {
-            return NextResponse.json({ message: 'Already processed' });
-        }
-
-        // 3. Update Balance
-        // 3. Update Balance
-        // Ensure user exists using Upsert (Idempotent)
-        const { error: upsertError } = await supabase
+        const amountToAdd = paymentIntent.amount / 100;
+        const returnPath = sanitizeReturnPath(paymentIntent.metadata?.return_path);
+        const donationMode = paymentIntent.metadata?.donation_mode || null;
+        const feederId = paymentIntent.metadata?.feeder_id || null;
+        const isPendingDonation = paymentIntent.metadata?.intent_type === 'pending_donation';
+        const depositKey = `deposit:${payment_intent_id}`;
+        await supabase
             .from('users')
             .upsert(
                 {
                     auth_id: user.id,
                     email: user.email,
                     name: user.user_metadata?.full_name || 'User'
-                    // removed balance: 0 to avoid overwriting existing balance or confusing schema if column missing
                 },
                 { onConflict: 'auth_id', ignoreDuplicates: true }
             );
 
-        if (upsertError) {
-            console.error("Upsert error:", upsertError);
-            // Verify if it's just a schema mismatch (e.g. balance column) or real error. 
-            // If we really can't ensure user, we might fail, but let's try to proceed to fetch balance.
-        }
-
-        // Get current balance
-        const { data: userData, error: fetchError } = await supabase
+        const { data: existingUser, error: fetchError } = await supabase
             .from('users')
             .select('balance')
             .eq('auth_id', user.id)
             .single();
 
-        if (fetchError || !userData) {
-            throw new Error("Failed to fetch user profile after creation attempt.");
+        if (fetchError || !existingUser) {
+            throw new Error('Failed to fetch user balance.');
         }
 
-        const currentBalance = userData.balance || 0;
-        const amountToAdd = paymentIntent.amount / 100; // Stripe is in cents
-        const newBalance = currentBalance + amountToAdd;
+        const currentBalance = existingUser.balance || 0;
 
-        // Update User Balance
-        const { error: updateError } = await supabase
-            .from('users')
-            .update({ balance: newBalance })
-            .eq('auth_id', user.id);
+        const { data: existingDeposit } = await supabase
+            .from('donations')
+            .select('id')
+            .eq('type', depositKey)
+            .maybeSingle();
 
-        if (updateError) throw updateError;
+        let creditedBalance = currentBalance;
 
-        // 4. Log Transaction
-        await supabase.from('donations').insert({
-            user_auth_id: user.id,
-            amount_eur: amountToAdd,
-            type: intentKey
+        if (!existingDeposit) {
+            creditedBalance = currentBalance + amountToAdd;
+
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({ balance: creditedBalance })
+                .eq('auth_id', user.id);
+
+            if (updateError) throw updateError;
+
+            await supabase.from('donations').insert({
+                user_auth_id: user.id,
+                amount_eur: amountToAdd,
+                type: depositKey
+            });
+        }
+
+        return NextResponse.json({
+            success: true,
+            paymentKind: isPendingDonation ? 'pending_donation' : 'wallet_deposit',
+            redirectPath: returnPath,
+            amount: amountToAdd,
+            mode: donationMode,
+            feederId,
+            newBalance: creditedBalance
         });
 
-        return NextResponse.json({ success: true, newBalance });
-
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error confirming deposit:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
     }
 }

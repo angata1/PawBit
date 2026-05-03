@@ -248,6 +248,8 @@
     "successTitle": "Success!",
     "successDesc": "Funds have been added to your wallet. You can now start feeding cats.",
     "goWallet": "Go to Wallet",
+    "walletReadyDesc": "Your wallet is ready. Click the green button to return and complete the donation.",
+    "returnAndDonate": "Return and donate",
     "errorTitle": "Something went wrong",
     "returnProfile": "Return to Profile"
   },

@@ -2,10 +2,15 @@
 
 import React, { useState } from "react";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import Button from "@/app/components/Button";
 import { useTranslations } from "next-intl";
+import Button from "@/app/components/Button";
 
-export default function CheckoutForm({ amount }: { amount: number }) {
+type CheckoutFormProps = {
+    amount: number;
+    returnPath?: string;
+};
+
+export default function CheckoutForm({ amount, returnPath = "/profile" }: CheckoutFormProps) {
     const t = useTranslations("CheckoutForm");
     const stripe = useStripe();
     const elements = useElements();
@@ -24,11 +29,15 @@ export default function CheckoutForm({ amount }: { amount: number }) {
 
         setIsLoading(true);
 
+        const successUrl = new URL("/payment-success", window.location.origin);
+        if (returnPath.startsWith("/")) {
+            successUrl.searchParams.set("return_path", returnPath);
+        }
+
         const { error } = await stripe.confirmPayment({
             elements,
             confirmParams: {
-                // Make sure to change this to your payment completion page
-                return_url: `${window.location.origin}/payment-success`,
+                return_url: successUrl.toString(),
             },
         });
 
@@ -46,9 +55,9 @@ export default function CheckoutForm({ amount }: { amount: number }) {
         setIsLoading(false);
     };
 
-    const paymentElementOptions: any = {
+    const paymentElementOptions = {
         layout: "tabs",
-    };
+    } as const;
 
     return (
         <form id="payment-form" onSubmit={handleSubmit}>
