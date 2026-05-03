@@ -155,7 +155,7 @@ export default function FeederDetails() {
             if (feederData) {
                 const { data: streamData } = await supabase
                     .from('livestreams')
-                    .select('stream_url, stream_provider, stream_channel, stream_uid')
+                    .select('id, stream_provider, stream_channel, stream_uid')
                     .eq('feeder_id', id)
                     .eq('is_active', true)
                     .order('created_at', { ascending: false })
@@ -163,9 +163,6 @@ export default function FeederDetails() {
                     .maybeSingle();
 
                 const mapped = mapFeederRow(feederData);
-                if (streamData?.stream_url) {
-                    mapped.liveStreamUrl = streamData.stream_url;
-                }
                 if (streamData?.stream_provider) {
                     mapped.streamProvider = streamData.stream_provider;
                 }
@@ -174,6 +171,16 @@ export default function FeederDetails() {
                 }
                 if (streamData?.stream_uid) {
                     mapped.streamUid = streamData.stream_uid;
+                }
+                if (streamData?.stream_provider === 'youtube') {
+                    const { data: youtubeStream } = await supabase
+                        .from('livestreams')
+                        .select('stream_url')
+                        .eq('id', streamData.id)
+                        .maybeSingle();
+                    if (youtubeStream?.stream_url) {
+                        mapped.liveStreamUrl = youtubeStream.stream_url;
+                    }
                 }
 
                 setFeeder(mapped);
