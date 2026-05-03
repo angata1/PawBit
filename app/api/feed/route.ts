@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 function isInsufficientFundsError(message: string | undefined) {
     return typeof message === 'string' && message.includes('INSUFFICIENT_FUNDS');
@@ -64,11 +64,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to access user profile' }, { status: 500 });
     }
 
-    const { data: feedResult, error: feedError } = await supabase.rpc('process_live_feed', {
+    const { data: feedResult, error: feedError } = await (supabase.rpc('process_live_feed', {
         p_user_auth_id: user.id,
         p_feeder_id: Number(feederId),
         p_amount: feedAmount,
-    });
+    }) as any);
 
     if (feedError) {
         if (isInsufficientFundsError(feedError.message)) {

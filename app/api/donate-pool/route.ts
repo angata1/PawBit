@@ -45,11 +45,11 @@ export async function POST(request: Request) {
     }
 
     const normalizedFeederId = feederId ? Number.parseInt(String(feederId), 10) : null;
-    const { data: donationResult, error: donationError } = await supabase.rpc('donate_to_pool_atomic', {
+    const { data: donationResult, error: donationError } = await (supabase.rpc('donate_to_pool_atomic', {
         p_user_auth_id: user.id,
         p_amount: donationAmount,
         p_feeder_id: normalizedFeederId,
-    });
+    }) as any);
 
     if (donationError) {
         if (isInsufficientFundsError(donationError.message)) {

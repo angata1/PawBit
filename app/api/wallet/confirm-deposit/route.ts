@@ -46,13 +46,13 @@ export async function POST(request: Request) {
         const feederId = paymentIntent.metadata?.feeder_id || null;
         const isPendingDonation = paymentIntent.metadata?.intent_type === 'pending_donation';
         const depositKey = `deposit:${payment_intent_id}`;
-        const { data: depositResult, error: depositError } = await supabase.rpc('confirm_wallet_deposit_atomic', {
+        const { data: depositResult, error: depositError } = await (supabase.rpc('confirm_wallet_deposit_atomic', {
             p_user_auth_id: user.id,
             p_amount: amountToAdd,
             p_deposit_key: depositKey,
             p_email: user.email ?? null,
             p_name: user.user_metadata?.full_name || 'User',
-        });
+        }) as any);
 
         if (depositError) {
             throw new Error(depositError.message);

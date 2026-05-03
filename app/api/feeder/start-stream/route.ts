@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { buildAgoraIngestUrl, createAgoraStreamingKey } from '@/lib/agora/mediaGateway';
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 export async function POST(request: Request) {
     const supabase = await createClient();
@@ -27,8 +27,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Agora stream generation is not configured' }, { status: 500 });
     }
 
-    const { data: feeder, error: feederError } = await adminSupabase
-        .from('feeders')
+    const { data: feeder, error: feederError } = await (adminSupabase
+        .from('feeders') as any)
         .select('pi_auth_key')
         .eq('id', feederId)
         .single();
@@ -47,8 +47,8 @@ export async function POST(request: Request) {
 
         const streamChannel = `pawbit-feeder-${feederId}`;
         const streamUid = `feeder-${feederId}`;
-        await adminSupabase
-            .from('livestreams')
+        await (adminSupabase
+            .from('livestreams') as any)
             .update({
                 is_active: false,
                 viewer_count: 0
@@ -65,8 +65,8 @@ export async function POST(request: Request) {
         });
         const streamUrl = buildAgoraIngestUrl(region, streamKey);
 
-        const { data: insertedRows, error: insertError } = await adminSupabase
-            .from('livestreams')
+        const { data: insertedRows, error: insertError } = await (adminSupabase
+            .from('livestreams') as any)
             .insert({
                 feeder_id: feederId,
                 stream_provider: 'agora',
@@ -120,8 +120,8 @@ export async function POST(request: Request) {
     } catch (err) {
         console.error(err);
         if (createdStreamId) {
-            await adminSupabase
-                .from('livestreams')
+            await (adminSupabase
+                .from('livestreams') as any)
                 .update({ is_active: false, viewer_count: 0 })
                 .eq('id', createdStreamId);
         }
