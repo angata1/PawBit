@@ -45,6 +45,175 @@
     "login": "Log In",
     "joinNow": "Join Now"
   },
+  "Admin": {
+    "loading": "Loading admin data...",
+    "tabs": {
+      "overview": "Overview",
+      "feeders": "Feeders ({count})",
+      "transactions": "Transactions",
+      "pools": "Pools"
+    },
+    "common": {
+      "refresh": "Refresh",
+      "dataUnavailable": "Data may be unavailable - check Supabase tables",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saveFeeder": "Save Feeder",
+      "saveChanges": "Save Changes",
+      "currencyPrefix": "€"
+    },
+    "modal": {
+      "addTitle": "Add New Feeder",
+      "createdTitle": "Feeder Created!",
+      "createdDesc": "Please copy the Raspberry Pi registration key below. You will need it to connect the Python script.",
+      "copied": "I have copied the key"
+    },
+    "chart": {
+      "revenue": "Revenue",
+      "meals": "Meals"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline",
+      "disabled": "Disabled",
+      "never_connected": "Never Connected"
+    },
+    "feederForm": {
+      "name": "Feeder Name",
+      "address": "Address",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "foodLevel": "Food Level (%)",
+      "mealPrice": "Meal Price (EUR)",
+      "leftovers": "Leftovers",
+      "adminStatus": "Admin Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "status": "Status",
+      "placeholders": {
+        "name": "e.g. Central Park Feeder",
+        "address": "e.g. Vitosha Blvd, Sofia",
+        "latitude": "42.6977",
+        "longitude": "23.3219",
+        "foodLevel": "100",
+        "mealPrice": "2.00"
+      },
+      "statusOptions": {
+        "active": "Active",
+        "maintenance": "Maintenance",
+        "offline": "Offline"
+      }
+    },
+    "overview": {
+      "keyMetrics": "Key Metrics",
+      "totalRevenue": "Total Revenue",
+      "totalMeals": "Total Meals",
+      "registeredUsers": "Registered Users",
+      "activeFeeders": "Active Feeders",
+      "avgFoodLevel": "Avg Food Level",
+      "catsDetected": "Cats Detected",
+      "thisMonthValue": "{value} this month",
+      "thisMonthMeals": "{value} this month",
+      "walletValue": "{value} in wallets",
+      "ofTotal": "of {value} total",
+      "offlineCount": "{value} offline",
+      "acrossAllFeeders": "Across all feeders",
+      "liveAcrossNetwork": "Live across network",
+      "mtd": "MTD",
+      "revenueTitle": "Revenue (14 days)",
+      "revenueSubtitle": "Wallet top-ups & deposits",
+      "perMonth": "/ mo",
+      "feedingsTitle": "Feedings Triggered (14 days)",
+      "feedingsSubtitle": "Dispensed meals per day",
+      "feederStatusTitle": "Feeder Status",
+      "feederStatusSubtitle": "Network health overview",
+      "noFeederData": "No feeder data available.",
+      "checkFeedersTable": "Check Supabase feeders table.",
+      "topDonorsTitle": "Top Donors",
+      "topDonorsSubtitle": "Highest lifetime deposits",
+      "noDonorData": "No donor data yet.",
+      "donorHint": "Donations will appear here once users top up their wallets.",
+      "recentTransactionsTitle": "Recent Transactions",
+      "recentTransactionsSubtitle": "Latest platform activity",
+      "viewAll": "View All →",
+      "noTransactions": "No transactions found.",
+      "checkDonationsTable": "Check Supabase donations table.",
+      "checkFeedersTableAlt": "Check Supabase feeders table."
+    },
+    "feeders": {
+      "title": "Feeder Management",
+      "subtitle": "Manage and monitor your hardware network",
+      "addFeeder": "Add Feeder",
+      "total": "Total",
+      "noFeedersTitle": "No feeders in database",
+      "noFeedersDesc": "Your Supabase feeders table is empty. Add your first feeder to get started.",
+      "addFirstFeeder": "Add First Feeder",
+      "piKey": "Pi Key:",
+      "noKey": "No key",
+      "food": "Food",
+      "leftovers": "Leftovers",
+      "meal": "Meal",
+      "id": "ID: {value}...",
+      "editTitle": "Edit feeder",
+      "deleteTitle": "Delete feeder",
+      "viewPublicPage": "View public page",
+      "lastSeen": "Last seen: {value}"
+    },
+    "transactions": {
+      "title": "Transaction Ledger",
+      "subtitle": "All deposits & feeding expenditures from Supabase",
+      "totalDeposits": "Total Deposits",
+      "thisMonth": "This Month",
+      "totalMealsPaid": "Total Meals Paid",
+      "walletBalances": "Wallet Balances",
+      "unclaimedFunds": "Unclaimed funds",
+      "allTransactions": "All Transactions",
+      "recordsShown": "{value} records shown",
+      "columns": {
+        "type": "Type",
+        "user": "User",
+        "amount": "Amount",
+        "date": "Date"
+      },
+      "txTypes": {
+        "deposit": "Deposit",
+        "feeding": "Feeding",
+        "live_feed": "Live Feed"
+      },
+      "unknown": "Unknown",
+      "noTransactions": "No transactions found",
+      "checkDonationsTable": "Check Supabase donations table schema and RLS policies"
+    },
+    "pools": {
+      "title": "Donation Pool Management",
+      "subtitle": "View balances, add funds, or deduct for maintenance and repairs",
+      "primaryFund": "Primary Fund",
+      "noPoolsTitle": "No donation pools found",
+      "noPoolsDesc": "Run the SQL migration to initialize the Global Pool",
+      "actionsTitle": "Admin Actions - Global Pool",
+      "actionsSubtitle": "Add or deduct funds for maintenance, repairs, new feeders, etc.",
+      "actionLabel": "Action",
+      "deduct": "Deduct (Withdraw)",
+      "add": "Add (Top Up)",
+      "amountLabel": "Amount (€)",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "e.g. feeder repair, new hardware",
+      "withdraw": "Withdraw",
+      "addFunds": "Add Funds",
+      "howItWorksTitle": "How Donation Pools Work",
+      "bullets": {
+        "globalPoolTitle": "Global Pool",
+        "globalPool": "Funds available to ALL feeders. Used when a feeder's own pool is empty.",
+        "feederPoolTitle": "Feeder Pool",
+        "feederPool": "Funds dedicated to a specific feeder. Checked FIRST before the global pool.",
+        "liveDonationTitle": "Live Donation",
+        "liveDonation": "User clicks \"Feed\" directly. Deducted from their wallet, bypasses pools entirely.",
+        "deductionsTitle": "Deductions",
+        "deductions": "Admin can withdraw from the Global Pool for maintenance, repairs, and infrastructure costs."
+      },
+      "updated": "Updated: {value}"
+    }
+  },
   "Footer": {
     "desc": "Connecting cat lovers with street cats through technology. Feed, donate, and watch live.",
     "navigation": "Navigation",

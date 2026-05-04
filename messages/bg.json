@@ -45,6 +45,174 @@
     "login": "Вход",
     "joinNow": "Регистрация"
   },
+  "Admin": {
+    "loading": "Зареждане на админ данните...",
+    "tabs": {
+      "overview": "Преглед",
+      "feeders": "Хранилки ({count})",
+      "transactions": "Транзакции",
+      "pools": "Фондове"
+    },
+    "common": {
+      "refresh": "Обнови",
+      "dataUnavailable": "Данните може да не са налични - проверете Supabase таблиците",
+      "cancel": "Отказ",
+      "saving": "Записване...",
+      "saveFeeder": "Запиши хранилката",
+      "saveChanges": "Запиши промените",
+      "currencyPrefix": "€"
+    },
+    "modal": {
+      "addTitle": "Добави нова хранилка",
+      "createdTitle": "Хранилката е създадена!",
+      "createdDesc": "Моля, копирайте кода за регистрация на Raspberry Pi по-долу. Ще ви трябва за връзка с Python скрипта.",
+      "copied": "Копирах кода"
+    },
+    "chart": {
+      "revenue": "Приход",
+      "meals": "Хранения"
+    },
+    "status": {
+      "online": "Онлайн",
+      "offline": "Офлайн",
+      "disabled": "Изключена",
+      "never_connected": "Никога не е свързвана"
+    },
+    "feederForm": {
+      "name": "Име на хранилката",
+      "address": "Адрес",
+      "latitude": "Ширина",
+      "longitude": "Дължина",
+      "foodLevel": "Ниво на храната (%)",
+      "mealPrice": "Цена на хранене (EUR)",
+      "leftovers": "Остатъци",
+      "adminStatus": "Статус на админа",
+      "enabled": "Включена",
+      "disabled": "Изключена",
+      "status": "Статус",
+      "placeholders": {
+        "name": "напр. Central Park Feeder",
+        "address": "напр. Vitosha Blvd, Sofia",
+        "latitude": "42.6977",
+        "longitude": "23.3219",
+        "foodLevel": "100",
+        "mealPrice": "2.00"
+      },
+      "statusOptions": {
+        "active": "Активна",
+        "maintenance": "Поддръжка",
+        "offline": "Офлайн"
+      }
+    },
+    "overview": {
+      "keyMetrics": "Ключови метрики",
+      "totalRevenue": "Общ приход",
+      "totalMeals": "Общо хранения",
+      "registeredUsers": "Регистрирани потребители",
+      "activeFeeders": "Активни хранилки",
+      "avgFoodLevel": "Средно ниво храна",
+      "catsDetected": "Открити котки",
+      "thisMonthValue": "{value} този месец",
+      "thisMonthMeals": "{value} този месец",
+      "walletValue": "{value} в портфейлите",
+      "ofTotal": "от общо {value}",
+      "offlineCount": "{value} офлайн",
+      "acrossAllFeeders": "Във всички хранилки",
+      "liveAcrossNetwork": "В цялата мрежа",
+      "mtd": "От началото на месеца",
+      "revenueTitle": "Приход (14 дни)",
+      "revenueSubtitle": "Направени допълвания и депозити",
+      "perMonth": "/ мес.",
+      "feedingsTitle": "Започнати хранения (14 дни)",
+      "feedingsSubtitle": "Разпределени хранения на ден",
+      "feederStatusTitle": "Статус на хранилките",
+      "feederStatusSubtitle": "Обзор на здравето на мрежата",
+      "noFeederData": "Няма данни за хранилките.",
+      "checkFeedersTable": "Проверете таблицата feeders в Supabase.",
+      "topDonorsTitle": "Топ донори",
+      "topDonorsSubtitle": "Най-големи досегашни постъпления",
+      "noDonorData": "Още няма данни за донори.",
+      "donorHint": "Когато потребителите допълнят своите портфейли, тук ще се появят даренията.",
+      "recentTransactionsTitle": "Скорошни транзакции",
+      "recentTransactionsSubtitle": "Най-новата активност в платформата",
+      "viewAll": "Виж всичко →",
+      "noTransactions": "Няма намерени транзакции.",
+      "checkDonationsTable": "Проверете таблицата donations в Supabase."
+    },
+    "feeders": {
+      "title": "Управление на хранилките",
+      "subtitle": "Управлявайте и наблюдавайте хардуерната мрежа",
+      "addFeeder": "Добави хранилка",
+      "total": "Общо",
+      "noFeedersTitle": "Няма хранилки в базата",
+      "noFeedersDesc": "Таблицата feeders в Supabase е празна. Добавете първата хранилка.",
+      "addFirstFeeder": "Добави първа хранилка",
+      "piKey": "Pi ключ:",
+      "noKey": "Няма ключ",
+      "food": "Храна",
+      "leftovers": "Остатъци",
+      "meal": "Хранене",
+      "id": "ID: {value}...",
+      "editTitle": "Редактирай хранилка",
+      "deleteTitle": "Изтрий хранилка",
+      "viewPublicPage": "Виж публичната страница",
+      "lastSeen": "Последно видяна: {value}"
+    },
+    "transactions": {
+      "title": "Таблица с плащания",
+      "subtitle": "Всички депозити и хранения от Supabase",
+      "totalDeposits": "Общо депозити",
+      "thisMonth": "Този месец",
+      "totalMealsPaid": "Общо платени хранения",
+      "walletBalances": "Баланс в портфейлите",
+      "unclaimedFunds": "Непотърсени средства",
+      "allTransactions": "Всички транзакции",
+      "recordsShown": "{value} записа показани",
+      "columns": {
+        "type": "Тип",
+        "user": "Потребител",
+        "amount": "Сума",
+        "date": "Дата"
+      },
+      "txTypes": {
+        "deposit": "Депозит",
+        "feeding": "Хранене",
+        "live_feed": "Живо хранене"
+      },
+      "unknown": "Неизвестен",
+      "noTransactions": "Няма намерени транзакции",
+      "checkDonationsTable": "Проверете схемата и RLS политиките на таблицата donations в Supabase"
+    },
+    "pools": {
+      "title": "Управление на донaционните фондове",
+      "subtitle": "Вижте балансите, добавяйте средства или отписвайте за поддръжка и ремонти",
+      "primaryFund": "Основен фонд",
+      "noPoolsTitle": "Няма намерени фондове",
+      "noPoolsDesc": "Използвайте SQL migration, за да инициализирате Общия фонд",
+      "actionsTitle": "Действия на админа - Общ фонд",
+      "actionsSubtitle": "Добавяйте или отписвайте средства за поддръжка, ремонти, нови хранилки и т.н.",
+      "actionLabel": "Действие",
+      "deduct": "Отпиши (изтегли)",
+      "add": "Добави (допълни)",
+      "amountLabel": "Сума (€)",
+      "reasonLabel": "Причина",
+      "reasonPlaceholder": "напр. ремонт на хранилка, нова апаратура",
+      "withdraw": "Изтегли",
+      "addFunds": "Добави средства",
+      "howItWorksTitle": "Как работят донaционните фондове",
+      "bullets": {
+        "globalPoolTitle": "Общ фонд",
+        "globalPool": "Средствата са налични за ВСИЧКИ хранилки. Използват се, когато личният фонд на хранилката е изчерпан.",
+        "feederPoolTitle": "Фонд на хранилка",
+        "feederPool": "Средствата са поделени за определена хранилка. Проверяват се ПЪРВО преди общия фонд.",
+        "liveDonationTitle": "Живо дарение",
+        "liveDonation": "Потребителят натиска „Храни“. Сумата се отписва от портфейла му и заобикаля фондовете.",
+        "deductionsTitle": "Отписвания",
+        "deductions": "Админът може да изтегля от Общия фонд за поддръжка, ремонти и инфраструктурни разходи."
+      },
+      "updated": "Обновено: {value}"
+    }
+  },
   "Footer": {
     "desc": "Свързваме любителите на котки с уличните котки чрез технологии. Нахранете, дарете и гледайте на живо.",
     "navigation": "Навигация",
