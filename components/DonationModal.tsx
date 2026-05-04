@@ -7,12 +7,8 @@ import { Elements } from "@stripe/react-stripe-js";
 import { useTranslations } from "next-intl";
 import CheckoutForm from "./CheckoutForm";
 import { X } from "lucide-react";
-// If Dialog component doesn't exist, we'll build a simple custom one for now or use the existing Card component in a fixed overlay.
 
-// Actually let's check if there is a Dialog or Modal component. 
-// Based on package.json, there is @radix-ui/react-dialog, so maybe there is a ui/dialog. 
-// I will assume for now I should build a self contained Modal to be safe or investigate.
-// Let's build a custom one using fixed positioning to avoid dependency hell if components aren't setup.
+// Custom modal implementation with fixed positioning and neobrutalist-friendly styling.
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
