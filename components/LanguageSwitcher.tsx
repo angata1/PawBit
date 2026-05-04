@@ -45,7 +45,7 @@ export default function LanguageSwitcher() {
     };
 
     return (
-        <div className="relative w-fit" ref={dropdownRef}>
+        <div className="fixed bottom-6 right-6 z-[999]" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={isPending}
@@ -75,7 +75,7 @@ export default function LanguageSwitcher() {
             </button>
 
             {isOpen && (
-                <div className="absolute top-full left-0 mt-2 min-w-[80px] bg-white border-2 border-foreground rounded-lg shadow-[4px_4px_0px_rgba(0,0,0,1)] z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute bottom-full right-0 mb-2 min-w-[100px] bg-white border-2 border-foreground rounded-lg shadow-[4px_4px_0px_rgba(0,0,0,1)] z-[1000] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
                     <div className="p-1 flex flex-col gap-1">
                         <button
                             onClick={() => handleLanguageChange("bg")}

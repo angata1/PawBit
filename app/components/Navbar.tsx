@@ -9,7 +9,6 @@ import { PawPrint, Map, Trophy, User, LogOut, Menu, X, Images, ShieldAlert, User
 import Image from 'next/image';
 import Button from './Button';
 import { createClient } from '@/lib/supabase/client';
-import LanguageSwitcher from '../../components/LanguageSwitcher';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface NavbarProps {
@@ -21,10 +20,21 @@ export default function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations('Navbar');
+  const navItems = [
+    { to: '/', icon: PawPrint, label: t('home') },
+    { to: '/map', icon: Map, label: t('map') },
+    { to: '/feedings', icon: Images, label: t('gallery') },
+    { to: '/leaderboard', icon: Trophy, label: t('rankings') },
+    { to: '/about', icon: Users, label: t('about') },
+  ];
+  const accountItems = user
+    ? [
+        { to: '/profile', icon: User, label: t('profile') },
+        ...(user.role === 'admin' ? [{ to: '/admin', icon: ShieldAlert, label: t('admin') }] : []),
+      ]
+    : [];
 
   const isActive = (path: string) => pathname === path;
-
-
 
   const supabase = createClient();
   const handleLogout = async () => {
@@ -33,13 +43,13 @@ export default function Navbar({ user }: NavbarProps) {
     router.refresh();
   };
 
-  const NavLink = ({ to, icon: Icon, label }: { to: string, icon: LucideIcon, label: string }) => (
+  const NavLink = ({ to, icon: Icon, label, active = isActive(to) }: { to: string, icon: LucideIcon, label: string, active?: boolean }) => (
     <Link
       href={to}
       onClick={() => setIsOpen(false)}
       className={`
-        flex items-center gap-2 px-4 py-2 rounded-lg font-bold uppercase tracking-wide transition-colors
-        ${isActive(to)
+        flex items-center gap-2 px-4 xl:px-3 2xl:px-4 py-2 rounded-lg font-bold uppercase tracking-wide transition-colors text-sm 2xl:text-base
+        ${active
           ? 'bg-primary text-primary-foreground neu-shadow-sm border-2 border-foreground'
           : 'hover:bg-muted text-foreground'
         }
@@ -51,8 +61,8 @@ export default function Navbar({ user }: NavbarProps) {
   );
 
   return (
-    <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b-2 border-foreground py-3">
-      <div className="container mx-auto px-4 flex justify-between items-center">
+    <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b-2 border-foreground py-3 relative">
+      <div className="container mx-auto px-4 flex justify-between items-center gap-3">
         {/* Logo */}
         <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2 group">
           <div className="bg-primary p-1.5 rounded-lg border-2 border-foreground neu-shadow-sm group-hover:rotate-6 transition-transform overflow-hidden">
@@ -64,42 +74,38 @@ export default function Navbar({ user }: NavbarProps) {
               className="object-contain brightness-0 invert"
             />
           </div>
-          <span className="text-3xl font-black tracking-tighter text-foreground group-hover:text-primary transition-colors">
+          <span className="text-2xl md:text-3xl font-black tracking-tighter text-foreground group-hover:text-primary transition-colors">
             PawBit
           </span>
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden xl:flex items-center gap-2 2xl:gap-4">
           <NavLink to="/" icon={PawPrint} label={t('home')} />
           <NavLink to="/map" icon={Map} label={t('map')} />
           <NavLink to="/feedings" icon={Images} label={t('gallery')} />
           <NavLink to="/leaderboard" icon={Trophy} label={t('rankings')} />
           <NavLink to="/about" icon={Users} label={t('about')} />
 
-          <div className="h-8 w-0.5 bg-foreground/20 mx-2" />
-
-          <LanguageSwitcher />
+          <div className="h-8 w-0.5 bg-foreground/20 mx-1 2xl:mx-2" />
 
           {user ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 2xl:gap-4">
               <NavLink to="/profile" icon={User} label={t('profile')} />
               {user.role === 'admin' && (
-                <Link
-                  href="/admin"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wide transition-colors bg-accent/20 hover:bg-accent/40 text-accent-foreground border-2 border-accent/50 text-xs"
-                >
-                  <ShieldAlert className="w-4 h-4" />
-                  {t('admin')}
-                </Link>
+                <NavLink to="/admin" icon={ShieldAlert} label={t('admin')} />
               )}
-              <Button variant="outline" size="sm" onClick={handleLogout} icon={<LogOut className="w-4 h-4" />}>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 2xl:px-4 py-2 rounded-lg font-bold uppercase tracking-wide transition-colors hover:bg-muted text-foreground text-sm 2xl:text-base"
+              >
+                <LogOut className="w-5 h-5" />
                 {t('logout')}
-              </Button>
+              </button>
             </div>
           ) : (
-            <div className="flex items-center gap-4">
-              <Link href="/login" className="font-bold text-foreground hover:underline">{t('login')}</Link>
+            <div className="flex items-center gap-2 2xl:gap-4">
+              <Link href="/login" className="font-bold text-foreground hover:underline text-sm 2xl:text-base">{t('login')}</Link>
               <Button href="/register" variant="accent" size="sm">
                 {t('joinNow')}
               </Button>
@@ -107,30 +113,37 @@ export default function Navbar({ user }: NavbarProps) {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile and Tablet Menu Button */}
         <button
-          className="md:hidden p-2 bg-white border-2 border-foreground rounded-lg"
+          className="xl:hidden inline-flex items-center gap-2 p-2 md:px-4 md:py-2 bg-white border-2 border-foreground rounded-lg font-bold uppercase tracking-wide"
           onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
+          aria-label={isOpen ? t('closeMenu') : t('openMenu')}
         >
-          {isOpen ? <X /> : <Menu />}
+          {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <span className="hidden md:inline text-sm">{isOpen ? t('close') : t('menu')}</span>
         </button>
       </div>
 
       {/* Mobile Menu Overlay */}
       {isOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b-2 border-foreground p-4 flex flex-col gap-4 shadow-xl">
-          <NavLink to="/" icon={PawPrint} label={t('home')} />
-          <NavLink to="/map" icon={Map} label={t('map')} />
-          <NavLink to="/feedings" icon={Images} label={t('gallery')} />
-          <NavLink to="/leaderboard" icon={Trophy} label={t('rankings')} />
-          <NavLink to="/about" icon={Users} label={t('about')} />
+        <div className="xl:hidden absolute top-full left-0 right-0 bg-background border-b-2 border-foreground p-4 flex flex-col gap-4 shadow-xl">
+          {navItems.map((item) => (
+            <NavLink key={item.to} to={item.to} icon={item.icon} label={item.label} />
+          ))}
           <hr className="border-foreground/20" />
-          <LanguageSwitcher />
           {user ? (
             <>
-              <NavLink to="/profile" icon={User} label={t('profile')} />
-              {user.role === 'admin' && <NavLink to="/admin" icon={ShieldAlert} label={t('adminPanel')} />}
-              <Button variant="secondary" onClick={handleLogout} className="w-full">{t('logout')}</Button>
+              {accountItems.map((item) => (
+                <NavLink key={item.to} to={item.to} icon={item.icon} label={item.label} />
+              ))}
+              <button
+                onClick={handleLogout}
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold uppercase tracking-wide transition-colors bg-muted/50 hover:bg-muted text-foreground border-2 border-foreground/10"
+              >
+                <LogOut className="w-5 h-5" />
+                {t('logout')}
+              </button>
             </>
           ) : (
             <>

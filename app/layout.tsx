@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "../components/Footer";
 import CookieBanner from "../components/CookieBanner";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import { createClient } from "@/lib/supabase/server";
 import {NextIntlClientProvider} from 'next-intl';
 import {getMessages, getLocale} from 'next-intl/server';
@@ -75,6 +76,7 @@ export default async function RootLayout({
 
           <Footer />
           <CookieBanner />
+          <LanguageSwitcher />
         </NextIntlClientProvider>
       </body>
     </html>
