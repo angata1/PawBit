@@ -8,6 +8,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     typescript: true,
 });
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
+type RpcResult<T> = { data: T | null; error: { message: string } | null };
+
 function sanitizeReturnPath(path: unknown) {
     if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) {
         return '/profile';
@@ -23,9 +29,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { payment_intent_id } = await request.json();
+    const body: unknown = await request.json();
+    if (!isRecord(body)) {
+        return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const payment_intent_id = body.payment_intent_id;
 
-    if (!payment_intent_id) {
+    if (typeof payment_intent_id !== 'string' || !payment_intent_id) {
         return NextResponse.json({ error: 'Missing payment_intent_id' }, { status: 400 });
     }
 
@@ -46,13 +56,13 @@ export async function POST(request: Request) {
         const feederId = paymentIntent.metadata?.feeder_id || null;
         const isPendingDonation = paymentIntent.metadata?.intent_type === 'pending_donation';
         const depositKey = `deposit:${payment_intent_id}`;
-        const { data: depositResult, error: depositError } = await (supabase.rpc('confirm_wallet_deposit_atomic', {
+        const { data: depositResult, error: depositError } = (await supabase.rpc('confirm_wallet_deposit_atomic', {
             p_user_auth_id: user.id,
             p_amount: amountToAdd,
             p_deposit_key: depositKey,
             p_email: user.email ?? null,
             p_name: user.user_metadata?.full_name || 'User',
-        }) as any);
+        })) as unknown as RpcResult<{ new_balance?: number | null }>;
 
         if (depositError) {
             throw new Error(depositError.message);

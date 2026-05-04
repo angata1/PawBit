@@ -4,6 +4,12 @@ import { buildAgoraIngestUrl, createAgoraStreamingKey } from '@/lib/agora/mediaG
 import { NextResponse } from 'next/server';
 import * as crypto from 'crypto';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
+type AdminSupabase = ReturnType<typeof createAdminClient>;
+
 export async function POST(request: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -13,13 +19,17 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { feederId } = await request.json();
+    const body: unknown = await request.json();
+    if (!isRecord(body)) {
+        return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const feederId = body.feederId;
 
     if (!feederId) {
         return NextResponse.json({ error: 'Missing feederId' }, { status: 400 });
     }
 
-    let adminSupabase;
+    let adminSupabase: AdminSupabase;
     try {
         adminSupabase = createAdminClient();
     } catch (error) {
@@ -27,13 +37,18 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Agora stream generation is not configured' }, { status: 500 });
     }
 
-    const { data: feeder, error: feederError } = await (adminSupabase
-        .from('feeders') as any)
+    const { data: feeder, error: feederError } = await adminSupabase
+        .from('feeders')
         .select('pi_auth_key')
         .eq('id', feederId)
         .single();
 
     if (feederError || !feeder) {
+        return NextResponse.json({ error: 'Feeder not found' }, { status: 404 });
+    }
+
+    const feederRecord: unknown = feeder;
+    if (!isRecord(feederRecord)) {
         return NextResponse.json({ error: 'Feeder not found' }, { status: 404 });
     }
 
@@ -47,8 +62,9 @@ export async function POST(request: Request) {
 
         const streamChannel = `pawbit-feeder-${feederId}`;
         const streamUid = `feeder-${feederId}`;
-        await (adminSupabase
-            .from('livestreams') as any)
+        await adminSupabase
+            .from('livestreams')
+            // @ts-expect-error: Livestreams table types are not correctly inferred by Supabase client
             .update({
                 is_active: false,
                 viewer_count: 0
@@ -65,8 +81,9 @@ export async function POST(request: Request) {
         });
         const streamUrl = buildAgoraIngestUrl(region, streamKey);
 
-        const { data: insertedRows, error: insertError } = await (adminSupabase
-            .from('livestreams') as any)
+        const { data: insertedRows, error: insertError } = await adminSupabase
+            .from('livestreams')
+            // @ts-expect-error: Livestreams table types are not correctly inferred by Supabase client
             .insert({
                 feeder_id: feederId,
                 stream_provider: 'agora',
@@ -83,7 +100,12 @@ export async function POST(request: Request) {
         if (insertError || !insertedRows) {
             return NextResponse.json({ error: 'Failed to create livestream record' }, { status: 500 });
         }
-        createdStreamId = String(insertedRows.id);
+        const insertedRecord: unknown = insertedRows;
+        if (!isRecord(insertedRecord) || (typeof insertedRecord.id !== 'string' && typeof insertedRecord.id !== 'number')) {
+            return NextResponse.json({ error: 'Failed to create livestream record' }, { status: 500 });
+        }
+        createdStreamId = String(insertedRecord.id);
+        const insertedId = insertedRecord.id;
 
         const commandChannel = supabase.channel(`feeder_commands_${feederId}`);
         await new Promise<void>((resolve, reject) => {
@@ -93,13 +115,13 @@ export async function POST(request: Request) {
                     clearTimeout(timeout);
                     const payloadObj = {
                         requested_by: user.id,
-                        stream_id: insertedRows.id,
+                        stream_id: insertedId,
                         stream_channel: streamChannel,
                         stream_uid: streamUid,
                     };
                     const rawPayload = JSON.stringify(payloadObj);
                     const signature = crypto
-                        .createHmac('sha256', feeder.pi_auth_key || 'fallback')
+                        .createHmac('sha256', (feederRecord.pi_auth_key as unknown as string) || 'fallback')
                         .update(rawPayload)
                         .digest('hex');
 
@@ -120,8 +142,9 @@ export async function POST(request: Request) {
     } catch (err) {
         console.error(err);
         if (createdStreamId) {
-            await (adminSupabase
-                .from('livestreams') as any)
+            await adminSupabase
+                .from('livestreams')
+                // @ts-expect-error: Livestreams table types are not correctly inferred by Supabase client
                 .update({ is_active: false, viewer_count: 0 })
                 .eq('id', createdStreamId);
         }

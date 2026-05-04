@@ -7,8 +7,42 @@ interface AddFeederModalProps {
     onAdd: (feeder: Feeder) => void;
 }
 
+type FeederFormState = {
+    name: string;
+    address: string;
+    lat: string;
+    lng: string;
+    status: 'active' | 'maintenance' | 'offline';
+    food_level: string;
+    dispense_price_eur: string;
+};
+
+type FeederFormField = Exclude<keyof FeederFormState, 'status'>;
+
+const feederFields: Array<{
+    label: string;
+    key: FeederFormField;
+    type: 'text' | 'number';
+    placeholder: string;
+}> = [
+    { label: 'Feeder Name', key: 'name', type: 'text', placeholder: 'e.g. Central Park Feeder' },
+    { label: 'Address', key: 'address', type: 'text', placeholder: 'e.g. Vitosha Blvd, Sofia' },
+    { label: 'Latitude', key: 'lat', type: 'number', placeholder: '42.6977' },
+    { label: 'Longitude', key: 'lng', type: 'number', placeholder: '23.3219' },
+    { label: 'Food Level (%)', key: 'food_level', type: 'number', placeholder: '100' },
+    { label: 'Meal Price (EUR)', key: 'dispense_price_eur', type: 'number', placeholder: '2.00' },
+];
+
 export const AddFeederModal = ({ onClose, onAdd }: AddFeederModalProps) => {
-    const [form, setForm] = useState({ name: '', address: '', lat: '42.6977', lng: '23.3219', status: 'active', food_level: '100', dispense_price_eur: '2.00' });
+    const [form, setForm] = useState<FeederFormState>({
+        name: '',
+        address: '',
+        lat: '42.6977',
+        lng: '23.3219',
+        status: 'active',
+        food_level: '100',
+        dispense_price_eur: '2.00',
+    });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [createdKey, setCreatedKey] = useState<string | null>(null);
@@ -29,16 +63,17 @@ export const AddFeederModal = ({ onClose, onAdd }: AddFeederModalProps) => {
                     dispense_price_eur: parseFloat(form.dispense_price_eur),
                 }),
             });
-            const data = await res.json();
+            const data = await res.json() as { feeder?: Feeder; error?: string };
             if (!res.ok) throw new Error(data.error || 'Failed to create feeder');
+            if (!data.feeder) throw new Error('Failed to create feeder');
             onAdd(data.feeder);
             if (data.feeder.pi_auth_key) {
                 setCreatedKey(data.feeder.pi_auth_key);
             } else {
                 onClose();
             }
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to create feeder');
         } finally {
             setLoading(false);
         }
@@ -73,19 +108,12 @@ export const AddFeederModal = ({ onClose, onAdd }: AddFeederModalProps) => {
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {error && <div className="p-3 bg-red-100 text-red-700 rounded-lg border border-red-300 text-sm font-mono">{error}</div>}
-                    {[
-                        { label: 'Feeder Name', key: 'name', type: 'text', placeholder: 'e.g. Central Park Feeder' },
-                        { label: 'Address', key: 'address', type: 'text', placeholder: 'e.g. Vitosha Blvd, Sofia' },
-                        { label: 'Latitude', key: 'lat', type: 'number', placeholder: '42.6977' },
-                        { label: 'Longitude', key: 'lng', type: 'number', placeholder: '23.3219' },
-                        { label: 'Food Level (%)', key: 'food_level', type: 'number', placeholder: '100' },
-                        { label: 'Meal Price (EUR)', key: 'dispense_price_eur', type: 'number', placeholder: '2.00' },
-                    ].map(f => (
+                    {feederFields.map(f => (
                         <div key={f.key}>
                             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">{f.label}</label>
                             <input
                                 type={f.type}
-                                value={(form as any)[f.key]}
+                                value={form[f.key]}
                                 onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
                                 placeholder={f.placeholder}
                                 required={f.key === 'name' || f.key === 'address'}
@@ -97,10 +125,10 @@ export const AddFeederModal = ({ onClose, onAdd }: AddFeederModalProps) => {
                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Status</label>
                         <select
                             value={form.status}
-                            onChange={e => setForm(prev => ({ ...prev, status: e.target.value }))}
+                            onChange={e => setForm(prev => ({ ...prev, status: e.target.value as FeederFormState['status'] }))}
                             className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                         >
-                            {['active', 'maintenance', 'offline'].map(s => (
+                            {(['active', 'maintenance', 'offline'] as const).map(s => (
                                 <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                             ))}
                         </select>

@@ -5,14 +5,15 @@ import { useTranslations } from 'next-intl';
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { PawPrint, Map, Trophy, User, LogOut, Menu, X, Images, ShieldAlert, Users } from 'lucide-react';
+import { PawPrint, Map, Trophy, User, LogOut, Menu, X, Images, ShieldAlert, Users, type LucideIcon } from 'lucide-react';
 import Image from 'next/image';
 import Button from './Button';
 import { createClient } from '@/lib/supabase/client';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface NavbarProps {
-  user: any;
+  user: (SupabaseUser & { role?: string }) | null;
 }
 
 export default function Navbar({ user }: NavbarProps) {
@@ -32,7 +33,7 @@ export default function Navbar({ user }: NavbarProps) {
     router.refresh();
   };
 
-  const NavLink = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
+  const NavLink = ({ to, icon: Icon, label }: { to: string, icon: LucideIcon, label: string }) => (
     <Link
       href={to}
       onClick={() => setIsOpen(false)}
@@ -42,7 +43,7 @@ export default function Navbar({ user }: NavbarProps) {
           ? 'bg-primary text-primary-foreground neu-shadow-sm border-2 border-foreground'
           : 'hover:bg-muted text-foreground'
         }
-`}
+       `}
     >
       <Icon className="w-5 h-5" />
       {label}

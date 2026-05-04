@@ -92,7 +92,7 @@ export default function HomeContent() {
             setLoadingMoments(false);
         };
         fetchMoments();
-    }, []);
+    }, [t]);
 
     const handleNavigate = (href: string) => {
         setIsTransitioning(true);
@@ -482,11 +482,13 @@ export default function HomeContent() {
                             {recentMoments.map((moment) => (
                                 <div key={moment.id} className="moment-card group relative bg-white rounded-3xl overflow-hidden border-2 border-foreground neu-shadow hover:neu-shadow-lg hover:-translate-y-1 transition-all duration-300">
                                     <div className="aspect-video bg-black relative overflow-hidden">
-                                        <img
-                                            className="w-full h-full absolute inset-0 object-cover"
+                                        <Image
+                                            className="object-cover"
                                             src={`https://img.youtube.com/vi/${moment.youtubeId}/hqdefault.jpg`}
                                             alt={moment.title}
-                                            loading="lazy"
+                                            fill
+                                            sizes="(min-width: 768px) 33vw, 100vw"
+                                            unoptimized
                                         />
                                         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-300" />
                                         <div className="absolute bottom-3 left-3 md:bottom-4 md:left-4 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1">

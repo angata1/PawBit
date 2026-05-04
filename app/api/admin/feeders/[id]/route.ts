@@ -1,8 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
 // PATCH - update a feeder
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -15,13 +20,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { id } = await params;
-    const body = await request.json();
+    // const { id } = params; // already extracted above
+    const body: unknown = await request.json();
+    if (!isRecord(body)) {
+        return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const allowedFields = ['name', 'location', 'enabled', 'active', 'dispense_price_eur', 'pi_auth_key', 'stock_level', 'left_overs', 'importance_rank', 'status', 'is_streaming'];
-    const updatePayload: any = {};
+    const updatePayload: Record<string, unknown> = {};
     for (const key of allowedFields) {
-        if (body[key] !== undefined) {
-            updatePayload[key] = body[key];
+        const value = body[key];
+        if (value !== undefined) {
+            updatePayload[key] = value;
         }
     }
 
@@ -49,6 +58,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 // DELETE - remove a feeder
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -61,7 +71,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { id } = await params;
+    // const { id } = params; // already extracted above
 
     const { error } = await supabase
         .from('feeders')

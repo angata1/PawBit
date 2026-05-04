@@ -33,7 +33,7 @@ export default function ForgotPassword() {
             } else {
                 setMessage(t('checkEmail'));
             }
-        } catch (err) {
+        } catch {
             setError(t('errorGeneric'));
         } finally {
             setLoading(false);

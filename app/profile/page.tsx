@@ -20,33 +20,23 @@ type TransactionRow = {
     created_at: string;
 };
 
+type ContributionFeeder = {
+    id: number;
+    name: string | null;
+    location: { address?: string } | null;
+};
+
+type ContributionMeal = {
+    id: number;
+    time_of_meal: string | null;
+    total_cost_eur: number | null;
+    video_link: string | null;
+    feeders: ContributionFeeder | ContributionFeeder[] | null;
+};
+
 type ContributionRow = {
     amount_contributed: number | null;
-    meals: {
-        id: number;
-        time_of_meal: string | null;
-        total_cost_eur: number | null;
-        video_link: string | null;
-        feeders: {
-            id: number;
-            name: string | null;
-            location: {
-                address?: string;
-            } | null;
-        } | {
-            id: number;
-            name: string | null;
-            location: {
-                address?: string;
-            } | null;
-        }[] | null;
-    } | {
-        id: number;
-        time_of_meal: string | null;
-        total_cost_eur: number | null;
-        video_link: string | null;
-        feeders: any;
-    }[] | null;
+    meals: ContributionMeal | ContributionMeal[] | null;
 };
 
 type UserVideo = {
@@ -149,8 +139,8 @@ export default function Profile() {
                 .eq("user_id", authUser.id)
                 .order("created_at", { ascending: false });
 
-            const mappedVideos = ((contributionRows || []) as any[])
-                .map((row) => {
+            const mappedVideos = ((contributionRows || []) as ContributionRow[])
+                .map((row): UserVideo | null => {
                     const meal = Array.isArray(row.meals) ? row.meals[0] : row.meals;
                     const feeder = meal ? (Array.isArray(meal.feeders) ? meal.feeders[0] : meal.feeders) : null;
 
@@ -175,7 +165,7 @@ export default function Profile() {
         };
 
         void getUser();
-    }, [router, supabase]);
+    }, [router, supabase, t]);
 
     const loadMoreTransactions = async () => {
         if (!user || loadingTx) return;

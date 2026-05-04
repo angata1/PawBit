@@ -33,20 +33,19 @@ export default async function RootLayout({
   const locale = await getLocale();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
-  let userWithRole = user ? { ...user, role: 'user' } : null;
 
+  let role: string | undefined;
   if (user) {
     const { data: dbUser } = await supabase
       .from('users')
       .select('role')
       .eq('auth_id', user.id)
       .maybeSingle();
-    
-    if (dbUser?.role && userWithRole) {
-      userWithRole.role = dbUser.role;
-    }
+
+    role = dbUser?.role ?? 'user';
   }
+
+  const userWithRole = user ? { ...user, role: role ?? 'user' } : null;
 
   return (
     <html lang={locale}>

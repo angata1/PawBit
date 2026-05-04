@@ -5,6 +5,12 @@ function isInsufficientFundsError(message: string | undefined) {
     return typeof message === 'string' && message.includes('INSUFFICIENT_FUNDS');
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
+type RpcResult<T> = { data: T | null; error: { message?: string } | null };
+
 /**
  * POST /api/donate-pool
  * 
@@ -21,8 +27,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { amount, feederId } = await request.json();
-    const donationAmount = Number(amount);
+    const body: unknown = await request.json();
+    if (!isRecord(body)) {
+        return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const donationAmount = Number(body.amount);
+    const feederId = body.feederId;
 
     if (!Number.isFinite(donationAmount) || donationAmount <= 0) {
         return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
@@ -45,11 +55,11 @@ export async function POST(request: Request) {
     }
 
     const normalizedFeederId = feederId ? Number.parseInt(String(feederId), 10) : null;
-    const { data: donationResult, error: donationError } = await (supabase.rpc('donate_to_pool_atomic', {
+    const { data: donationResult, error: donationError } = (await supabase.rpc('donate_to_pool_atomic', {
         p_user_auth_id: user.id,
         p_amount: donationAmount,
         p_feeder_id: normalizedFeederId,
-    }) as any);
+    })) as unknown as RpcResult<{ new_balance?: number | null }>;
 
     if (donationError) {
         if (isInsufficientFundsError(donationError.message)) {

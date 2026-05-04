@@ -1,6 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
 // POST - Raspberry Pi heartbeat
 // Called every ~30s by the Python script on the Pi.
 // Authenticates via pi_auth_key, updates last_seen_at + sensor data.
@@ -8,16 +12,22 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
     const supabase = await createClient();
 
-    let body: any;
+    let body: unknown;
     try {
         body = await request.json();
     } catch {
         return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { pi_auth_key, stock_level, left_overs } = body;
+    if (!isRecord(body)) {
+        return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
 
-    if (!pi_auth_key) {
+    const pi_auth_key = body.pi_auth_key;
+    const stock_level = body.stock_level;
+    const left_overs = body.left_overs;
+
+    if (typeof pi_auth_key !== 'string' || !pi_auth_key) {
         return NextResponse.json({ error: 'pi_auth_key is required' }, { status: 400 });
     }
 
@@ -41,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     // Build the update payload — always set last_seen_at
-    const updatePayload: Record<string, any> = {
+    const updatePayload: Record<string, unknown> = {
         last_seen_at: new Date().toISOString(),
     };
 

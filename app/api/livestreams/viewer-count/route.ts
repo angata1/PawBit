@@ -30,12 +30,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Supabase admin client is not configured" }, { status: 500 });
     }
 
+    type LivestreamRow = { id: string; viewer_count: number | null };
+
     try {
-        const { data: stream, error: streamError } = await supabase
+        const { data: stream, error: streamError } = await (supabase
             .from("livestreams")
             .select("id, viewer_count")
             .eq("id", streamId)
-            .maybeSingle();
+            .maybeSingle() as unknown as Promise<{ data: LivestreamRow | null; error: { message: string } | null }>);
 
         if (streamError) {
             throw streamError;
@@ -46,8 +48,13 @@ export async function POST(request: Request) {
         }
 
         if (Number(stream.viewer_count ?? 0) !== viewerCount) {
-            const { error: updateError } = await supabase
-                .from("livestreams")
+            type UpdateBuilder = {
+                update(values: Record<string, unknown>): {
+                    eq(col: string, val: unknown): Promise<{ error: { message: string } | null }>;
+                };
+            };
+            const table = supabase.from("livestreams") as unknown as UpdateBuilder;
+            const { error: updateError } = await table
                 .update({ viewer_count: viewerCount })
                 .eq("id", streamId);
 

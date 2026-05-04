@@ -6,6 +6,12 @@ function isInsufficientFundsError(message: string | undefined) {
     return typeof message === 'string' && message.includes('INSUFFICIENT_FUNDS');
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
+type RpcResult<T> = { data: T | null; error: { message?: string } | null };
+
 export async function POST(request: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -14,7 +20,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { amount, feederId } = await request.json();
+    const body: unknown = await request.json();
+    if (!isRecord(body)) {
+        return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const amount = body.amount;
+    const feederId = body.feederId;
 
     if (!feederId) {
         return NextResponse.json({ error: 'Missing feederId' }, { status: 400 });
@@ -30,11 +41,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Feeder not found' }, { status: 404 });
     }
 
-    if (!feeder.enabled) {
+    const feederRecord: unknown = feeder;
+    if (!isRecord(feederRecord)) {
+        return NextResponse.json({ error: 'Feeder not found' }, { status: 404 });
+    }
+
+    if (feederRecord.enabled !== true) {
         return NextResponse.json({ error: 'Feeder is disabled' }, { status: 403 });
     }
 
-    const minimumPrice = Number(feeder.dispense_price_eur || 2);
+    const minimumPrice = Number((feederRecord.dispense_price_eur as unknown) || 2);
     const feedAmount = Number(amount || minimumPrice);
 
     if (!Number.isFinite(feedAmount) || feedAmount <= 0) {
@@ -64,11 +80,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to access user profile' }, { status: 500 });
     }
 
-    const { data: feedResult, error: feedError } = await (supabase.rpc('process_live_feed', {
+    const { data: feedResult, error: feedError } = (await supabase.rpc('process_live_feed', {
         p_user_auth_id: user.id,
         p_feeder_id: Number(feederId),
         p_amount: feedAmount,
-    }) as any);
+    })) as unknown as RpcResult<{ meal_id?: string | number | null; new_balance?: number | null }>;
 
     if (feedError) {
         if (isInsufficientFundsError(feedError.message)) {
@@ -100,7 +116,7 @@ export async function POST(request: Request) {
                     
                     const rawPayload = JSON.stringify(payloadObj);
                     const signature = crypto
-                        .createHmac('sha256', feeder.pi_auth_key || 'fallback')
+                        .createHmac('sha256', (feederRecord.pi_auth_key as unknown as string) || 'fallback')
                         .update(rawPayload)
                         .digest('hex');
 

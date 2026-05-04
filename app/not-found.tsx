@@ -1,9 +1,9 @@
 "use client";
 
-import Link from 'next/link';
+
 import { GridPattern } from './components/GridPattern';
 import { cn } from '@/lib/utils';
-import { Cat, Dog, Home, SearchX } from 'lucide-react';
+import { Cat, Home, SearchX } from 'lucide-react';
 import Button from './components/Button';
 import { useTranslations } from 'next-intl';
 

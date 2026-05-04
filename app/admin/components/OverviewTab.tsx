@@ -1,25 +1,47 @@
 import React from 'react';
-import { 
-    AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend 
+import {
+    AreaChart,
+    Area,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+    Cell,
+    PieChart,
+    Pie,
+    Legend,
 } from 'recharts';
-import { TrendingUp, Zap, Users, Wifi, Battery, Activity, Clock } from 'lucide-react';
+import { TrendingUp, Zap, Users, Wifi, Battery, Activity } from 'lucide-react';
 import { AdminData } from '../types';
 import { StatCard } from './StatCard';
 
 interface OverviewTabProps {
     data: AdminData;
     fmtCurrency: (v: number) => string;
-    fmtDate: (d: string) => string;
     fmtShortDate: (d: string) => string;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+type TooltipPoint = {
+    color?: string;
+    name?: string;
+    value?: number | string;
+};
+
+type CustomTooltipProps = {
+    active?: boolean;
+    payload?: TooltipPoint[];
+    label?: string | number;
+};
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
         const dateStr = label ? new Date(label).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '';
         return (
             <div className="bg-white border-2 border-foreground rounded-xl p-3 neu-shadow">
                 <p className="text-xs font-bold text-muted-foreground mb-1 font-mono">{dateStr}</p>
-                {payload.map((p: any, i: number) => (
+                {payload.map((p, i) => (
                     <p key={i} className="text-sm font-black" style={{ color: p.color }}>
                         {p.name === 'revenue' ? `€${p.value}` : p.value}
                         <span className="text-xs font-normal text-muted-foreground ml-1">{p.name}</span>
@@ -31,8 +53,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-export const OverviewTab = ({ data, fmtCurrency, fmtDate, fmtShortDate }: OverviewTabProps) => {
-    const PieColors = ['#22c55e', '#ef4444', '#9ca3af', '#e05c5c'];
+export const OverviewTab = ({ data, fmtCurrency, fmtShortDate }: OverviewTabProps) => {
+    const pieColors = ['#22c55e', '#ef4444', '#9ca3af', '#e05c5c'];
     const feederStatuses = [
         { name: 'Online', value: data.overview.activeFeeders },
         { name: 'Offline', value: data.overview.offlineFeeders },
@@ -41,7 +63,6 @@ export const OverviewTab = ({ data, fmtCurrency, fmtDate, fmtShortDate }: Overvi
 
     return (
         <div className="space-y-8">
-            {/* KPI Cards */}
             <div>
                 <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Key Metrics</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -49,19 +70,26 @@ export const OverviewTab = ({ data, fmtCurrency, fmtDate, fmtShortDate }: Overvi
                         title="Total Revenue"
                         value={fmtCurrency(data.overview.totalRevenue)}
                         subtitle={`${fmtCurrency(data.overview.revenueThisMonth)} this month`}
-                        icon={TrendingUp} color="bg-primary" trend="up" trendValue="MTD"
+                        icon={TrendingUp}
+                        color="bg-primary"
+                        trend="up"
+                        trendValue="MTD"
                     />
                     <StatCard
                         title="Total Meals"
                         value={data.overview.totalMeals.toLocaleString()}
                         subtitle={`${data.overview.mealsThisMonth} this month`}
-                        icon={Zap} color="bg-accent" trend="up" trendValue="MTD"
+                        icon={Zap}
+                        color="bg-accent"
+                        trend="up"
+                        trendValue="MTD"
                     />
                     <StatCard
                         title="Registered Users"
                         value={data.overview.totalUsers}
                         subtitle={`€${data.overview.totalWalletBalance.toFixed(0)} in wallets`}
-                        icon={Users} color="bg-blue-500"
+                        icon={Users}
+                        color="bg-blue-500"
                     />
                     <StatCard
                         title="Active Feeders"
@@ -83,12 +111,12 @@ export const OverviewTab = ({ data, fmtCurrency, fmtDate, fmtShortDate }: Overvi
                         title="Cats Detected"
                         value={data.overview.totalAnimalsDetected}
                         subtitle="Live across network"
-                        icon={Activity} color="bg-purple-500"
+                        icon={Activity}
+                        color="bg-purple-500"
                     />
                 </div>
             </div>
 
-            {/* Charts */}
             <div className="grid xl:grid-cols-2 gap-6">
                 <div className="bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                     <h3 className="font-black text-lg mb-6">Revenue (14 days)</h3>
@@ -125,7 +153,6 @@ export const OverviewTab = ({ data, fmtCurrency, fmtDate, fmtShortDate }: Overvi
                 </div>
             </div>
 
-            {/* Status & Donors */}
             <div className="grid xl:grid-cols-3 gap-6">
                 <div className="bg-white border-2 border-foreground rounded-2xl p-6 neu-shadow">
                     <h3 className="font-black text-lg mb-4">Feeder Status</h3>
@@ -133,7 +160,7 @@ export const OverviewTab = ({ data, fmtCurrency, fmtDate, fmtShortDate }: Overvi
                         <PieChart>
                             <Pie data={feederStatuses} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
                                 {feederStatuses.map((_, i) => (
-                                    <Cell key={i} fill={PieColors[i % PieColors.length]} />
+                                    <Cell key={i} fill={pieColors[i % pieColors.length]} />
                                 ))}
                             </Pie>
                             <Tooltip />

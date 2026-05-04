@@ -6,6 +6,7 @@ import { User } from '@/app/types';
 import Button from '@/app/components/Button';
 import { Send, MessageSquare, AlertTriangle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface ChatMessage {
     id: string;
@@ -18,7 +19,7 @@ interface ChatMessage {
 export default function RealtimeChat({ roomId, currentUser }: { roomId: string, currentUser: User | null }) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
-    const [channel, setChannel] = useState<any>(null);
+    const [channel, setChannel] = useState<RealtimeChannel | null>(null);
     const [hasAcceptedTerms, setHasAcceptedTerms] = useState(true);
     const t = useTranslations('Chat');
 
@@ -48,7 +49,8 @@ export default function RealtimeChat({ roomId, currentUser }: { roomId: string, 
                 'broadcast',
                 { event: 'new_message' },
                 (payload) => {
-                    setMessages((prev) => [...prev, payload.payload as ChatMessage]);
+                    const msg = (payload as unknown as { payload: ChatMessage }).payload;
+                    setMessages((prev) => [...prev, msg]);
                 }
             )
             .subscribe((status) => {

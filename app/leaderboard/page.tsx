@@ -5,7 +5,7 @@ import { Storage } from "../storage";
 import { User } from "../types";
 import Card from "../components/Card";
 import { useTranslations } from "next-intl";
-import { Trophy, Medal, Star, Crown } from "lucide-react";
+import { Medal, Star, Crown } from "lucide-react";
 import {
     BarChart,
     Bar,

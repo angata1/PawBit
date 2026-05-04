@@ -3,11 +3,62 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useRouter } from 'next/navigation';
-import { Feeder, deriveConnectionStatus, formatLastSeen } from '../types';
+import { Feeder, deriveConnectionStatus } from '../types';
 import Button from '../components/Button';
 import { createClient } from '@/lib/supabase/client';
 import { useTranslations } from 'next-intl';
 import { Search, Battery, Heart, ArrowRight, List, Map as MapIcon, MapPin, Loader2 } from 'lucide-react';
+
+type LeafletLatLngTuple = [number, number];
+
+type LeafletMap = {
+    setView: (center: LeafletLatLngTuple, zoom: number) => LeafletMap;
+    invalidateSize: () => void;
+    remove: () => void;
+    eachLayer: (cb: (layer: unknown) => void) => void;
+    removeLayer: (layer: unknown) => void;
+    fitBounds: (bounds: unknown) => void;
+    flyTo: (center: LeafletLatLngTuple, zoom: number) => void;
+};
+
+type LeafletMarker = {
+    on: (event: string, cb: () => void) => LeafletMarker;
+    addTo: (map: LeafletMap) => LeafletMarker;
+    bindPopup: (html: string, options?: { closeButton?: boolean; className?: string }) => LeafletMarker;
+};
+
+type LeafletNamespace = {
+    map: (el: HTMLElement) => LeafletMap;
+    tileLayer: (url: string, options: { attribution: string; maxZoom: number }) => { addTo: (map: LeafletMap) => void };
+    divIcon: (options: {
+        html: string;
+        className: string;
+        iconSize: [number, number];
+        iconAnchor: [number, number];
+        popupAnchor: [number, number];
+    }) => unknown;
+    marker: (coords: LeafletLatLngTuple, options?: { icon?: unknown }) => LeafletMarker;
+    FeatureGroup: new (layers: unknown[]) => { getBounds: () => { pad: (ratio: number) => unknown } };
+    Marker: new (...args: unknown[]) => unknown;
+};
+
+declare global {
+    interface Window {
+        L?: LeafletNamespace;
+    }
+}
+
+type FeederRow = {
+    id: unknown;
+    name: string;
+    location?: { lat?: number; lng?: number; address?: string } | null;
+    enabled?: boolean | null;
+    last_seen_at?: string | null;
+    stock_level?: number | null;
+    left_overs?: number | null;
+    dispense_price_eur?: number | string | null;
+    created_at?: string | null;
+};
 
 const escapeHtml = (unsafe: string) => {
     return String(unsafe)
@@ -21,7 +72,7 @@ const escapeHtml = (unsafe: string) => {
 export default function MapPage() {
     const navigate = useRouter();
     const mapContainerRef = useRef<HTMLDivElement>(null);
-    const mapInstanceRef = useRef<any>(null);
+    const mapInstanceRef = useRef<LeafletMap | null>(null);
     const t = useTranslations('MapPage');
 
     const [feeders, setFeeders] = useState<Feeder[]>([]);
@@ -34,7 +85,7 @@ export default function MapPage() {
     const hasCenteredRef = useRef(false);
 
     // Map Supabase row to Feeder type
-    const mapFeederRow = (f: any): Feeder => {
+    const mapFeederRow = (f: FeederRow): Feeder => {
         const enabled = f.enabled ?? true;
         const lastSeenAt = f.last_seen_at ?? null;
         return {
@@ -51,7 +102,7 @@ export default function MapPage() {
             foodLevel: f.stock_level ?? 50,
             animalsDetected: f.left_overs ?? 0,
             dispensePriceEur: Number(f.dispense_price_eur ?? 2),
-            lastFeeding: f.created_at,
+            lastFeeding: f.created_at ?? undefined,
             liveStreamUrl: '',
         };
     };
@@ -69,7 +120,7 @@ export default function MapPage() {
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    setFeeders(data.map(mapFeederRow));
+                    setFeeders((data as FeederRow[]).map(mapFeederRow));
                 } else {
                     // Fallback to mock data if table is empty
                     const { Storage } = await import('../storage');
@@ -87,7 +138,7 @@ export default function MapPage() {
 
         const supabaseClient = createClient();
         const subscription = supabaseClient.channel('feeders-channel')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'feeders' }, (payload) => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'feeders' }, () => {
                 fetchFeeders(); 
             })
             .subscribe();
@@ -105,7 +156,7 @@ export default function MapPage() {
     // Initialize Map
     useEffect(() => {
         // Ensure L is available from the global window object
-        const L = (window as any).L;
+        const L = window.L;
 
         if (!mapContainerRef.current || !L) return;
         if (mapInstanceRef.current) return;
@@ -136,7 +187,8 @@ export default function MapPage() {
 
     // Auto-center map based on most concurrent "feeders" (animals detected)
     useEffect(() => {
-        if (!mapInstanceRef.current || feeders.length === 0 || loadingFeeders || hasCenteredRef.current) return;
+        const map = mapInstanceRef.current;
+        if (!map || feeders.length === 0 || loadingFeeders || hasCenteredRef.current) return;
 
         // Find the feeder with the most concurrent animals detected
         // If multiple have the same, it picks the first one found
@@ -146,16 +198,16 @@ export default function MapPage() {
 
         if (topFeeder && topFeeder.animalsDetected > 0) {
             // Zoom in on the most active spot
-            mapInstanceRef.current.setView([topFeeder.location.lat, topFeeder.location.lng], 15);
+            map.setView([topFeeder.location.lat, topFeeder.location.lng], 15);
             hasCenteredRef.current = true;
         } else if (feeders.length > 0) {
             // Optional: fit bounds to all feeders if no specific activity
-            const L = (window as any).L;
+            const L = window.L;
             if (L) {
                 const group = new L.FeatureGroup(
                     feeders.map(f => L.marker([f.location.lat, f.location.lng]))
                 );
-                mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
+                map.fitBounds(group.getBounds().pad(0.1));
                 hasCenteredRef.current = true;
             }
         }
@@ -163,13 +215,14 @@ export default function MapPage() {
 
     // Update Markers
     useEffect(() => {
-        const L = (window as any).L;
-        if (!mapInstanceRef.current || !L) return;
+        const L = window.L;
+        const map = mapInstanceRef.current;
+        if (!map || !L) return;
 
         // Clear existing markers
-        mapInstanceRef.current.eachLayer((layer: any) => {
+        map.eachLayer((layer: unknown) => {
             if (layer instanceof L.Marker) {
-                mapInstanceRef.current.removeLayer(layer);
+                map.removeLayer(layer);
             }
         });
 
@@ -193,7 +246,7 @@ export default function MapPage() {
             });
 
             const marker = L.marker([feeder.location.lat, feeder.location.lng], { icon })
-                .addTo(mapInstanceRef.current)
+                .addTo(map)
                 .bindPopup(`
           <div class="p-0 font-sans text-foreground min-w-[220px]">
             <div class="bg-primary/10 p-3 border-b-2 border-foreground/10">
@@ -231,13 +284,13 @@ export default function MapPage() {
                 }
             });
         });
-    }, [feeders, navigate]);
+    }, [feeders, navigate, t]);
 
     // Resize map when view changes (important for mobile toggle)
     useEffect(() => {
-        if (mapInstanceRef.current) {
-            setTimeout(() => mapInstanceRef.current.invalidateSize(), 100);
-        }
+        const map = mapInstanceRef.current;
+        if (!map) return;
+        setTimeout(() => map.invalidateSize(), 100);
     }, [mobileView]);
 
     const flyToFeeder = (feeder: Feeder) => {

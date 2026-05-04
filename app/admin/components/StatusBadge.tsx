@@ -1,5 +1,11 @@
 import React from 'react';
-import { CheckCircle, Zap, AlertTriangle, XCircle, Activity } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Activity, type LucideIcon } from 'lucide-react';
+
+type KnownStatus = 'online' | 'offline' | 'disabled' | 'never_connected';
+
+const isKnownStatus = (status: string): status is KnownStatus => {
+    return status === 'online' || status === 'offline' || status === 'disabled' || status === 'never_connected';
+};
 
 export const StatusBadge = ({ status }: { status: string }) => {
     const map: Record<string, string> = {
@@ -8,13 +14,13 @@ export const StatusBadge = ({ status }: { status: string }) => {
         disabled: 'bg-gray-100 text-gray-700 border-gray-300',
         never_connected: 'bg-gray-50 text-gray-500 border-gray-200',
     };
-    const icons: Record<string, any> = {
+    const icons: Record<KnownStatus, LucideIcon> = {
         online: CheckCircle,
         offline: XCircle,
         disabled: XCircle,
         never_connected: AlertTriangle,
     };
-    const Icon = icons[status] || Activity;
+    const Icon = isKnownStatus(status) ? icons[status] : Activity;
     const formattedStatus = status.replace('_', ' ');
     return (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold border uppercase tracking-wider ${map[status] || 'bg-gray-100 text-gray-600 border-gray-300'}`}>

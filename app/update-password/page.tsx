@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+
 import { createClient } from "@/lib/supabase/client";
 import Card from "../components/Card";
 import Button from "../components/Button";
@@ -17,7 +17,7 @@ export default function UpdatePassword() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     
-    const router = useRouter();
+
     const supabase = createClient();
     const t = useTranslations('Auth');
 
@@ -42,7 +42,7 @@ export default function UpdatePassword() {
             } else {
                 setSuccess(true);
             }
-        } catch (err) {
+        } catch {
             setError(t('errorGeneric'));
         } finally {
             setLoading(false);

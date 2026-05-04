@@ -68,7 +68,7 @@ export default function Register() {
                 // For now redirect or show message
                 router.push(`/login?message=${encodeURIComponent(t('accountCreated'))}`);
             }
-        } catch (err) {
+        } catch {
             setError(t('errorGeneric'));
         } finally {
             setLoading(false);

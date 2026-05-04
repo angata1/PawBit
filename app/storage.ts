@@ -54,7 +54,7 @@ let feeders: Feeder[] = [
     },
 ];
 
-let users: User[] = [
+const users: User[] = [
     {
         id: 'u1',
         name: 'Alice Johnson',
@@ -113,7 +113,7 @@ let users: User[] = [
     }
 ];
 
-let donations: Donation[] = [
+const donations: Donation[] = [
     {
         id: 'd1',
         donorName: 'Alice',

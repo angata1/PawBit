@@ -1,16 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-    Cell, PieChart, Pie, Legend
+    Cell, PieChart, Pie, Legend,
 } from 'recharts';
 import {
-    TrendingUp, Users, Zap, Wifi, WifiOff, AlertTriangle,
+    TrendingUp, Users, Zap, Wifi, AlertTriangle,
     DollarSign, Activity, RefreshCw, Plus, Trash2, Edit3,
-    CheckCircle, XCircle, ChevronDown, ChevronUp, MapPin,
-    BarChart2, Settings, LogOut, PawPrint, Package, ArrowUpRight,
-    ArrowDownRight, Clock, X, Save, Loader2, Battery, ShieldAlert
+    CheckCircle, XCircle, MapPin,
+    BarChart2, Settings, Package, ArrowUpRight,
+    ArrowDownRight, Clock, X, Save, Loader2, Battery,
+    type LucideIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -77,6 +78,29 @@ interface AdminData {
     recentTransactions: Transaction[];
 }
 
+type AdminTab = 'overview' | 'feeders' | 'transactions' | 'pools';
+
+type EditFeederForm = {
+    name: string;
+    address: string;
+    lat: string;
+    lng: string;
+    status: 'enabled' | 'disabled';
+    stock_level: string;
+    left_overs: string;
+    dispense_price_eur: string;
+};
+
+type DonationPool = {
+    id: string | number;
+    feeder_id: string | number | null;
+    feeder_name: string;
+    balance: number | string;
+    last_updated: string | null;
+};
+
+type PoolAction = 'add' | 'deduct';
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const StatCard = ({
@@ -85,7 +109,7 @@ const StatCard = ({
     title: string;
     value: string | number;
     subtitle?: string;
-    icon: any;
+    icon: LucideIcon;
     color: string;
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
@@ -111,19 +135,25 @@ const StatCard = ({
 );
 
 const StatusBadge = ({ status }: { status: string }) => {
+    type KnownStatus = 'online' | 'offline' | 'disabled' | 'never_connected';
+
+    const isKnownStatus = (value: string): value is KnownStatus => {
+        return value === 'online' || value === 'offline' || value === 'disabled' || value === 'never_connected';
+    };
+
     const map: Record<string, string> = {
         online: 'bg-green-100 text-green-700 border-green-300',
         offline: 'bg-red-100 text-red-700 border-red-300',
         disabled: 'bg-gray-100 text-gray-700 border-gray-300',
         never_connected: 'bg-gray-50 text-gray-500 border-gray-200',
     };
-    const icons: Record<string, any> = {
+    const icons: Record<KnownStatus, LucideIcon> = {
         online: CheckCircle,
         offline: XCircle,
         disabled: XCircle,
         never_connected: AlertTriangle,
     };
-    const Icon = icons[status] || Activity;
+    const Icon = isKnownStatus(status) ? icons[status] : Activity;
     const formattedStatus = status.replace('_', ' ');
     return (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold border uppercase tracking-wider ${map[status] || 'bg-gray-100 text-gray-600 border-gray-300'}`}>
@@ -134,8 +164,42 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 // ─── Add Feeder Modal ─────────────────────────────────────────────────────────
+type FeederFormState = {
+    name: string;
+    address: string;
+    lat: string;
+    lng: string;
+    status: 'active' | 'maintenance' | 'offline';
+    food_level: string;
+    dispense_price_eur: string;
+};
+
+type FeederFormField = Exclude<keyof FeederFormState, 'status'>;
+
+const feederFields: Array<{
+    label: string;
+    key: FeederFormField;
+    type: 'text' | 'number';
+    placeholder: string;
+}> = [
+    { label: 'Feeder Name', key: 'name', type: 'text', placeholder: 'e.g. Central Park Feeder' },
+    { label: 'Address', key: 'address', type: 'text', placeholder: 'e.g. Vitosha Blvd, Sofia' },
+    { label: 'Latitude', key: 'lat', type: 'number', placeholder: '42.6977' },
+    { label: 'Longitude', key: 'lng', type: 'number', placeholder: '23.3219' },
+    { label: 'Food Level (%)', key: 'food_level', type: 'number', placeholder: '100' },
+    { label: 'Meal Price (EUR)', key: 'dispense_price_eur', type: 'number', placeholder: '2.00' },
+];
+
 const AddFeederModal = ({ onClose, onAdd }: { onClose: () => void; onAdd: (feeder: Feeder) => void }) => {
-    const [form, setForm] = useState({ name: '', address: '', lat: '42.6977', lng: '23.3219', status: 'active', food_level: '100', dispense_price_eur: '2.00' });
+    const [form, setForm] = useState<FeederFormState>({
+        name: '',
+        address: '',
+        lat: '42.6977',
+        lng: '23.3219',
+        status: 'active',
+        food_level: '100',
+        dispense_price_eur: '2.00',
+    });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [createdKey, setCreatedKey] = useState<string | null>(null);
@@ -156,16 +220,17 @@ const AddFeederModal = ({ onClose, onAdd }: { onClose: () => void; onAdd: (feede
                     dispense_price_eur: parseFloat(form.dispense_price_eur),
                 }),
             });
-            const data = await res.json();
+            const data = await res.json() as { feeder?: Feeder; error?: string };
             if (!res.ok) throw new Error(data.error || 'Failed to create feeder');
+            if (!data.feeder) throw new Error('Failed to create feeder');
             onAdd(data.feeder);
             if (data.feeder.pi_auth_key) {
                 setCreatedKey(data.feeder.pi_auth_key);
             } else {
                 onClose();
             }
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to create feeder');
         } finally {
             setLoading(false);
         }
@@ -200,19 +265,12 @@ const AddFeederModal = ({ onClose, onAdd }: { onClose: () => void; onAdd: (feede
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {error && <div className="p-3 bg-red-100 text-red-700 rounded-lg border border-red-300 text-sm font-mono">{error}</div>}
-                    {[
-                        { label: 'Feeder Name', key: 'name', type: 'text', placeholder: 'e.g. Central Park Feeder' },
-                        { label: 'Address', key: 'address', type: 'text', placeholder: 'e.g. Vitosha Blvd, Sofia' },
-                        { label: 'Latitude', key: 'lat', type: 'number', placeholder: '42.6977' },
-                        { label: 'Longitude', key: 'lng', type: 'number', placeholder: '23.3219' },
-                        { label: 'Food Level (%)', key: 'food_level', type: 'number', placeholder: '100' },
-                        { label: 'Meal Price (EUR)', key: 'dispense_price_eur', type: 'number', placeholder: '2.00' },
-                    ].map(f => (
+                    {feederFields.map((f) => (
                         <div key={f.key}>
                             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">{f.label}</label>
                             <input
                                 type={f.type}
-                                value={(form as any)[f.key]}
+                                value={form[f.key]}
                                 onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
                                 placeholder={f.placeholder}
                                 required={f.key === 'name' || f.key === 'address'}
@@ -224,10 +282,10 @@ const AddFeederModal = ({ onClose, onAdd }: { onClose: () => void; onAdd: (feede
                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Status</label>
                         <select
                             value={form.status}
-                            onChange={e => setForm(prev => ({ ...prev, status: e.target.value }))}
+                            onChange={e => setForm(prev => ({ ...prev, status: e.target.value as FeederFormState['status'] }))}
                             className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                         >
-                            {['active', 'maintenance', 'offline'].map(s => (
+                            {(['active', 'maintenance', 'offline'] as const).map(s => (
                                 <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                             ))}
                         </select>
@@ -250,13 +308,25 @@ const AddFeederModal = ({ onClose, onAdd }: { onClose: () => void; onAdd: (feede
 };
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
-const CustomTooltip = ({ active, payload, label }: any) => {
+type TooltipPoint = {
+    color?: string;
+    name?: string;
+    value?: number | string;
+};
+
+type CustomTooltipProps = {
+    active?: boolean;
+    payload?: TooltipPoint[];
+    label?: string | number;
+};
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
         const dateStr = label ? new Date(label).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '';
         return (
             <div className="bg-white border-2 border-foreground rounded-xl p-3 neu-shadow">
                 <p className="text-xs font-bold text-muted-foreground mb-1 font-mono">{dateStr}</p>
-                {payload.map((p: any, i: number) => (
+                {payload.map((p, i) => (
                     <p key={i} className="text-sm font-black" style={{ color: p.color }}>
                         {p.name === 'revenue' ? `€${p.value}` : p.value}
                         <span className="text-xs font-normal text-muted-foreground ml-1">{p.name}</span>
@@ -278,19 +348,26 @@ export default function AdminDashboard() {
     const [showAddFeeder, setShowAddFeeder] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editingFeeder, setEditingFeeder] = useState<Feeder | null>(null);
-    const [editForm, setEditForm] = useState<any>({});
-    const [feedersExpanded, setFeedersExpanded] = useState<Record<string, boolean>>({});
-    const [userEmail, setUserEmail] = useState('');
+    const [editForm, setEditForm] = useState<EditFeederForm>({
+        name: '',
+        address: '',
+        lat: '0',
+        lng: '0',
+        status: 'enabled',
+        stock_level: '0',
+        left_overs: '0',
+        dispense_price_eur: '2.00',
+    });
 
     // Pool management state
-    const [pools, setPools] = useState<any[]>([]);
+    const [pools, setPools] = useState<DonationPool[]>([]);
     const [poolLoading, setPoolLoading] = useState(false);
     const [poolAction, setPoolAction] = useState<'add' | 'deduct'>('deduct');
     const [poolAmount, setPoolAmount] = useState('');
     const [poolReason, setPoolReason] = useState('');
     const [poolMessage, setPoolMessage] = useState('');
 
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     const fetchData = useCallback(async (showRefreshAnimation = false) => {
         if (showRefreshAnimation) setRefreshing(true);
@@ -314,20 +391,15 @@ export default function AdminDashboard() {
             const json = await res.json();
             setData(json);
             setError('');
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : 'Failed to load data');
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [supabase.auth]);
+    }, [supabase]);
 
     useEffect(() => {
-        const init = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            setUserEmail(user?.email || '');
-        };
-        init();
         fetchData();
     }, [fetchData]);
 
@@ -338,8 +410,8 @@ export default function AdminDashboard() {
             const res = await fetch(`/api/admin/feeders/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Failed to delete');
             setData(prev => prev ? { ...prev, feeders: prev.feeders.filter(f => f.id !== id) } : prev);
-        } catch (e: any) {
-            alert(e.message);
+        } catch (e: unknown) {
+            alert(e instanceof Error ? e.message : 'Failed to delete');
         } finally {
             setDeletingId(null);
         }
@@ -372,14 +444,9 @@ export default function AdminDashboard() {
                 feeders: prev.feeders.map(f => f.id === feeder.id ? updated.feeder : f)
             } : prev);
             setEditingFeeder(null);
-        } catch (e: any) {
-            alert(e.message);
+        } catch (e: unknown) {
+            alert(e instanceof Error ? e.message : 'Failed to update');
         }
-    };
-
-    const handleSignOut = async () => {
-        await supabase.auth.signOut();
-        window.location.href = '/';
     };
 
     // ── Pool management ──
@@ -390,7 +457,7 @@ export default function AdminDashboard() {
             if (!res.ok) throw new Error('Failed to load pools');
             const json = await res.json();
             setPools(json.pools || []);
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error('Pool fetch error:', e);
         } finally {
             setPoolLoading(false);
@@ -418,8 +485,8 @@ export default function AdminDashboard() {
             setPoolAmount('');
             setPoolReason('');
             fetchPools();
-        } catch (e: any) {
-            setPoolMessage(`❌ ${e.message}`);
+        } catch (e: unknown) {
+            setPoolMessage(`Failed: ${e instanceof Error ? e.message : 'Action failed'}`);
         } finally {
             setPoolLoading(false);
         }
@@ -428,9 +495,6 @@ export default function AdminDashboard() {
     const fmtCurrency = (v: number) => `€${v.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
     const fmtShortDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-
-    // Color palette
-    const CHART_COLORS = ['#7aa374', '#ecae78', '#86c4b4', '#f4c05a', '#c47ab4'];
 
     const PieColors = ['#22c55e', '#ef4444', '#9ca3af', '#e05c5c'];
     const feederStatuses = data ? [
@@ -466,7 +530,7 @@ export default function AdminDashboard() {
                         ].map(t => (
                             <button
                                 key={t.key}
-                                onClick={() => setActiveTab(t.key as any)}
+                                onClick={() => setActiveTab(t.key as AdminTab)}
                                 className={`flex items-center gap-1.5 px-3 sm:px-5 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${activeTab === t.key ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
                             >
                                 <t.icon className="w-4 h-4" />
@@ -903,7 +967,7 @@ export default function AdminDashboard() {
                                                         </div>
                                                         <div>
                                                             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Admin Status</label>
-                                                            <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary">
+                                                            <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value as EditFeederForm['status'] })} className="w-full px-3 py-1.5 border-2 border-foreground rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary">
                                                                 <option value="enabled">Enabled</option>
                                                                 <option value="disabled">Disabled</option>
                                                             </select>
@@ -1066,7 +1130,7 @@ export default function AdminDashboard() {
                                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Action</label>
                                     <select
                                         value={poolAction}
-                                        onChange={e => setPoolAction(e.target.value as any)}
+                                        onChange={e => setPoolAction(e.target.value as PoolAction)}
                                         className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                                     >
                                         <option value="deduct">Deduct (Withdraw)</option>

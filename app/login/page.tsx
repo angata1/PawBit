@@ -37,7 +37,7 @@ export default function Login() {
                 router.push("/");
                 router.refresh();
             }
-        } catch (err) {
+        } catch {
             setError(t('errorGeneric'));
         } finally {
             setLoading(false);
