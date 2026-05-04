@@ -24,7 +24,7 @@ export default function Navbar({ user }: NavbarProps) {
     { to: '/', icon: PawPrint, label: t('home') },
     { to: '/map', icon: Map, label: t('map') },
     { to: '/feedings', icon: Images, label: t('gallery') },
-    { to: '/leaderboard', icon: Trophy, label: t('rankings') },
+    { to: '/leaderboard', icon: Trophy, label: t('leaderboard') },
     { to: '/about', icon: Users, label: t('about') },
   ];
   const accountItems = user
@@ -84,7 +84,7 @@ export default function Navbar({ user }: NavbarProps) {
           <NavLink to="/" icon={PawPrint} label={t('home')} />
           <NavLink to="/map" icon={Map} label={t('map')} />
           <NavLink to="/feedings" icon={Images} label={t('gallery')} />
-          <NavLink to="/leaderboard" icon={Trophy} label={t('rankings')} />
+          <NavLink to="/leaderboard" icon={Trophy} label={t('leaderboard')} />
           <NavLink to="/about" icon={Users} label={t('about')} />
 
           <div className="h-8 w-0.5 bg-foreground/20 mx-1 2xl:mx-2" />
