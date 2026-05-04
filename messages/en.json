@@ -3,7 +3,7 @@
     "heroTitle": "Feed a Cat. <br/> <span class=\"text-primary italic\">In Real Time.</span>",
     "heroDesc": "PawBit connects your clicks to real kibble. Watch live as you donate to stray cats across your city.",
     "feedNow": "Feed Now",
-    "viewImpact": "View Impact",
+    "viewImpact": "About PawBit",
     "scroll": "Scroll",
     "howItWorks": "How It Works",
     "fuelThePool": "Fuel the Pool",
@@ -22,7 +22,7 @@
     "replay": "REPLAY",
     "ctaTitle": "Feed any cat,<br/> <span class=\"text-primary italic\">anywhere in the city.</span>",
     "ctaDesc": "Donate to the shared pool — no feeder to pick, no routing to think about. When a feeder detects nearby cats, it draws from the pool and dispenses food automatically.",
-    "contributeToPool": "Contribute to pool",
+    "contributeToPool": "Contribute to global pool",
     "statActiveFeeders": "Active feeders",
     "statActiveFeedersDesc": "Across parks and shelters",
     "statUptime": "Uptime",
@@ -43,7 +43,11 @@
     "adminPanel": "Admin Panel",
     "logout": "Logout",
     "login": "Log In",
-    "joinNow": "Join Now"
+    "joinNow": "Join Now",
+    "menu": "Menu",
+    "close": "Close",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu"
   },
   "Admin": {
     "loading": "Loading admin data...",

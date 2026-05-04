@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import React, { useRef, useState, useEffect } from 'react';
 import {
     Heart, Video, Gift, Activity,
-    ChevronRight, PlayCircle, Clock, MapPin
+    ChevronRight, PlayCircle, Clock, MapPin, Info
 } from 'lucide-react';
 import Button from './Button';
 import Image from 'next/image';
@@ -118,53 +118,6 @@ export default function HomeContent() {
             return;
         }
 
-        const reveal = (
-            targets: gsap.TweenTarget,
-            vars: {
-                from?: gsap.TweenVars;
-                to?: gsap.TweenVars;
-                scrollTrigger?: ScrollTrigger.Vars;
-            } = {},
-        ) => {
-            gsap.fromTo(targets,
-                {
-                    autoAlpha: 0,
-                    y: 48,
-                    ...vars.from,
-                },
-                {
-                    autoAlpha: 1,
-                    y: 0,
-                    duration: 0.7,
-                    ease: "power3.out",
-                    stagger: 0.1,
-                    overwrite: "auto",
-                    ...vars.to,
-                    scrollTrigger: {
-                        start: "top 82%",
-                        once: true,
-                        ...vars.scrollTrigger,
-                    },
-                }
-            );
-        };
-
-        const addParallax = (targets: Element[], amount = -5) => {
-            targets.forEach((target, index) => {
-                gsap.to(target, {
-                    yPercent: amount + (index % 2 === 0 ? 1 : -1),
-                    ease: "none",
-                    scrollTrigger: {
-                        trigger: target,
-                        start: "top bottom",
-                        end: "bottom top",
-                        scrub: 0.8,
-                        invalidateOnRefresh: true,
-                    },
-                });
-            });
-        };
-
         gsap.timeline({ defaults: { ease: "power3.out" } })
             .fromTo(q(".hero-bg-img"),
                 { autoAlpha: 0 },
@@ -194,34 +147,87 @@ export default function HomeContent() {
             ease: "sine.inOut",
         });
 
-        reveal(q(".feature-card"), {
-            from: { y: 70, scale: 0.96 },
-            to: { scale: 1, stagger: 0.12 },
-            scrollTrigger: { trigger: q(".feature-cards-container")[0], start: "top 78%" },
+        const makeSectionIntro = (trigger: Element | undefined, build: () => gsap.core.Timeline) => {
+            if (!trigger) return;
+            const tl = build();
+            tl.pause(0);
+            ScrollTrigger.create({
+                trigger,
+                start: "top 76%",
+                once: true,
+                animation: tl,
+            });
+        };
+
+        makeSectionIntro(q(".feature-cards-container")[0], () => {
+            return gsap.timeline({ defaults: { ease: "power3.out", overwrite: "auto" } })
+                .fromTo(q(".feature-cards-container h2"),
+                    { autoAlpha: 0, y: 24 },
+                    { autoAlpha: 1, y: 0, duration: 0.45 }
+                )
+                .fromTo(q(".feature-cards-container h2 + div"),
+                    { scaleX: 0, transformOrigin: "center center" },
+                    { scaleX: 1, duration: 0.45, ease: "back.out(1.8)" },
+                    0.1
+                )
+                .fromTo(q(".feature-card"),
+                    { autoAlpha: 0, y: 36, scale: 0.9, rotation: -1.5 },
+                    {
+                        autoAlpha: 1,
+                        y: 0,
+                        scale: 1,
+                        rotation: 0,
+                        duration: 0.52,
+                        ease: "back.out(1.45)",
+                        stagger: { each: 0.07, from: "start" },
+                    },
+                    0.16
+                )
+                .fromTo(q(".feature-icon"),
+                    { scale: 0.65, rotation: -18 },
+                    {
+                        scale: 1,
+                        rotation: 0,
+                        duration: 0.34,
+                        ease: "back.out(2.4)",
+                        stagger: 0.06,
+                    },
+                    0.35
+                );
         });
 
-        reveal(q(".feature-icon"), {
-            from: { y: 0, scale: 0.7, rotation: -20 },
-            to: { scale: 1, rotation: 0, duration: 0.55, stagger: 0.12, ease: "back.out(1.8)" },
-            scrollTrigger: { trigger: q(".feature-cards-container")[0], start: "top 72%" },
+        makeSectionIntro(q(".moments-section")[0], () => {
+            return gsap.timeline({ defaults: { ease: "power3.out", overwrite: "auto" } })
+                .fromTo(q(".moments-heading"),
+                    { autoAlpha: 0, y: 26 },
+                    { autoAlpha: 1, y: 0, duration: 0.48 }
+                )
+                .fromTo(q(".moments-section .flex > a"),
+                    { autoAlpha: 0, x: 18 },
+                    { autoAlpha: 1, x: 0, duration: 0.42, ease: "back.out(1.5)" },
+                    0.12
+                );
         });
 
-        reveal(q(".moments-heading"), {
-            from: { y: 34 },
-            to: { duration: 0.65 },
-            scrollTrigger: { trigger: q(".moments-section")[0], start: "top 76%" },
-        });
-
-        reveal(q(".cta-content"), {
-            from: { y: 46 },
-            to: { stagger: 0.08 },
-            scrollTrigger: { trigger: q(".cta-section")[0], start: "top 78%" },
-        });
-
-        reveal(q(".stat-item"), {
-            from: { y: 30, scale: 0.94 },
-            to: { scale: 1, duration: 0.55, stagger: 0.08 },
-            scrollTrigger: { trigger: q(".cta-section")[0], start: "top 68%" },
+        makeSectionIntro(q(".cta-section")[0], () => {
+            return gsap.timeline({ defaults: { ease: "power3.out", overwrite: "auto" } })
+                .fromTo(q(".cta-content").slice(0, 1),
+                    { autoAlpha: 0, x: -26 },
+                    { autoAlpha: 1, x: 0, duration: 0.5 }
+                )
+                .fromTo(q(".stat-item"),
+                    { autoAlpha: 0, y: 24, scale: 0.9, rotation: 1.5 },
+                    {
+                        autoAlpha: 1,
+                        y: 0,
+                        scale: 1,
+                        rotation: 0,
+                        duration: 0.45,
+                        ease: "back.out(1.65)",
+                        stagger: { amount: 0.18, from: "edges" },
+                    },
+                    0.14
+                );
         });
 
         mm.add("(min-width: 768px)", () => {
@@ -250,31 +256,26 @@ export default function HomeContent() {
                 }
             });
 
-            addParallax(q(".feature-card"), -5);
-            addParallax(q(".moment-card"), -4);
-            addParallax(q(".cta-content"), -5);
-            addParallax(q(".stat-item"), -3);
-
             gsap.to(q(".feature-background-pattern"), {
-                yPercent: -8,
+                yPercent: -4,
                 ease: "none",
                 scrollTrigger: {
                     trigger: q(".feature-cards-container")[0],
                     start: "top bottom",
                     end: "bottom top",
-                    scrub: 0.6,
+                    scrub: 0.35,
                     invalidateOnRefresh: true,
                 }
             });
 
             gsap.to(q(".cta-background-pattern"), {
-                yPercent: -6,
+                yPercent: -3,
                 ease: "none",
                 scrollTrigger: {
                     trigger: q(".cta-section")[0],
                     start: "top bottom",
                     end: "bottom top",
-                    scrub: 0.6,
+                    scrub: 0.35,
                     invalidateOnRefresh: true,
                 }
             });
@@ -293,43 +294,28 @@ export default function HomeContent() {
         if (!cards.length) return;
 
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            gsap.set(cards, { clearProps: "all", autoAlpha: 1, y: 0, scale: 1 });
+            gsap.set(cards, { clearProps: "all", autoAlpha: 1, y: 0, scale: 1, rotation: 0 });
             return;
         }
 
         gsap.fromTo(cards,
-            { autoAlpha: 0, y: 56, scale: 0.98 },
+            { autoAlpha: 0, y: 30, scale: 0.9, rotation: -1.2 },
             {
                 autoAlpha: 1,
                 y: 0,
                 scale: 1,
-                duration: 0.7,
-                ease: "power3.out",
-                stagger: 0.1,
+                rotation: 0,
+                duration: 0.48,
+                ease: "back.out(1.55)",
+                stagger: { each: 0.07, from: "start" },
                 overwrite: "auto",
                 scrollTrigger: {
                     trigger: q(".moments-section")[0],
-                    start: "top 72%",
+                    start: "top 70%",
                     once: true,
                 },
             }
         );
-
-        if (window.matchMedia("(min-width: 768px)").matches) {
-            cards.forEach((card, index) => {
-                gsap.to(card, {
-                    yPercent: -4 + (index % 2 === 0 ? 1 : -1),
-                    ease: "none",
-                    scrollTrigger: {
-                        trigger: card,
-                        start: "top bottom",
-                        end: "bottom top",
-                        scrub: 0.8,
-                        invalidateOnRefresh: true,
-                    },
-                });
-            });
-        }
 
         ScrollTrigger.refresh();
     }, { scope: container, dependencies: [loadingMoments, recentMoments.length] });
@@ -377,7 +363,7 @@ export default function HomeContent() {
                             <Button href="/map" variant="primary" size="lg" icon={<Heart className="w-5 h-5 md:w-6 md:h-6 fill-current" />} onClick={(e) => { e.preventDefault(); handleNavigate('/map'); }}>
                                 {t('feedNow')}
                             </Button>
-                            <Button href="/leaderboard" variant="outline" size="lg" icon={<Activity className="w-5 h-5 md:w-6 md:h-6" />} onClick={(e) => { e.preventDefault(); handleNavigate('/leaderboard'); }}>
+                            <Button href="/about" variant="outline" size="lg" icon={<Info className="w-5 h-5 md:w-6 md:h-6" />} onClick={(e) => { e.preventDefault(); handleNavigate('/about'); }}>
                                 {t('viewImpact')}
                             </Button>
                         </div>
