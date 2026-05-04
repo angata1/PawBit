@@ -271,7 +271,8 @@
     "createAccountBtn": "Създаване на акаунт",
     "creatingAccountBtn": "Създаване...",
     "orContinueWith": "Или продължете с",
-    "alreadyAccount": "Вече имате акаунт? Влезте",
+    "alreadyHaveAccount": "Вече имате акаунт?",
+    "loginNow": "Влезте сега",
     "back": "Назад"
   },
   "Auth": {

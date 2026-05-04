@@ -272,7 +272,8 @@
     "createAccountBtn": "Create Account",
     "creatingAccountBtn": "Creating Account...",
     "orContinueWith": "Or continue with",
-    "alreadyAccount": "Already have an account? Login",
+    "alreadyHaveAccount": "Already have an account?",
+    "loginNow": "Login now",
     "back": "Back"
   },
   "Auth": {
