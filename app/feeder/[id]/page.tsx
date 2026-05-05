@@ -142,7 +142,7 @@ export default function FeederDetails() {
                 .from('meals')
                 .select('*')
                 .order('time_of_meal', { ascending: false })
-                .limit(10);
+                .limit(5);
 
             if (recentMeals) setDonations(recentMeals);
         } else {
@@ -200,7 +200,7 @@ export default function FeederDetails() {
                 .select('*')
                 .eq('feeder_id', id)
                 .order('time_of_meal', { ascending: false })
-                .limit(10);
+                .limit(5);
 
             if (feederMeals) setDonations(feederMeals);
         }
@@ -408,17 +408,17 @@ export default function FeederDetails() {
             : t('modes.global_pool');
 
     return (
-        <div className="min-h-screen pt-4 sm:pt-8 pb-12 px-4 bg-background overflow-x-hidden">
-            <div className="container mx-auto max-w-6xl">
+        <div className="min-h-screen pt-4 sm:pt-8 pb-12 px-3 sm:px-4 bg-background overflow-x-hidden">
+            <div className="container mx-auto max-w-6xl min-w-0">
                 <button onClick={() => router.push('/map')} className="flex items-center gap-2 font-bold text-muted-foreground hover:text-foreground mb-4 sm:mb-6 transition-colors text-sm sm:text-base">
                     <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /> {t('backToMap')}
                 </button>
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8 gap-4">
-                    <div className="w-full sm:w-auto">
+                <div className="flex min-w-0 flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8 gap-4">
+                    <div className="w-full min-w-0 sm:w-auto">
                         <div className="flex items-center flex-wrap gap-2 sm:gap-3 mb-2">
-                            <h1 className="text-2xl sm:text-4xl font-bold break-words">{feeder.id === 'all' ? t('globalPool') : feeder.name}</h1>
+                            <h1 className="min-w-0 text-2xl sm:text-4xl font-bold break-words">{feeder.id === 'all' ? t('globalPool') : feeder.name}</h1>
                             {feeder.connectionStatus === 'online' ? (
                                 <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-green-100 text-green-800 rounded-full text-[10px] sm:text-xs font-bold border border-green-300 animate-pulse uppercase">{t('online')}</span>
                             ) : feeder.connectionStatus === 'offline' ? (
@@ -427,8 +427,8 @@ export default function FeederDetails() {
                                 <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-zinc-100 text-zinc-800 rounded-full text-[10px] sm:text-xs font-bold border border-zinc-300 uppercase">{t('disabled')}</span>
                             )}
                         </div>
-                        <p className="text-sm sm:text-lg text-muted-foreground font-mono flex items-center gap-2">
-                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4" /> {feeder.id === 'all' ? t('globalPoolSidebarDesc') : feeder.location.address}
+                        <p className="min-w-0 text-sm sm:text-lg text-muted-foreground font-mono flex items-start gap-2 break-words">
+                            <MapPin className="mt-1 w-3 h-3 sm:w-4 sm:h-4 shrink-0" /> <span className="min-w-0 break-words">{feeder.id === 'all' ? t('globalPoolSidebarDesc') : feeder.location.address}</span>
                         </p>
                     </div>
                     <div className="flex gap-3 sm:gap-4 w-full sm:w-auto">
@@ -446,10 +446,10 @@ export default function FeederDetails() {
                 </div>
 
                 {/* ── Main 2-col layout ── */}
-                <div className="grid lg:grid-cols-3 gap-8">
+                <div className="grid min-w-0 lg:grid-cols-3 gap-6 lg:gap-8">
 
                     {/* ── LEFT COLUMN ── */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="min-w-0 lg:col-span-2 space-y-6">
 
                         {/* Stream / AI block */}
                         {id === 'all' ? (
@@ -598,7 +598,7 @@ export default function FeederDetails() {
                                         ))}
                                     </div>
 
-                                    <div className="flex gap-2 w-full">
+                                    <div className="flex flex-col sm:flex-row gap-2 w-full">
                                         <input
                                             type="number"
                                             placeholder={t('customAmount')}
@@ -610,7 +610,7 @@ export default function FeederDetails() {
                                             onClick={() => handleDonate(Number(customAmount) || 1)}
                                             disabled={!customAmount}
                                             variant="accent"
-                                            className="flex-shrink-0"
+                                            className="w-full sm:w-auto sm:flex-shrink-0"
                                         >
                                             {t('donate')}
                                         </Button>
@@ -648,7 +648,7 @@ export default function FeederDetails() {
                                         </Button>
                                     ))}
                                 </div>
-                                <div className="flex gap-2 mb-6 w-full">
+                                <div className="flex flex-col sm:flex-row gap-2 mb-6 w-full">
                                     <input
                                         type="number"
                                         placeholder={t('customAmount')}
@@ -656,7 +656,7 @@ export default function FeederDetails() {
                                         value={customAmount}
                                         onChange={(e) => setCustomAmount(e.target.value)}
                                     />
-                                    <Button onClick={() => handleDonate(Number(customAmount) || 1, 'global_pool')} disabled={!customAmount} variant="accent" className="flex-shrink-0">
+                                    <Button onClick={() => handleDonate(Number(customAmount) || 1, 'global_pool')} disabled={!customAmount} variant="accent" className="w-full sm:w-auto sm:flex-shrink-0">
                                         {t('donate')}
                                     </Button>
                                 </div>
@@ -672,15 +672,15 @@ export default function FeederDetails() {
                         {/* Recent Activity — at the very bottom of left column */}
                         <Card title={t('recentActivity')}>
                             <div className="space-y-4">
-                                {donations.length > 0 ? donations.map(d => (
-                                    <div key={d.id} className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border-2 border-foreground/10 hover:border-foreground/20 transition-colors">
-                                        <div className="flex items-center gap-3">
+                                {donations.length > 0 ? donations.slice(0, 5).map(d => (
+                                    <div key={d.id} className="flex min-w-0 items-center justify-between gap-3 p-3 sm:p-4 bg-muted/20 rounded-xl border-2 border-foreground/10 hover:border-foreground/20 transition-colors">
+                                        <div className="flex min-w-0 items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center border-2 border-accent/20">
                                                 <Heart className="w-5 h-5 text-accent" fill="currentColor" />
                                             </div>
-                                            <div>
+                                            <div className="min-w-0">
                                                 <p className="font-bold text-sm">{t('communityMember')}</p>
-                                                <p className="text-xs text-muted-foreground font-mono">{t('dispensedFood', { amount: d.total_cost_eur ?? 0 })}</p>
+                                                <p className="text-xs text-muted-foreground font-mono break-words">{t('dispensedFood', { amount: d.total_cost_eur ?? 0 })}</p>
                                             </div>
                                         </div>
                                         <div className="text-right flex-shrink-0">
@@ -701,7 +701,7 @@ export default function FeederDetails() {
                     </div>
 
                     {/* ── RIGHT COLUMN: Chat + extras ── */}
-                    <div className="space-y-6">
+                    <div className="min-w-0 space-y-6">
                         <RealtimeChat roomId={id} currentUser={currentUser} />
 
                         {id !== 'all' && (

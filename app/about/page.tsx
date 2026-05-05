@@ -133,7 +133,7 @@ export default function AboutPage() {
                             PawBit
                         </p>
                         <h1
-                            className="about-reveal text-4xl font-semibold leading-[1.08] text-foreground sm:text-5xl md:text-6xl"
+                            className="about-reveal text-4xl font-black leading-[1.08] text-foreground sm:text-5xl md:text-6xl"
                             dangerouslySetInnerHTML={{ __html: t.raw("heroTitle") }}
                         />
                         <p className="about-reveal mx-auto max-w-[38rem] text-base leading-8 text-muted-foreground md:text-lg lg:mx-0">
@@ -149,7 +149,7 @@ export default function AboutPage() {
                                 fill
                                 priority
                                 sizes="(min-width: 1024px) 520px, 92vw"
-                                className="object-cover"
+                            className="object-cover"
                             />
                         </div>
                     </div>
@@ -162,7 +162,7 @@ export default function AboutPage() {
                         <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-primary">
                             Story
                         </p>
-                        <h2 className="text-3xl font-semibold leading-tight md:text-5xl">
+                        <h2 className="text-3xl font-black leading-tight md:text-5xl">
                             {t("story.title")}
                         </h2>
                     </div>
@@ -176,13 +176,13 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            <section className="about-section bg-card/55 px-4 py-16 md:py-24">
+            <section className="about-section bg-primary/5 px-4 py-16 md:py-24 border-y-2 border-foreground/5">
                 <div className="container mx-auto max-w-6xl">
                     <div className="about-reveal mb-12 max-w-3xl">
                         <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-primary">
                             Principles
                         </p>
-                        <h2 className="text-3xl font-semibold leading-tight md:text-5xl">
+                        <h2 className="text-3xl font-black leading-tight md:text-5xl">
                             {t("why.title")}
                         </h2>
                     </div>
@@ -191,9 +191,9 @@ export default function AboutPage() {
                         {whyItems.map((item) => (
                             <article
                                 key={item.title}
-                                className="about-reveal rounded-lg border border-foreground/10 bg-background/80 p-6 shadow-sm transition-transform duration-200 hover:-translate-y-1"
+                                className="about-reveal rounded-2xl border-2 border-foreground bg-white p-5 sm:p-6 neu-shadow transition-transform duration-200 hover:-translate-y-1 hover:neu-shadow-lg"
                             >
-                                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border-2 border-foreground bg-primary/10 text-primary">
                                     <item.icon className="h-5 w-5" />
                                 </div>
                                 <h3 className="mb-2 text-xl font-semibold leading-snug">{item.title}</h3>
@@ -224,7 +224,7 @@ export default function AboutPage() {
                                 Technology
                             </p>
                             <h2
-                                className="text-3xl font-semibold leading-tight md:text-5xl"
+                                className="text-3xl font-black leading-tight md:text-5xl"
                                 dangerouslySetInnerHTML={{ __html: t.raw("tech.title") }}
                             />
                         </div>
@@ -236,7 +236,7 @@ export default function AboutPage() {
 
                         <ul className="space-y-3">
                             {techItems.map((item) => (
-                                <li key={item.label} className="about-reveal flex gap-3 rounded-lg border border-foreground/10 bg-card/65 p-4">
+                                <li key={item.label} className="about-reveal flex gap-3 rounded-2xl border-2 border-foreground bg-white p-4 neu-shadow-sm">
                                     <item.icon className="mt-1 h-5 w-5 shrink-0 text-primary" />
                                     <span className="leading-7 text-foreground/85">{item.label}</span>
                                 </li>
@@ -246,26 +246,26 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            <section className="about-section bg-card/55 px-4 py-16 md:py-24">
+            <section className="about-section bg-primary/5 px-4 py-16 md:py-24 border-y-2 border-foreground/5">
                 <div className="container mx-auto max-w-6xl">
                     <div className="about-reveal mb-12 max-w-3xl">
                         <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-primary">
                             Team
                         </p>
-                        <h2 className="text-3xl font-semibold leading-tight md:text-5xl">
+                        <h2 className="text-3xl font-black leading-tight md:text-5xl">
                             {t("team.title")}
                         </h2>
                     </div>
 
                     <div className="grid gap-5 md:grid-cols-2">
                         {team.map((member) => (
-                            <article key={member.name} className="about-reveal rounded-lg border border-foreground/10 bg-background/80 p-6 shadow-sm md:p-7">
+                            <article key={member.name} className="about-reveal rounded-2xl border-2 border-foreground bg-white p-5 neu-shadow md:p-7">
                                 <div className="mb-5 flex items-center gap-4">
-                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-2xl font-semibold text-primary">
+                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-primary/10 text-2xl font-black text-primary">
                                         {member.initial}
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-semibold leading-tight">{member.name}</h3>
+                                        <h3 className="text-2xl font-black leading-tight">{member.name}</h3>
                                         <p className="mt-1 text-sm font-medium leading-6 text-primary">{member.role}</p>
                                     </div>
                                 </div>
@@ -281,10 +281,10 @@ export default function AboutPage() {
             </section>
 
             <section className="about-section px-4 py-16 md:py-24">
-                <div className="container mx-auto grid max-w-6xl items-center gap-8 rounded-lg border border-foreground/10 bg-foreground px-6 py-10 text-background shadow-xl shadow-foreground/10 md:grid-cols-[1fr_auto] md:px-10 md:py-12">
+                <div className="container mx-auto grid max-w-6xl items-center gap-8 rounded-2xl border-2 border-foreground bg-foreground px-5 py-10 text-background neu-shadow-lg md:grid-cols-[1fr_auto] md:px-10 md:py-12">
                     <div className="about-reveal max-w-2xl">
                         <Heart className="mb-5 h-8 w-8 text-primary" />
-                        <h2 className="mb-4 text-3xl font-semibold leading-tight md:text-4xl">
+                        <h2 className="mb-4 text-3xl font-black leading-tight md:text-4xl">
                             {t("cta.title")}
                         </h2>
                         <p className="text-base leading-8 text-background/80 md:text-lg">

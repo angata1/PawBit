@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   description: "Connect your clicks to real kibble. Watch live video as you donate to stray cats in your city.",
   icons: {
     icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
   },
 };
 

@@ -11,7 +11,7 @@ export default function Card({ children, className = '', title, hoverEffect = fa
   return (
     <div className={`
       bg-card text-card-foreground 
-      border-2 border-foreground rounded-2xl p-6 
+      border-2 border-foreground rounded-2xl p-4 sm:p-6 min-w-0 max-w-full
       neu-shadow 
       ${hoverEffect ? 'hover:-translate-y-1 hover:neu-shadow-lg transition-all duration-300' : ''}
       ${className}

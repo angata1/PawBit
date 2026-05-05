@@ -330,7 +330,7 @@ export default function HomeContent() {
 
             <div className={`w-full transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`} ref={container}>
                 {/* ========== HERO ========== */}
-                <section className="hero-section min-h-[92svh] md:min-h-[92vh] flex flex-col items-center justify-center relative overflow-hidden px-4">
+                <section className="hero-section min-h-[92svh] md:min-h-[92vh] flex flex-col items-center justify-center relative overflow-hidden px-4 py-24 md:py-28">
                     <div className="absolute inset-0 z-0 pointer-events-none">
                         <Image
                             src="/hero-cat.png"
@@ -352,14 +352,14 @@ export default function HomeContent() {
                         <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-background to-transparent" />
                     </div>
 
-                    <div className="hero-content-wrapper container mx-auto flex flex-col items-center text-center z-10 max-w-4xl space-y-6 md:space-y-8">
-                        <h1 className="hero-text-element text-5xl sm:text-6xl md:text-8xl font-black leading-[1.1] text-foreground" dangerouslySetInnerHTML={{ __html: t.raw('heroTitle') }} />
+                    <div className="hero-content-wrapper container mx-auto flex flex-col items-center text-center z-10 max-w-4xl space-y-5 md:space-y-8">
+                        <h1 className="hero-text-element text-[clamp(2.35rem,13vw,4rem)] md:text-8xl font-black leading-[1.08] text-foreground break-words" dangerouslySetInnerHTML={{ __html: t.raw('heroTitle') }} />
 
-                        <p className="hero-text-element text-lg sm:text-xl md:text-2xl text-muted-foreground font-medium leading-relaxed max-w-2xl">
+                        <p className="hero-text-element text-base sm:text-xl md:text-2xl text-muted-foreground font-medium leading-relaxed max-w-2xl">
                             {t('heroDesc')}
                         </p>
 
-                        <div className="hero-text-element flex flex-col sm:flex-row items-center gap-3 md:gap-4">
+                        <div className="hero-text-element flex w-full max-w-sm flex-col sm:max-w-none sm:w-auto sm:flex-row items-stretch sm:items-center gap-3 md:gap-4">
                             <Button href="/map" variant="primary" size="lg" icon={<Heart className="w-5 h-5 md:w-6 md:h-6 fill-current" />} onClick={(e) => { e.preventDefault(); handleNavigate('/map'); }}>
                                 {t('feedNow')}
                             </Button>
@@ -372,15 +372,15 @@ export default function HomeContent() {
                     </div>
 
                     {/* ── Scroll indicator ── */}
-                    <div className="scroll-indicator absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-10 pointer-events-none select-none opacity-0">
-                        <span className="text-[9px] md:text-[11px] font-black tracking-[0.4em] uppercase text-foreground/40 md:text-foreground/60 mb-1">{t('scroll')}</span>
+                    <div className="scroll-indicator absolute bottom-3 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-10 pointer-events-none select-none opacity-0">
+                        <span className="max-w-[5.5rem] text-center text-[8px] md:text-[11px] font-black tracking-[0.22em] md:tracking-[0.4em] uppercase text-foreground/40 md:text-foreground/60 mb-0.5 md:mb-1 leading-tight">{t('scroll')}</span>
                         <div className="scroll-indicator-icon relative flex items-center justify-center">
                             <Image
                                 src="/scroll.svg"
                                 alt="Scroll Down"
                                 width={40}
                                 height={40}
-                                className="w-8 h-8 md:w-14 md:h-14 relative z-10"
+                                className="w-7 h-7 md:w-14 md:h-14 relative z-10"
                             />
                         </div>
                     </div>
@@ -531,7 +531,7 @@ export default function HomeContent() {
                                     {t('ctaDesc')}
                                 </p>
 
-                                <Button href="/feeder/all" variant="primary" size="lg" icon={<Gift className="w-5 h-5 md:w-6 md:h-6 fill-current" />} onClick={(e) => { e.preventDefault(); handleNavigate('/feeder/all'); }}>
+                                <Button href="/feeder/all" variant="primary" size="lg" className="w-full sm:w-auto max-w-full" icon={<Gift className="w-5 h-5 md:w-6 md:h-6 fill-current shrink-0" />} onClick={(e) => { e.preventDefault(); handleNavigate('/feeder/all'); }}>
                                     {t('contributeToPool')}
                                 </Button>
                             </div>

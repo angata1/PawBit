@@ -147,6 +147,7 @@ const Feedings: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedLocation, setSelectedLocation] = useState<string>("all");
+    const [filtersOpen, setFiltersOpen] = useState(false);
 
     useEffect(() => {
         const loadVideos = async () => {
@@ -258,30 +259,40 @@ const Feedings: React.FC = () => {
                 </p>
             </div>
 
-            <Card className="mb-8 bg-white sticky top-20 z-30 shadow-xl border-2 border-foreground">
-                <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <Card className="mb-6 md:mb-8 bg-white sticky top-16 md:top-20 z-30 shadow-xl border-2 border-foreground">
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between">
                     <div className="relative w-full md:w-96">
                         <input
                             type="text"
                             placeholder={t('searchPlaceholder')}
-                            className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-all font-mono text-sm"
+                            className="w-full pl-10 pr-12 md:pr-4 py-2.5 md:py-3 rounded-xl border-2 border-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-all font-mono text-sm"
                             value={searchQuery}
                             onChange={(event) => {
                                 setSearchQuery(event.target.value);
                                 setCurrentPage(1);
                             }}
                         />
-                        <Search className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
+                        <Search className="absolute left-3 top-3 text-gray-400 w-5 h-5 md:top-3.5" />
+                        <button
+                            type="button"
+                            onClick={() => setFiltersOpen((open) => !open)}
+                            className={`absolute right-2 top-1.5 flex h-9 w-9 items-center justify-center rounded-lg border-2 md:hidden ${filtersOpen || selectedLocation !== "all" ? "border-primary bg-primary text-white" : "border-foreground/20 bg-white text-foreground"}`}
+                            aria-expanded={filtersOpen}
+                            aria-label="Toggle filters"
+                        >
+                            <Filter className="h-4 w-4" />
+                        </button>
                     </div>
 
-                    <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-                        <Filter className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                    <div className={`${filtersOpen ? "flex" : "hidden"} md:flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar`}>
+                        <Filter className="hidden md:block w-5 h-5 text-muted-foreground flex-shrink-0" />
                         <button
                             onClick={() => {
                                 setSelectedLocation("all");
                                 setCurrentPage(1);
+                                setFiltersOpen(false);
                             }}
-                            className={`px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap transition-colors border-2 ${selectedLocation === "all" ? "bg-primary text-white border-primary" : "bg-white border-foreground/10 hover:border-primary"}`}
+                            className={`px-3 md:px-4 py-2 rounded-lg font-bold text-xs md:text-sm whitespace-nowrap transition-colors border-2 ${selectedLocation === "all" ? "bg-primary text-white border-primary" : "bg-white border-foreground/10 hover:border-primary"}`}
                         >
                             {t('allLocations')}
                         </button>
@@ -291,8 +302,9 @@ const Feedings: React.FC = () => {
                                 onClick={() => {
                                     setSelectedLocation(location.id);
                                     setCurrentPage(1);
+                                    setFiltersOpen(false);
                                 }}
-                                className={`px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap transition-colors border-2 ${selectedLocation === location.id ? "bg-primary text-white border-primary" : "bg-white border-foreground/10 hover:border-primary"}`}
+                                className={`px-3 md:px-4 py-2 rounded-lg font-bold text-xs md:text-sm whitespace-nowrap transition-colors border-2 ${selectedLocation === location.id ? "bg-primary text-white border-primary" : "bg-white border-foreground/10 hover:border-primary"}`}
                             >
                                 {location.name}
                             </button>
