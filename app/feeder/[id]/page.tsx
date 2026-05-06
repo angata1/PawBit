@@ -84,11 +84,26 @@ export default function FeederDetails() {
     const [customAmount, setCustomAmount] = useState('');
     const [isAnimating, setIsAnimating] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>('overview');
+    const [isLargeScreen, setIsLargeScreen] = useState(() =>
+        typeof window === 'undefined' ? false : window.matchMedia('(min-width: 1024px)').matches
+    );
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [donationAmount, setDonationAmount] = useState(5);
     const [pendingDonationMode, setPendingDonationMode] = useState<'live' | 'feeder_pool' | 'global_pool'>(donationMode);
     const pendingDonationHandledRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 1024px)');
+        const updateScreenSize = () => setIsLargeScreen(mediaQuery.matches);
+
+        updateScreenSize();
+        mediaQuery.addEventListener('change', updateScreenSize);
+
+        return () => {
+            mediaQuery.removeEventListener('change', updateScreenSize);
+        };
+    }, []);
 
     const mapFeederRow = (f: FeederRow): Feeder => {
         const enabled = f.enabled ?? true;
@@ -471,6 +486,7 @@ export default function FeederDetails() {
                 </div>
 
                 {/* ── Main 2-col layout ── */}
+                {!isLargeScreen && (
                 <div className="lg:hidden space-y-4 mb-6">
                     <div className="sticky top-3 z-30">
                         <div className="grid grid-cols-3 gap-2 rounded-2xl border-2 border-foreground bg-white p-2 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
@@ -760,7 +776,9 @@ export default function FeederDetails() {
                         <RealtimeChat roomId={id} currentUser={currentUser} />
                     )}
                 </div>
+                )}
 
+                {isLargeScreen && (
                 <div className="hidden lg:grid min-w-0 lg:grid-cols-3 gap-6 lg:gap-8">
 
                     {/* ── LEFT COLUMN ── */}
@@ -1034,6 +1052,7 @@ export default function FeederDetails() {
 
                     </div>
                 </div>
+                )}
             </div>
 
             <DonationModal

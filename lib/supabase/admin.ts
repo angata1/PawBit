@@ -7,7 +7,11 @@ export function createAdminClient() {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!url || !serviceRoleKey) {
-        throw new Error("Supabase admin client is not configured");
+        const missing = [
+            !url ? "NEXT_PUBLIC_SUPABASE_URL" : null,
+            !serviceRoleKey ? "SUPABASE_SERVICE_ROLE_KEY" : null,
+        ].filter(Boolean).join(", ");
+        throw new Error(`Supabase admin client is not configured. Missing: ${missing}`);
     }
 
     if (!adminClient) {

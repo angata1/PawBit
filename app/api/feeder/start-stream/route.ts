@@ -34,7 +34,7 @@ export async function POST(request: Request) {
         adminSupabase = createAdminClient();
     } catch (error) {
         console.error(error);
-        return NextResponse.json({ error: 'Agora stream generation is not configured' }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Supabase admin client is not configured' }, { status: 500 });
     }
 
     const { data: feeder, error: feederError } = await adminSupabase
@@ -57,7 +57,11 @@ export async function POST(request: Request) {
         const region = process.env.AGORA_REGION;
 
         if (!appId || !region) {
-            return NextResponse.json({ error: 'Agora stream key generation is not configured' }, { status: 500 });
+            const missing = [
+                !appId ? 'NEXT_PUBLIC_AGORA_APP_ID or AGORA_APP_ID' : null,
+                !region ? 'AGORA_REGION' : null,
+            ].filter(Boolean).join(', ');
+            return NextResponse.json({ error: `Agora stream key generation is not configured. Missing: ${missing}` }, { status: 500 });
         }
 
         const streamChannel = `pawbit-feeder-${feederId}`;

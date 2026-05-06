@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Expand, Loader2, Maximize2, Minimize2, Pause, Play, RotateCcw, Square, Trash2, Users, Video, WifiOff } from "lucide-react";
 import type { IAgoraRTCClient, IAgoraRTCRemoteUser } from "agora-rtc-sdk-ng";
 
@@ -25,6 +25,7 @@ const VIEWER_COUNT_SYNC_INTERVAL_MS = 30_000;
 const MAX_CLIP_DURATION_MS = 30_000;
 const DVR_CHUNK_INTERVAL_MS = 1_000;
 const MAX_DVR_BUFFER_MS = 10 * 60 * 1_000;
+const VIEWER_UID_STORAGE_PREFIX = "pawbit:agora-viewer-uid:";
 const VIEWER_UID_MIN = 1_000_000_000;
 const VIEWER_UID_MAX = 2_147_483_647;
 
@@ -32,26 +33,6 @@ type DvrChunk = {
     blob: Blob;
     durationMs: number;
 };
-
-function getStableViewerUid(channelName: string) {
-    const storageKey = `pawbit-agora-viewer-uid:${channelName}`;
-    const existing = window.sessionStorage.getItem(storageKey);
-    if (existing) {
-        const uid = Number(existing);
-        if (Number.isInteger(uid) && uid >= VIEWER_UID_MIN && uid <= VIEWER_UID_MAX) {
-            return uid;
-        }
-    }
-
-    const uid = Math.floor(Math.random() * (VIEWER_UID_MAX - VIEWER_UID_MIN + 1)) + VIEWER_UID_MIN;
-    window.sessionStorage.setItem(storageKey, String(uid));
-    return uid;
-}
-
-function resetStableViewerUid(channelName: string) {
-    window.sessionStorage.removeItem(`pawbit-agora-viewer-uid:${channelName}`);
-    return getStableViewerUid(channelName);
-}
 
 export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlayerProps) {
     const playerRef = useRef<HTMLDivElement>(null);
@@ -90,6 +71,36 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
     const [dvrPlayheadSeconds, setDvrPlayheadSeconds] = useState(0);
     const [showControls, setShowControls] = useState(true);
     isWatchingDelayedRef.current = isWatchingDelayed;
+
+    const getStoredViewerUid = useCallback(() => {
+        const storageKey = `${VIEWER_UID_STORAGE_PREFIX}${feederId}:${channelName}`;
+
+        try {
+            const storedUid = Number(window.localStorage.getItem(storageKey));
+            if (Number.isInteger(storedUid) && storedUid >= VIEWER_UID_MIN && storedUid <= VIEWER_UID_MAX) {
+                return storedUid;
+            }
+
+            const nextUid = Math.floor(Math.random() * (VIEWER_UID_MAX - VIEWER_UID_MIN + 1)) + VIEWER_UID_MIN;
+            window.localStorage.setItem(storageKey, String(nextUid));
+            return nextUid;
+        } catch {
+            return Math.floor(Math.random() * (VIEWER_UID_MAX - VIEWER_UID_MIN + 1)) + VIEWER_UID_MIN;
+        }
+    }, [channelName, feederId]);
+
+    const replaceStoredViewerUid = useCallback(() => {
+        const storageKey = `${VIEWER_UID_STORAGE_PREFIX}${feederId}:${channelName}`;
+        const nextUid = Math.floor(Math.random() * (VIEWER_UID_MAX - VIEWER_UID_MIN + 1)) + VIEWER_UID_MIN;
+
+        try {
+            window.localStorage.setItem(storageKey, String(nextUid));
+        } catch {
+            // Storage can fail in private browsing; the generated UID still works for this join.
+        }
+
+        return nextUid;
+    }, [channelName, feederId]);
 
     const clearClipPreview = () => {
         if (clipUrlRef.current) {
@@ -449,13 +460,16 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
         };
 
         const joinChannel = async () => {
+            let joined = false;
             try {
                 setState("connecting");
                 setMessage("Connecting to live camera...");
-                let viewerUid = getStableViewerUid(channelName);
 
+                const buildTokenUrl = (viewerUid: number) =>
+                    `/api/agora/token?feederId=${encodeURIComponent(feederId)}&channel=${encodeURIComponent(channelName)}&uid=${encodeURIComponent(String(viewerUid))}`;
+                let viewerUid = getStoredViewerUid();
                 const tokenResponse = await fetch(
-                    `/api/agora/token?feederId=${encodeURIComponent(feederId)}&channel=${encodeURIComponent(channelName)}&uid=${viewerUid}`
+                    buildTokenUrl(viewerUid)
                 );
 
                 if (!tokenResponse.ok) {
@@ -464,7 +478,10 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
 
                 const { appId, token, uid, channel, viewerCount: initialViewerCount } =
                     (await tokenResponse.json()) as TokenResponse;
-                viewerUid = uid;
+
+                if (cancelled) {
+                    return;
+                }
 
                 updateViewerCount(Number(initialViewerCount ?? 0));
                 void syncAgoraViewerCount();
@@ -474,6 +491,12 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
 
                 const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
                 const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+
+                if (cancelled) {
+                    client.removeAllListeners();
+                    await client.leave().catch(() => undefined);
+                    return;
+                }
 
                 clientRef.current = client;
                 client.setClientRole("audience");
@@ -515,12 +538,13 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                 });
 
                 try {
-                    await client.join(appId, channel, token, viewerUid);
+                    await client.join(appId, channel, token, uid);
+                    joined = true;
                 } catch (error) {
                     if (error instanceof Error && error.message.includes("UID_CONFLICT")) {
-                        viewerUid = resetStableViewerUid(channelName);
+                        viewerUid = replaceStoredViewerUid();
                         const retryTokenResponse = await fetch(
-                            `/api/agora/token?feederId=${encodeURIComponent(feederId)}&channel=${encodeURIComponent(channelName)}&uid=${viewerUid}`
+                            buildTokenUrl(viewerUid)
                         );
 
                         if (!retryTokenResponse.ok) {
@@ -529,9 +553,17 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
 
                         const retryToken = (await retryTokenResponse.json()) as TokenResponse;
                         await client.join(retryToken.appId, retryToken.channel, retryToken.token, retryToken.uid);
+                        joined = true;
                     } else {
                         throw error;
                     }
+                }
+
+                if (cancelled) {
+                    if (joined) {
+                        await client.leave().catch(() => undefined);
+                    }
+                    return;
                 }
 
                 if (!cancelled && client.remoteUsers.length === 0) {
@@ -573,7 +605,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                 window.clearTimeout(controlsHideTimerRef.current);
             }
         };
-    }, [feederId, channelName]);
+    }, [feederId, channelName, getStoredViewerUid, replaceStoredViewerUid]);
 
     return (
         <div
