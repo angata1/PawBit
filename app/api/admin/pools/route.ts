@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { logMoneyEvent } from '@/lib/money-events';
 import { NextResponse } from 'next/server';
 
 type DonationPoolRow = {
@@ -7,6 +8,27 @@ type DonationPoolRow = {
     balance_amount: number;
     last_updated: string;
     feeders?: { name?: string | null } | null;
+};
+
+type MoneyEventRow = {
+    id: number;
+    created_at: string;
+    event_type: string;
+    reason: string;
+    reason_en: string | null;
+    amount_eur: number;
+    actor_auth_id: string | null;
+    user_auth_id: string | null;
+    source_pool_id: number | null;
+    destination_pool_id: number | null;
+    feeder_id: number | null;
+    meal_id: number | null;
+    donation_id: number | null;
+};
+
+type PoolOperationEntry = {
+    poolId: number;
+    amount: number;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -20,6 +42,20 @@ function getNumber(value: unknown): number | null {
         if (Number.isFinite(n)) return n;
     }
     return null;
+}
+
+function getPoolEntries(value: unknown): PoolOperationEntry[] {
+    if (!Array.isArray(value)) return [];
+
+    return value
+        .map((entry): PoolOperationEntry | null => {
+            if (!isRecord(entry)) return null;
+            const poolId = getNumber(entry.poolId);
+            const amount = getNumber(entry.amount);
+            if (!poolId || !amount || amount <= 0) return null;
+            return { poolId, amount };
+        })
+        .filter((entry): entry is PoolOperationEntry => entry !== null);
 }
 
 /**
@@ -56,7 +92,16 @@ export async function GET() {
         last_updated: p.last_updated,
     }));
 
-    return NextResponse.json({ pools: formatted });
+    const { data: events } = await supabase
+        .from('money_events')
+        .select('id, created_at, event_type, reason, reason_en, amount_eur, actor_auth_id, user_auth_id, source_pool_id, destination_pool_id, feeder_id, meal_id, donation_id')
+        .order('created_at', { ascending: false })
+        .limit(25);
+
+    const eventsUnknown: unknown = events;
+    const recentEvents: MoneyEventRow[] = Array.isArray(eventsUnknown) ? (eventsUnknown as MoneyEventRow[]) : [];
+
+    return NextResponse.json({ pools: formatted, recentEvents });
 }
 
 export async function POST(request: Request) {
@@ -75,12 +120,44 @@ export async function POST(request: Request) {
     const action = body.action;
     const amount = getNumber(body.amount);
     const reason = typeof body.reason === 'string' ? body.reason : undefined;
+    const reasonEn = typeof body.reasonEn === 'string' ? body.reasonEn : reason;
+    const sourcePoolId = getNumber(body.sourcePoolId);
+    const destinationPoolId = getNumber(body.destinationPoolId);
+    const entries = getPoolEntries(body.entries);
 
     if (!amount || amount <= 0) {
         return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
     }
 
+    const { data: operationResult, error: operationError } = await supabase.rpc('admin_pool_operation_atomic', {
+        p_actor_auth_id: user.id,
+        p_action: action,
+        p_amount: amount,
+        p_reason: reason || 'admin_adjustment',
+        p_reason_en: reasonEn || reason || 'Admin adjustment',
+        p_source_pool_id: sourcePoolId,
+        p_destination_pool_id: destinationPoolId,
+        p_entries: entries.length > 0 ? entries.map((entry) => ({
+            pool_id: entry.poolId,
+            amount: entry.amount,
+        })) : null,
+    });
+
+    if (!operationError) {
+        return NextResponse.json(operationResult);
+    }
+
+    if (action !== 'add' && action !== 'deduct') {
+        return NextResponse.json({ error: operationError.message }, { status: 500 });
+    }
+
     if (action === 'deduct') {
+        const { data: globalPool } = await supabase
+            .from('donation_pools')
+            .select('id')
+            .is('feeder_id', null)
+            .maybeSingle();
+
         const { data, error } = await supabase.rpc('admin_deduct_pool', {
             p_amount: amount,
             p_reason: reason || 'maintenance',
@@ -96,6 +173,15 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: errMsg }, { status: 400 });
         }
 
+        await logMoneyEvent({
+            event_type: 'admin_withdrawal',
+            reason: reason || 'maintenance',
+            reason_en: reason || 'Maintenance',
+            amount_eur: amount,
+            actor_auth_id: user.id,
+            source_pool_id: globalPool?.id ?? null,
+        });
+
         return NextResponse.json(dataUnknown);
     }
 
@@ -104,6 +190,22 @@ export async function POST(request: Request) {
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        const { data: globalPool } = await supabase
+            .from('donation_pools')
+            .select('id')
+            .is('feeder_id', null)
+            .maybeSingle();
+
+        await logMoneyEvent({
+            event_type: 'admin_add_funds',
+            reason: reason || 'admin_added_funds',
+            reason_en: reason || 'Admin-added funds',
+            amount_eur: amount,
+            actor_auth_id: user.id,
+            destination_pool_id: globalPool?.id ?? null,
+        });
+
         return NextResponse.json({ success: true, message: `Added ${amount}€ to Global Pool` });
     }
 

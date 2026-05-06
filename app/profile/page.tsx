@@ -9,7 +9,7 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import DonationModal from "@/components/DonationModal";
-import { User as UserIcon, Shield, Key, Loader2, PlayCircle, MapPin } from "lucide-react";
+import { User as UserIcon, Shield, Key, Loader2, PlayCircle, MapPin, TrendingDown, TrendingUp, ArrowDownRight, ArrowUpRight, Receipt } from "lucide-react";
 
 type MessageState = { type: "success" | "error"; text: string } | null;
 
@@ -50,6 +50,41 @@ type UserVideo = {
     timestamp: string;
 };
 
+type MoneyEventRow = {
+    id: number;
+    created_at: string;
+    event_type: string;
+    reason: string;
+    reason_en: string | null;
+    amount_eur: number;
+    feeder_id: number | null;
+    meal_id: number | null;
+    donation_id: number | null;
+};
+
+type MoneyEventAllocationRow = {
+    amount_eur: number;
+    money_events: MoneyEventRow | MoneyEventRow[] | null;
+};
+
+type UsageEvent = {
+    id: string;
+    createdAt: string;
+    label: string;
+    amount: number;
+    direction: "in" | "out";
+};
+
+function unwrapMoneyEvent(value: MoneyEventAllocationRow["money_events"]): MoneyEventRow | null {
+    if (!value) return null;
+    return Array.isArray(value) ? (value[0] || null) : value;
+}
+
+function formatMoneyEventLabel(event: MoneyEventRow, t: any): string {
+    if (t.has(`eventTypes.${event.event_type}`)) return t(`eventTypes.${event.event_type}`);
+    return event.reason_en || event.reason.replaceAll("_", " ");
+}
+
 function getYouTubeEmbedUrl(url: string): string {
     if (!url) return "";
 
@@ -79,6 +114,7 @@ export default function Profile() {
     const [hasMoreTx, setHasMoreTx] = useState(true);
     const [loadingTx, setLoadingTx] = useState(false);
     const [contributedVideos, setContributedVideos] = useState<UserVideo[]>([]);
+    const [usageEvents, setUsageEvents] = useState<UsageEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const [message, setMessage] = useState<MessageState>(null);
@@ -160,6 +196,89 @@ export default function Profile() {
                 .filter((row): row is UserVideo => row !== null);
 
             setContributedVideos(mappedVideos);
+
+            const { data: directMoneyEvents } = await supabase
+                .from("money_events")
+                .select("id, created_at, event_type, reason, reason_en, amount_eur, feeder_id, meal_id, donation_id")
+                .eq("user_auth_id", authUser.id)
+                .order("created_at", { ascending: false })
+                .limit(20);
+
+            const { data: allocatedMoneyEvents } = await supabase
+                .from("money_event_allocations")
+                .select(`
+                    amount_eur,
+                    money_events (
+                        id,
+                        created_at,
+                        event_type,
+                        reason,
+                        reason_en,
+                        amount_eur,
+                        feeder_id,
+                        meal_id,
+                        donation_id
+                    )
+                `)
+                .eq("user_auth_id", authUser.id)
+                .order("created_at", { ascending: false })
+                .limit(20);
+
+            const allocatedEventIds = new Set(
+                ((allocatedMoneyEvents || []) as MoneyEventAllocationRow[])
+                    .map((row) => unwrapMoneyEvent(row.money_events)?.id)
+                    .filter((id): id is number => typeof id === "number")
+            );
+
+            const directUsage = ((directMoneyEvents || []) as MoneyEventRow[])
+                .filter((event) => !allocatedEventIds.has(event.id))
+                .map((event): UsageEvent => ({
+                    id: `event-${event.id}`,
+                    createdAt: event.created_at,
+                    label: formatMoneyEventLabel(event, t),
+                    amount: Number(event.amount_eur || 0),
+                    direction: event.event_type === "wallet_deposit" ? "in" : "out",
+                }));
+
+            const allocatedUsage = ((allocatedMoneyEvents || []) as MoneyEventAllocationRow[])
+                .map((row): UsageEvent | null => {
+                    const event = unwrapMoneyEvent(row.money_events);
+                    if (!event) return null;
+
+                    return {
+                        id: `allocation-${event.id}`,
+                        createdAt: event.created_at,
+                        label: `${formatMoneyEventLabel(event, t)} - ${t("yourShare")}`,
+                        amount: Number(row.amount_eur || 0),
+                        direction: "out",
+                    };
+                })
+                .filter((row): row is UsageEvent => row !== null);
+
+            const { data: allPoolDonations } = await supabase
+                .from("donations")
+                .select("id, amount_eur, type, created_at")
+                .eq("user_auth_id", authUser.id)
+                .eq("type", "pool")
+                .order("created_at", { ascending: false });
+
+            const poolDonations = ((allPoolDonations || []) as TransactionRow[])
+                .filter((d) => d.amount_eur > 0)
+                .map((d): UsageEvent => ({
+                    id: `donation-${d.id}`,
+                    createdAt: d.created_at,
+                    label: t("eventTypes.pool_donation"),
+                    amount: Number(d.amount_eur || 0),
+                    direction: "in",
+                }));
+
+            setUsageEvents(
+                [...poolDonations, ...directUsage, ...allocatedUsage]
+                    .filter((event, index, events) => events.findIndex((candidate) => candidate.id === event.id) === index)
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .slice(0, 20)
+            );
+
             setUser(authUser);
             setLoading(false);
         };
@@ -233,12 +352,23 @@ export default function Profile() {
     if (!user) return null;
 
     const isAnonymous = user.user_metadata?.is_anonymous || false;
+    const usageTotals = usageEvents.reduce(
+        (totals, event) => {
+            if (event.direction === "in") {
+                totals.in += event.amount;
+            } else {
+                totals.out += event.amount;
+            }
+            return totals;
+        },
+        { in: 0, out: 0 }
+    );
 
     return (
-        <div className="min-h-screen pt-12 px-4 pb-12 bg-background container mx-auto max-w-6xl">
+        <div className="min-h-screen pt-12 px-4 pb-12 bg-background container mx-auto max-w-7xl">
             <h1 className="text-4xl font-bold mb-8 text-center">{t("title")}</h1>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1fr_1fr_1.2fr] gap-6 md:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.45fr)] gap-6 md:gap-8 items-start">
                 <div className="space-y-8">
                     <Card className="bg-white">
                         <div className="flex items-center gap-4 mb-6">
@@ -339,8 +469,10 @@ export default function Profile() {
                         </div>
                     </Card>
 
+
+
                     <Card className="bg-white">
-                        <h2 className="text-xl font-bold mb-4">Transaction History</h2>
+                        <h2 className="text-xl font-bold mb-4">{t("transactionHistory")}</h2>
                         <div className="space-y-3">
                             {transactions.length > 0 ? (
                                 <>
@@ -384,13 +516,17 @@ export default function Profile() {
                     </Card>
                 </div>
 
-                <Card className="bg-white">
-                    <h2 className="text-xl font-bold mb-4">{t("feedingsFunded")}</h2>
-                    <div className="space-y-4">
+                <Card className="bg-white lg:col-span-2">
+                    <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
+                        <div>
+                            <h2 className="text-2xl font-bold">{t("feedingsFunded")}</h2>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                         {contributedVideos.length > 0 ? (
                             contributedVideos.map((video) => (
-                                <div key={`${video.mealId}-${video.youtubeUrl}`} className="rounded-2xl overflow-hidden border-2 border-foreground bg-muted/10">
-                                    <div className="aspect-video bg-black">
+                                <div key={`${video.mealId}-${video.youtubeUrl}`} className="grid md:grid-cols-[minmax(220px,0.9fr)_minmax(0,1fr)] overflow-hidden rounded-2xl border-2 border-foreground bg-muted/10">
+                                    <div className="aspect-video md:aspect-auto md:min-h-[220px] bg-black">
                                         <iframe
                                             className="w-full h-full"
                                             src={getYouTubeEmbedUrl(video.youtubeUrl)}
@@ -400,7 +536,7 @@ export default function Profile() {
                                             allowFullScreen
                                         />
                                     </div>
-                                    <div className="p-4 space-y-3">
+                                    <div className="p-4 sm:p-5 flex min-w-0 flex-col gap-4">
                                         <div className="flex flex-wrap items-start justify-between gap-3">
                                             <div className="min-w-0 flex-1">
                                                 <h3 className="font-bold text-lg truncate">{video.feederName}</h3>
@@ -413,26 +549,106 @@ export default function Profile() {
                                                 <PlayCircle className="w-3 h-3" /> {t("recorded")}
                                             </span>
                                         </div>
-                                        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                                        <div className="mt-auto grid gap-3 rounded-xl border border-foreground/10 bg-white/70 p-3 text-sm">
                                             <span className="font-mono text-muted-foreground">
                                                 {new Date(video.timestamp).toLocaleDateString()} {new Date(video.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                             </span>
-                                            <span className="font-bold text-primary">
+                                            <span className="font-bold text-primary leading-snug">
                                                 {t("contributedAmount", { amount: video.contributionAmount.toFixed(2), total: video.mealCost.toFixed(2) })}
                                             </span>
                                         </div>
-                                        <Button className="w-full" variant="outline" onClick={() => router.push(`/feeder/${video.feederId}`)}>
+                                        <Button className="w-full mt-1" variant="outline" onClick={() => router.push(`/feeder/${video.feederId}`)}>
                                             {t("openFeeder")}
                                         </Button>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="text-sm text-muted-foreground text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                            <div className="xl:col-span-2 text-sm text-muted-foreground text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                                 {t("noVideos")}
                             </div>
                         )}
                     </div>
+                </Card>
+
+                <Card className="bg-white lg:col-span-2">
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-violet-100 rounded-xl">
+                                <Receipt className="w-5 h-5 text-violet-700" />
+                            </div>
+                            <h2 className="text-2xl font-bold">{t("donationUsage")}</h2>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                        <div className="rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4">
+                            <div className="flex items-center gap-2 mb-1">
+                                <TrendingUp className="w-4 h-4 text-green-600" />
+                                <p className="text-xs font-bold uppercase tracking-wider text-green-600">{t("added")}</p>
+                            </div>
+                            <p className="text-2xl font-black text-green-700">{usageTotals.in.toFixed(2)} <span className="text-sm font-bold text-green-500">EUR</span></p>
+                        </div>
+                        <div className="rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-4">
+                            <div className="flex items-center gap-2 mb-1">
+                                <TrendingDown className="w-4 h-4 text-orange-600" />
+                                <p className="text-xs font-bold uppercase tracking-wider text-orange-600">{t("used")}</p>
+                            </div>
+                            <p className="text-2xl font-black text-orange-700">{usageTotals.out.toFixed(2)} <span className="text-sm font-bold text-orange-500">EUR</span></p>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1 rounded-xl border-2 border-foreground/10 bg-gradient-to-br from-gray-50 to-slate-50 p-4">
+                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{t("balance")}</p>
+                            <p className="text-2xl font-black">{(usageTotals.in - usageTotals.out).toFixed(2)} <span className="text-sm font-bold text-muted-foreground">EUR</span></p>
+                            {(usageTotals.in + usageTotals.out) > 0 && (
+                                <div className="mt-2 h-2 rounded-full bg-gray-200 overflow-hidden">
+                                    <div
+                                        className="h-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-500"
+                                        style={{ width: `${Math.min(100, usageTotals.in > 0 ? ((usageTotals.in - usageTotals.out) / usageTotals.in) * 100 : 0)}%` }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {usageEvents.length > 0 ? (
+                        <div className="space-y-0 relative">
+                            <div className="absolute left-[19px] top-4 bottom-4 w-px bg-gradient-to-b from-foreground/20 via-foreground/10 to-transparent hidden sm:block" />
+                            {usageEvents.slice(0, 10).map((event, idx) => (
+                                <div
+                                    key={event.id}
+                                    className={`relative flex items-start gap-4 p-4 rounded-xl transition-colors hover:bg-muted/30 ${idx !== usageEvents.length - 1 && idx !== 9 ? 'border-b border-foreground/5' : ''}`}
+                                >
+                                    <div className={`relative z-10 shrink-0 w-10 h-10 rounded-xl flex items-center justify-center border-2 ${
+                                        event.direction === 'in'
+                                            ? 'bg-green-50 border-green-300 text-green-600'
+                                            : 'bg-orange-50 border-orange-300 text-orange-600'
+                                    }`}>
+                                        {event.direction === 'in' ? <ArrowDownRight className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
+                                    </div>
+                                    <div className="flex-1 min-w-0 pt-0.5">
+                                        <p className="font-bold text-sm truncate">{event.label}</p>
+                                        <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                                            {new Date(event.createdAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            {' · '}
+                                            {new Date(event.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    </div>
+                                    <span className={`shrink-0 font-black text-sm tabular-nums px-3 py-1.5 rounded-lg ${
+                                        event.direction === 'in'
+                                            ? 'bg-green-50 text-green-700 border border-green-200'
+                                            : 'bg-orange-50 text-orange-700 border border-orange-200'
+                                    }`}>
+                                        {event.direction === 'in' ? '+' : '−'}{event.amount.toFixed(2)} EUR
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 bg-gray-50/50 rounded-xl border-2 border-dashed border-gray-200">
+                            <Receipt className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                            <p className="text-sm text-muted-foreground font-medium">{t("noUsage")}</p>
+                        </div>
+                    )}
                 </Card>
             </div>
 

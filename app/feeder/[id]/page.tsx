@@ -10,7 +10,7 @@ import AgoraLivePlayer from '../../components/AgoraLivePlayer';
 import DonationModal from '@/components/DonationModal';
 import RealtimeChat from '@/components/RealtimeChat';
 import { useTranslations } from 'next-intl';
-import { Video, ArrowLeft, Activity, Heart, AlertCircle, MapPin, ArrowRight, Loader2, WifiOff, PlayCircle } from 'lucide-react';
+import { Video, ArrowLeft, Activity, Heart, AlertCircle, MapPin, ArrowRight, Loader2, WifiOff, PlayCircle, MessageSquare } from 'lucide-react';
 
 type FeederRow = {
     id: string | number;
@@ -42,6 +42,8 @@ type PendingDonationState = {
     returnPath?: string;
     paymentIntentId?: string;
 };
+
+type MobileTab = 'overview' | 'donate' | 'activity' | 'chat';
 
 const PENDING_DONATION_KEY = 'pawbit:pending-donation-ready';
 
@@ -81,6 +83,7 @@ export default function FeederDetails() {
     const [donationMode, setDonationMode] = useState<'live' | 'feeder_pool' | 'global_pool'>(id === 'all' ? 'global_pool' : 'feeder_pool');
     const [customAmount, setCustomAmount] = useState('');
     const [isAnimating, setIsAnimating] = useState(false);
+    const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>('overview');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [donationAmount, setDonationAmount] = useState(5);
@@ -267,6 +270,10 @@ export default function FeederDetails() {
         };
     }, [fetchData, t, id]);
 
+    useEffect(() => {
+        setActiveMobileTab('overview');
+    }, [id]);
+
     const handleStartStream = async () => {
         if (!currentUser) {
             router.push('/login');
@@ -281,7 +288,8 @@ export default function FeederDetails() {
                 body: JSON.stringify({ feederId: id })
             });
             if (!res.ok) {
-                console.error('Failed to start stream');
+                const errorData = await res.json().catch(() => ({}));
+                console.error('Failed to start stream:', errorData.error || res.statusText);
                 setStreamStatus('offline');
             }
         } catch (e) {
@@ -406,6 +414,12 @@ export default function FeederDetails() {
         : donationMode === 'feeder_pool'
             ? t('modes.feeder_pool')
             : t('modes.global_pool');
+    const mobileTabs = [
+        { key: 'overview' as const, label: t('tabs.overview'), icon: Video },
+        { key: 'donate' as const, label: t('tabs.donate'), icon: Heart },
+        { key: 'activity' as const, label: t('tabs.activity'), icon: Activity },
+        { key: 'chat' as const, label: t('tabs.chat'), icon: MessageSquare },
+    ];
 
     return (
         <div className="min-h-screen pt-4 sm:pt-8 pb-12 px-3 sm:px-4 bg-background overflow-x-hidden">
@@ -446,7 +460,297 @@ export default function FeederDetails() {
                 </div>
 
                 {/* ── Main 2-col layout ── */}
-                <div className="grid min-w-0 lg:grid-cols-3 gap-6 lg:gap-8">
+                <div className="lg:hidden space-y-4 mb-6">
+                    <div className="sticky top-3 z-30">
+                        <div className="grid grid-cols-4 gap-2 rounded-2xl border-2 border-foreground bg-white p-2 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                            {mobileTabs.map((tab) => {
+                                const active = activeMobileTab === tab.key;
+                                const Icon = tab.icon;
+
+                                return (
+                                    <button
+                                        key={tab.key}
+                                        type="button"
+                                        onClick={() => setActiveMobileTab(tab.key)}
+                                        className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 py-2 text-[11px] font-black uppercase tracking-wider transition-all ${
+                                            active
+                                                ? 'bg-primary text-white border-foreground shadow-[2px_2px_0px_rgba(0,0,0,0.85)]'
+                                                : 'bg-background text-foreground border-transparent hover:border-primary/40'
+                                        }`}
+                                    >
+                                        <Icon className="w-4 h-4" />
+                                        <span className="truncate">{tab.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {activeMobileTab === 'overview' && (
+                        <div className="space-y-4">
+                            {id === 'all' ? (
+                                <Card className="min-h-[240px] flex flex-col items-center justify-center bg-white border-2 border-foreground neu-shadow">
+                                    <Heart className="w-16 h-16 text-primary mb-4" fill="currentColor" />
+                                    <h2 className="text-2xl font-black text-center mb-2 px-4 uppercase">{t('globalPool')}</h2>
+                                    <p className="text-center max-w-md text-muted-foreground font-mono px-4 text-sm">
+                                        {t('globalPoolDesc')}
+                                    </p>
+                                </Card>
+                            ) : (
+                                <div className="relative rounded-3xl overflow-hidden border-2 border-foreground bg-black h-[280px] shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                                    {isOffline && (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/80 z-10 backdrop-blur-sm">
+                                            <div className="bg-card border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] p-5 rounded-2xl flex flex-col items-center text-center max-w-sm mx-4 transform -rotate-1">
+                                                <WifiOff className="w-10 h-10 text-foreground mb-4" />
+                                                <h2 className="text-2xl font-black uppercase text-foreground mb-2">{t('offlineStatus')}</h2>
+                                                <p className="font-mono text-muted-foreground text-xs leading-relaxed">
+                                                    {t('offlineDesc')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {streamStatus === 'connecting' && !isOffline && (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white z-10">
+                                            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                                            <p className="font-mono animate-pulse">{t('establishingTunnel')}</p>
+                                        </div>
+                                    )}
+
+                                    {streamStatus === 'standby' && !isOffline && (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 text-white z-10">
+                                            <div className="bg-black/50 p-5 rounded-2xl flex flex-col items-center text-center border border-white/10 shadow-xl">
+                                                <Video className="w-10 h-10 mb-3 text-primary" />
+                                                <h3 className="text-lg font-bold mb-2">{t('cameraReady')}</h3>
+                                                <p className="text-xs text-gray-400 mb-5 max-w-xs font-mono">{t('startStreamDesc')}</p>
+                                                <Button variant="primary" onClick={handleStartStream} icon={<PlayCircle className="w-5 h-5 fill-current" />}>
+                                                    {t('startLiveStream')}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {streamStatus === 'live' && !isOffline && (
+                                        <>
+                                            {feeder.streamProvider === 'agora' && feeder.streamChannel ? (
+                                                <AgoraLivePlayer feederId={feeder.id} channelName={feeder.streamChannel} />
+                                            ) : feeder.liveStreamUrl && getSafeYouTubeUrl(feeder.liveStreamUrl) ? (
+                                                <iframe
+                                                    width="100%"
+                                                    height="100%"
+                                                    src={getSafeYouTubeUrl(feeder.liveStreamUrl)}
+                                                    title="Live Feeder Stream"
+                                                    frameBorder="0"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-zinc-900 flex flex-col items-center justify-center text-muted-foreground font-mono text-sm">
+                                                    <Video className="w-10 h-10 mb-2 opacity-50" />
+                                                    <p>Live stream signal connected</p>
+                                                    <p className="text-xs opacity-50 mt-1">(No Agora channel configured in backend)</p>
+                                                </div>
+                                            )}
+                                            <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded flex items-center gap-2 font-bold text-sm border-2 border-black shadow-lg z-20 pointer-events-none">
+                                                <span className="w-2 h-2 bg-white rounded-full animate-pulse" /> {t('liveFeed')}
+                                            </div>
+
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeMobileTab === 'donate' && (
+                        <div className="space-y-4">
+                            {id !== 'all' ? (
+                                <Card className={`relative overflow-hidden transition-all duration-500 border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] ${isAnimating ? 'ring-4 ring-accent scale-[1.01]' : ''}`}>
+                                    {isAnimating && (
+                                        <div className="absolute inset-0 bg-accent/20 flex items-center justify-center z-10 backdrop-blur-md animate-in fade-in">
+                                            <div className="donation-success-burst bg-white p-8 rounded-full border-4 border-accent shadow-2xl">
+                                                <span className="absolute inset-0 rounded-full border-4 border-accent/40 animate-ping" />
+                                                <Heart className="relative w-16 h-16 text-accent fill-accent" />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-start justify-between mb-2">
+                                        <h2 className="text-2xl font-black">{t('supportFeeder')}</h2>
+
+                                    </div>
+                                    <p className="text-muted-foreground text-sm mb-6 font-mono leading-relaxed">
+                                        {t('chooseModeDesc')}
+                                    </p>
+
+                                    <div className="grid grid-cols-3 gap-2 mb-5">
+                                        {[
+                                            { key: 'live', label: t('modes.live'), disabled: streamStatus !== 'live' || isOffline },
+                                            { key: 'feeder_pool', label: t('modes.feeder_pool'), disabled: false },
+                                            { key: 'global_pool', label: t('modes.global_pool'), disabled: false },
+                                        ].map(option => (
+                                            <button
+                                                key={option.key}
+                                                type="button"
+                                                disabled={option.disabled}
+                                                onClick={() => setDonationMode(option.key as typeof donationMode)}
+                                                className={`px-3 py-2 rounded-xl border-2 text-[11px] font-black uppercase tracking-wider transition-all ${
+                                                    donationMode === option.key
+                                                        ? 'bg-primary text-white border-foreground shadow-[3px_3px_0px_rgba(60,50,30,0.8)]'
+                                                        : 'bg-white text-foreground border-foreground/20 hover:border-primary'
+                                                } disabled:opacity-40 disabled:cursor-not-allowed`}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className={`space-y-4 ${donationMode === 'live' && (isOffline || streamStatus !== 'live') ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+                                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                            {selectedModeLabel}
+                                        </p>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {quickAmounts.map(amt => (
+                                                <Button
+                                                    key={amt}
+                                                    variant="outline"
+                                                    onClick={() => handleDonate(amt)}
+                                                    className="donation-amount-button bg-white border-2"
+                                                >
+                                                    {amt}€
+                                                </Button>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex flex-col gap-2 w-full">
+                                            <input
+                                                type="number"
+                                                placeholder={t('customAmount')}
+                                                className="w-full px-4 py-3 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-0 font-mono font-bold"
+                                                value={customAmount}
+                                                onChange={(e) => setCustomAmount(e.target.value)}
+                                            />
+                                            <Button
+                                                onClick={() => handleDonate(Number(customAmount) || 1)}
+                                                disabled={!customAmount}
+                                                variant="accent"
+                                                className="w-full"
+                                            >
+                                                {t('donate')}
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-muted/30 p-4 rounded-xl border-2 border-foreground/10 text-xs font-mono text-muted-foreground mt-6">
+                                        <div className="flex items-center gap-2 mb-2 text-foreground font-bold uppercase tracking-tighter">
+                                            <AlertCircle className="w-4 h-4 text-primary" /> {t('impactGuarantee')}
+                                        </div>
+                                        <p>{t('impactDesc')}</p>
+                                    </div>
+                                </Card>
+                            ) : (
+                                <Card className={`relative overflow-hidden transition-all duration-500 border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] ${isAnimating ? 'ring-4 ring-accent scale-[1.01]' : ''}`}>
+                                    {isAnimating && (
+                                        <div className="absolute inset-0 bg-accent/20 flex items-center justify-center z-10 backdrop-blur-md animate-in fade-in">
+                                            <div className="donation-success-burst bg-white p-8 rounded-full border-4 border-accent shadow-2xl">
+                                                <span className="absolute inset-0 rounded-full border-4 border-accent/40 animate-ping" />
+                                                <Heart className="relative w-16 h-16 text-accent fill-accent" />
+                                            </div>
+                                        </div>
+                                    )}
+                                    <h2 className="text-2xl font-black mb-2">{t('makeDonation')}</h2>
+                                    <p className="text-muted-foreground text-sm mb-6 font-mono leading-relaxed">
+                                        {t('globalPoolCtaDesc')}
+                                    </p>
+                                    <div className="grid grid-cols-3 gap-3 mb-4">
+                                        {[2, 5, 10].map(amt => (
+                                            <Button key={amt} variant="outline" onClick={() => handleDonate(amt, 'global_pool')} className="donation-amount-button bg-white border-2">
+                                                {amt}€
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <div className="flex flex-col gap-2 mb-6 w-full">
+                                        <input
+                                            type="number"
+                                            placeholder={t('customAmount')}
+                                            className="w-full px-4 py-3 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-0 font-mono font-bold"
+                                            value={customAmount}
+                                            onChange={(e) => setCustomAmount(e.target.value)}
+                                        />
+                                        <Button onClick={() => handleDonate(Number(customAmount) || 1, 'global_pool')} disabled={!customAmount} variant="accent" className="w-full">
+                                            {t('donate')}
+                                        </Button>
+                                    </div>
+                                    <div className="bg-muted/30 p-4 rounded-xl border-2 border-foreground/10 text-xs font-mono text-muted-foreground">
+                                        <div className="flex items-center gap-2 mb-2 text-foreground font-bold uppercase tracking-tighter">
+                                            <AlertCircle className="w-4 h-4 text-primary" /> {t('impactGuarantee')}
+                                        </div>
+                                        <p>{t('impactDesc')}</p>
+                                    </div>
+                                </Card>
+                            )}
+
+                            {id !== 'all' && (
+                                <div
+                                    className="bg-white border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] rounded-2xl p-5 cursor-pointer hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all duration-200"
+                                    onClick={() => router.push('/feeder/all')}
+                                >
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 bg-primary rounded-lg border-2 border-foreground flex items-center justify-center flex-shrink-0">
+                                            <Heart className="w-4 h-4 text-white" fill="currentColor" />
+                                        </div>
+                                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('modes.global_pool')}</span>
+                                    </div>
+                                    <h3 className="text-lg font-black mb-1">{t('donateToGlobal')}</h3>
+                                    <p className="text-sm text-muted-foreground font-mono leading-relaxed mb-4">
+                                        {t('globalPoolSidebarDesc')}
+                                    </p>
+                                    <div className="flex items-center gap-2 font-bold text-sm border-2 border-foreground w-fit px-3 py-1.5 rounded-xl bg-background hover:bg-primary hover:text-white hover:border-primary transition-colors">
+                                        {t('viewGlobalPool')} <ArrowRight className="w-4 h-4" />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeMobileTab === 'activity' && (
+                        <Card title={t('recentActivity')}>
+                            <div className="space-y-4">
+                                {donations.length > 0 ? donations.slice(0, 5).map(d => (
+                                    <div key={d.id} className="flex min-w-0 items-center justify-between gap-3 p-3 sm:p-4 bg-muted/20 rounded-xl border-2 border-foreground/10 hover:border-foreground/20 transition-colors">
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center border-2 border-accent/20">
+                                                <Heart className="w-5 h-5 text-accent" fill="currentColor" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-sm">{t('communityMember')}</p>
+                                                <p className="text-xs text-muted-foreground font-mono break-words">{t('dispensedFood', { amount: d.total_cost_eur ?? 0 })}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right flex-shrink-0">
+                                            <span className="block font-black text-primary text-sm sm:text-base">+{d.total_cost_eur}€</span>
+                                            <span className="text-[9px] sm:text-[10px] text-muted-foreground font-mono opacity-70">
+                                                {new Date(d.time_of_meal || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )) : (
+                                    <div className="py-8 text-center border-2 border-dashed border-foreground/10 rounded-xl">
+                                        <p className="text-muted-foreground italic font-mono">{t('noRecentFeedings')}</p>
+                                        <p className="text-xs text-muted-foreground/60 mt-1">{t('beTheFirst')}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+                    )}
+
+                    {activeMobileTab === 'chat' && (
+                        <RealtimeChat roomId={id} currentUser={currentUser} />
+                    )}
+                </div>
+
+                <div className="hidden lg:grid min-w-0 lg:grid-cols-3 gap-6 lg:gap-8">
 
                     {/* ── LEFT COLUMN ── */}
                     <div className="min-w-0 lg:col-span-2 space-y-6">
@@ -524,12 +828,7 @@ export default function FeederDetails() {
                                         <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded flex items-center gap-2 font-bold text-sm border-2 border-black shadow-lg z-20 pointer-events-none">
                                             <span className="w-2 h-2 bg-white rounded-full animate-pulse" /> {t('liveFeed')}
                                         </div>
-                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6 text-white z-20 pointer-events-none">
-                                            <p className="font-mono text-sm flex items-center gap-2">
-                                                <Activity className="w-4 h-4 text-green-400" />
-                                                {t('sensorData')}
-                                            </p>
-                                        </div>
+
                                     </>
                                 )}
                             </div>
@@ -549,11 +848,7 @@ export default function FeederDetails() {
 
                                 <div className="flex items-start justify-between mb-2">
                                     <h2 className="text-2xl font-black">{t('supportFeeder')}</h2>
-                                    {isOffline && (
-                                        <span className="text-xs font-bold px-2 py-1 bg-red-100 text-red-700 border border-red-300 rounded-lg font-mono">
-                                            {t('donationsPaused')}
-                                        </span>
-                                    )}
+
                                 </div>
                                 <p className="text-muted-foreground text-sm mb-6 font-mono leading-relaxed">
                                     {t('chooseModeDesc')}

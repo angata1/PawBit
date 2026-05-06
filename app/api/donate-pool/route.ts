@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { logMoneyEvent } from '@/lib/money-events';
 import { NextResponse } from 'next/server';
 
 function isInsufficientFundsError(message: string | undefined) {
@@ -69,6 +70,41 @@ export async function POST(request: Request) {
         console.error('Atomic pool donation failed:', donationError);
         return NextResponse.json({ error: donationError.message || 'Failed to credit pool' }, { status: 500 });
     }
+
+    const { data: poolRow } = normalizedFeederId === null
+        ? await supabase
+            .from('donation_pools')
+            .select('id')
+            .is('feeder_id', null)
+            .maybeSingle()
+        : await supabase
+            .from('donation_pools')
+            .select('id')
+            .eq('feeder_id', normalizedFeederId)
+            .maybeSingle();
+
+    const { data: donationRow } = await supabase
+        .from('donations')
+        .select('id')
+        .eq('user_auth_id', user.id)
+        .eq('type', 'pool')
+        .eq('amount_eur', donationAmount)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    await logMoneyEvent({
+        event_type: 'pool_donation',
+        reason: normalizedFeederId === null ? 'global_pool_donation' : 'feeder_pool_donation',
+        reason_en: normalizedFeederId === null ? 'Global pool donation' : 'Feeder pool donation',
+        amount_eur: donationAmount,
+        actor_auth_id: user.id,
+        user_auth_id: user.id,
+        destination_pool_id: poolRow?.id ?? null,
+        feeder_id: normalizedFeederId,
+        donation_id: donationRow?.id ?? null,
+        idempotency_key: donationRow?.id ? `pool_donation:${donationRow.id}` : null,
+    });
 
     const target = feederId ? `Feeder #${feederId}'s pool` : 'Global Donation Pool';
 

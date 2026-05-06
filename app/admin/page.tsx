@@ -11,6 +11,7 @@ import {
     CheckCircle, XCircle, MapPin,
     BarChart2, Settings, Package, ArrowUpRight,
     ArrowDownRight, Clock, X, Save, Loader2, Battery,
+    ArrowRightLeft, ShieldCheck, SlidersHorizontal, WalletCards,
     type LucideIcon
 } from 'lucide-react';
 import Link from 'next/link';
@@ -100,7 +101,20 @@ type DonationPool = {
     last_updated: string | null;
 };
 
-type PoolAction = 'add' | 'deduct';
+type MoneyEvent = {
+    id: string | number;
+    created_at: string;
+    event_type: string;
+    reason: string;
+    reason_en: string | null;
+    amount_eur: number | string;
+    source_pool_id: string | number | null;
+    destination_pool_id: string | number | null;
+    feeder_id: string | number | null;
+};
+
+type PoolAction = 'add' | 'withdraw' | 'transfer' | 'expense';
+type SplitMode = 'single' | 'split';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -344,11 +358,18 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 export default function AdminDashboard() {
     const t = useTranslations('Admin');
     const locale = useLocale();
-    const [activeTab, setActiveTab] = useState<'overview' | 'feeders' | 'transactions' | 'pools'>('overview');
+    const [activeTab, setActiveTab] = useState<AdminTab>('overview');
     const [data, setData] = useState<AdminData | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
+    const [isAdminReady, setIsAdminReady] = useState(false);
+    const [loadedTabs, setLoadedTabs] = useState<Record<AdminTab, boolean>>({
+        overview: false,
+        feeders: false,
+        transactions: false,
+        pools: false,
+    });
     const [showAddFeeder, setShowAddFeeder] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editingFeeder, setEditingFeeder] = useState<Feeder | null>(null);
@@ -365,28 +386,53 @@ export default function AdminDashboard() {
 
     // Pool management state
     const [pools, setPools] = useState<DonationPool[]>([]);
+    const [poolEvents, setPoolEvents] = useState<MoneyEvent[]>([]);
     const [poolLoading, setPoolLoading] = useState(false);
-    const [poolAction, setPoolAction] = useState<'add' | 'deduct'>('deduct');
+    const [poolAction, setPoolAction] = useState<PoolAction>('withdraw');
+    const [splitMode, setSplitMode] = useState<SplitMode>('single');
+    const [sourcePoolId, setSourcePoolId] = useState('');
+    const [destinationPoolId, setDestinationPoolId] = useState('');
+    const [splitAmounts, setSplitAmounts] = useState<Record<string, string>>({});
     const [poolAmount, setPoolAmount] = useState('');
-    const [poolReason, setPoolReason] = useState('');
+    const [poolReason, setPoolReason] = useState('food_purchase');
+    const [customReason, setCustomReason] = useState('');
     const [poolMessage, setPoolMessage] = useState('');
 
     const supabase = useMemo(() => createClient(), []);
 
-    const fetchData = useCallback(async (showRefreshAnimation = false) => {
-        if (showRefreshAnimation) setRefreshing(true);
+    const markTabLoaded = useCallback((tab: AdminTab) => {
+        setLoadedTabs(prev => ({ ...prev, [tab]: true }));
+    }, []);
+
+    const verifyAdmin = useCallback(async () => {
+        setLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 window.location.href = '/login';
-                return;
+                return false;
             }
 
             const { data: dbUser } = await supabase.from('users').select('role').eq('auth_id', user.id).single();
             if (dbUser?.role !== 'admin') {
                 window.location.href = '/';
-                return;
+                return false;
             }
+
+            setIsAdminReady(true);
+            return true;
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : 'Failed to verify admin access');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    }, [supabase]);
+
+    const fetchData = useCallback(async (tab: AdminTab, showRefreshAnimation = false) => {
+        if (showRefreshAnimation) setRefreshing(true);
+        setLoading(true);
+        try {
             const res = await fetch('/api/admin/stats');
             if (!res.ok) {
                 const err = await res.json();
@@ -394,6 +440,7 @@ export default function AdminDashboard() {
             }
             const json = await res.json();
             setData(json);
+            markTabLoaded(tab);
             setError('');
         } catch (e: unknown) {
             setError(e instanceof Error ? e.message : 'Failed to load data');
@@ -401,11 +448,11 @@ export default function AdminDashboard() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [supabase]);
+    }, [markTabLoaded]);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        verifyAdmin();
+    }, [verifyAdmin]);
 
     const handleDeleteFeeder = async (id: string | number) => {
         if (!confirm('Delete this feeder permanently?')) return;
@@ -461,34 +508,114 @@ export default function AdminDashboard() {
             if (!res.ok) throw new Error('Failed to load pools');
             const json = await res.json();
             setPools(json.pools || []);
+            setPoolEvents(json.recentEvents || []);
+            markTabLoaded('pools');
         } catch (e: unknown) {
             console.error('Pool fetch error:', e);
         } finally {
             setPoolLoading(false);
         }
-    }, []);
+    }, [markTabLoaded]);
 
     useEffect(() => {
-        if (activeTab === 'pools') fetchPools();
-    }, [activeTab, fetchPools]);
+        if (!isAdminReady || loadedTabs[activeTab]) return;
+        if (activeTab === 'pools') {
+            fetchPools();
+            return;
+        }
+        fetchData(activeTab);
+    }, [activeTab, fetchData, fetchPools, isAdminReady, loadedTabs]);
+
+    const globalPool = pools.find(pool => pool.feeder_id === null) || null;
+    const totalPoolBalance = pools.reduce((sum, pool) => sum + Number(pool.balance || 0), 0);
+    const lowBalancePools = pools.filter(pool => Number(pool.balance || 0) < 5);
+    const activePoolAmount = Number.parseFloat(poolAmount) || 0;
+    const selectedSourcePool = pools.find(pool => String(pool.id) === sourcePoolId) || globalPool;
+    const selectedDestinationPool = pools.find(pool => String(pool.id) === destinationPoolId) || globalPool;
+    const reasonOptions = [
+        { value: 'food_purchase', label: t('pools.reasons.food_purchase') },
+        { value: 'feeder_repair', label: t('pools.reasons.feeder_repair') },
+        { value: 'livestream_cost', label: t('pools.reasons.livestream_cost') },
+        { value: 'hardware_upgrade', label: t('pools.reasons.hardware_upgrade') },
+        { value: 'emergency_support', label: t('pools.reasons.emergency_support') },
+        { value: 'admin_adjustment', label: t('pools.reasons.admin_adjustment') },
+        { value: 'custom', label: t('pools.reasons.custom') },
+    ];
+    const poolActionMeta: Record<PoolAction, { label: string; tone: string; icon: LucideIcon; description: string }> = {
+        add: { label: t('pools.actionAdd'), tone: 'bg-green-500', icon: ArrowDownRight, description: t('pools.actionAddDesc') },
+        withdraw: { label: t('pools.actionWithdraw'), tone: 'bg-red-500', icon: ArrowUpRight, description: t('pools.actionWithdrawDesc') },
+        transfer: { label: t('pools.actionTransfer'), tone: 'bg-blue-500', icon: ArrowRightLeft, description: t('pools.actionTransferDesc') },
+        expense: { label: t('pools.actionExpense'), tone: 'bg-orange-500', icon: WalletCards, description: t('pools.actionExpenseDesc') },
+    };
+    const splitEntries = pools
+        .map(pool => ({
+            pool,
+            amount: Number.parseFloat(splitAmounts[String(pool.id)] || '0') || 0,
+        }))
+        .filter(entry => entry.amount > 0);
+    const splitTotal = splitEntries.reduce((sum, entry) => sum + entry.amount, 0);
+    const operationSources = (poolAction === 'withdraw' || poolAction === 'expense')
+        ? splitMode === 'split'
+            ? splitEntries
+            : selectedSourcePool
+                ? [{ pool: selectedSourcePool, amount: activePoolAmount }]
+                : []
+        : poolAction === 'transfer' && selectedSourcePool
+            ? [{ pool: selectedSourcePool, amount: activePoolAmount }]
+            : [];
+    const operationDestinations = poolAction === 'add' && selectedDestinationPool
+        ? [{ pool: selectedDestinationPool, amount: activePoolAmount }]
+        : poolAction === 'transfer' && selectedDestinationPool
+            ? [{ pool: selectedDestinationPool, amount: activePoolAmount }]
+            : [];
+    const hasInsufficientFunds = operationSources.some(entry => Number(entry.pool.balance || 0) < entry.amount);
+    const splitMismatch = (poolAction === 'withdraw' || poolAction === 'expense') && splitMode === 'split' && Math.abs(splitTotal - activePoolAmount) > 0.009;
+    const transferSamePool = poolAction === 'transfer' && selectedSourcePool && selectedDestinationPool && String(selectedSourcePool.id) === String(selectedDestinationPool.id);
+    const canSubmitPoolOperation = activePoolAmount > 0 && !hasInsufficientFunds && !splitMismatch && !transferSamePool && (
+        poolAction === 'add'
+            ? Boolean(selectedDestinationPool)
+            : poolAction === 'transfer'
+                ? Boolean(selectedSourcePool && selectedDestinationPool)
+                : splitMode === 'split'
+                    ? splitEntries.length > 0
+                    : Boolean(selectedSourcePool)
+    );
 
     const handlePoolAction = async () => {
         const amt = parseFloat(poolAmount);
-        if (!amt || amt <= 0) return;
+        if (!amt || amt <= 0 || !canSubmitPoolOperation) return;
         setPoolLoading(true);
         setPoolMessage('');
         try {
+            const entries = (poolAction === 'withdraw' || poolAction === 'expense') && splitMode === 'split'
+                ? splitEntries.map(entry => ({ poolId: Number(entry.pool.id), amount: entry.amount }))
+                : undefined;
+            const resolvedReason = poolReason === 'custom' ? (customReason.trim() || 'admin_adjustment') : (poolReason || 'admin_adjustment');
+            const resolvedReasonEn = poolReason === 'custom' ? (customReason.trim() || 'Custom') : (reasonOptions.find(option => option.value === poolReason)?.label || poolReason);
             const res = await fetch('/api/admin/pools', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: poolAction, amount: amt, reason: poolReason || 'admin_adjustment' }),
+                body: JSON.stringify({
+                    action: poolAction,
+                    amount: amt,
+                    reason: resolvedReason,
+                    reasonEn: resolvedReasonEn,
+                    sourcePoolId: poolAction === 'transfer' || ((poolAction === 'withdraw' || poolAction === 'expense') && splitMode === 'single')
+                        ? Number(selectedSourcePool?.id)
+                        : undefined,
+                    destinationPoolId: poolAction === 'add' || poolAction === 'transfer'
+                        ? Number(selectedDestinationPool?.id)
+                        : undefined,
+                    entries,
+                }),
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || 'Action failed');
-            setPoolMessage(`✅ Successfully ${poolAction === 'deduct' ? 'deducted' : 'added'} €${amt.toFixed(2)}`);
+            setPoolMessage(`Recorded ${poolActionMeta[poolAction].label.toLowerCase()} of ${fmtCurrency(amt)}`);
             setPoolAmount('');
-            setPoolReason('');
-            fetchPools();
+            setSplitAmounts({});
+            setCustomReason('');
+            await fetchPools();
         } catch (e: unknown) {
             setPoolMessage(`Failed: ${e instanceof Error ? e.message : 'Action failed'}`);
         } finally {
@@ -513,7 +640,7 @@ export default function AdminDashboard() {
         { name: t('status.disabled'), value: data.overview.disabledFeeders },
     ].filter(s => s.value > 0) : [];
 
-    if (loading) {
+    if (loading && !isAdminReady) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="text-center">
@@ -550,8 +677,14 @@ export default function AdminDashboard() {
                     </div>
 
                     <button
-                        onClick={() => fetchData(true)}
-                        disabled={refreshing}
+                        onClick={() => {
+                            if (activeTab === 'pools') {
+                                fetchPools();
+                                return;
+                            }
+                            fetchData(activeTab, true);
+                        }}
+                        disabled={refreshing || poolLoading}
                         className="flex items-center gap-1.5 px-3 py-1.5 border-2 border-foreground rounded-lg text-xs font-bold hover:bg-muted transition-colors disabled:opacity-50 flex-shrink-0 ml-4"
                     >
                         <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
@@ -570,9 +703,16 @@ export default function AdminDashboard() {
             )}
 
             <main className="px-3 sm:px-6 py-6 sm:py-8 max-w-[1400px] mx-auto">
+                {activeTab !== 'pools' && !loadedTabs[activeTab] && (
+                    <div className="bg-white border-2 border-foreground rounded-2xl p-12 neu-shadow text-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
+                        <p className="font-black">Loading {activeTab} data</p>
+                        <p className="text-xs text-muted-foreground font-mono mt-1">This admin tab loads only when opened.</p>
+                    </div>
+                )}
 
                 {/* ══════════ OVERVIEW TAB ══════════ */}
-                {activeTab === 'overview' && data && (
+                {activeTab === 'overview' && data && loadedTabs.overview && (
                     <div className="space-y-8">
 
                         {/* KPI Cards */}
@@ -794,7 +934,7 @@ export default function AdminDashboard() {
                 )}
 
                 {/* ══════════ FEEDERS TAB ══════════ */}
-                {activeTab === 'feeders' && (
+                {activeTab === 'feeders' && data && loadedTabs.feeders && (
                     <div className="space-y-6">
                         {/* Header */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1006,7 +1146,7 @@ export default function AdminDashboard() {
                 )}
 
                 {/* ══════════ TRANSACTIONS TAB ══════════ */}
-                {activeTab === 'transactions' && data && (
+                {activeTab === 'transactions' && data && loadedTabs.transactions && (
                     <div className="space-y-6">
                         <div>
                             <h2 className="text-2xl font-black">{t('transactions.title')}</h2>
@@ -1098,9 +1238,264 @@ export default function AdminDashboard() {
                             <h2 className="text-2xl font-black">{t('pools.title')}</h2>
                             <p className="text-sm text-muted-foreground font-mono">{t('pools.subtitle')}</p>
                         </div>
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white border-2 border-foreground rounded-2xl p-5 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('pools.totalInPools')}</p>
+                                <p className="text-3xl font-black mt-2">{fmtCurrency(totalPoolBalance)}</p>
+                                <p className="text-xs text-muted-foreground font-mono mt-2">{t('pools.managedBalances', { count: pools.length })}</p>
+                            </div>
+                            <div className="bg-white border-2 border-foreground rounded-2xl p-5 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('pools.globalReserve')}</p>
+                                <p className="text-3xl font-black mt-2 text-primary">{fmtCurrency(Number(globalPool?.balance || 0))}</p>
+                                <p className="text-xs text-muted-foreground font-mono mt-2">{t('pools.fallbackMoney')}</p>
+                            </div>
+                            <div className={`border-2 border-foreground rounded-2xl p-5 shadow-[3px_3px_0px_rgba(60,50,30,0.8)] ${lowBalancePools.length > 0 ? 'bg-red-50' : 'bg-green-50'}`}>
+                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('pools.riskWatch')}</p>
+                                <div className="mt-2 flex items-center gap-3">
+                                    <p className={`text-3xl font-black ${lowBalancePools.length > 0 ? 'text-red-600' : 'text-green-600'}`}>{lowBalancePools.length}</p>
+                                    {lowBalancePools.length > 0 && <AlertTriangle className="w-6 h-6 text-red-500 animate-pulse" />}
+                                </div>
+                                <p className="text-xs text-muted-foreground font-mono mt-2">{t('pools.poolsBelowLimit', { count: lowBalancePools.length, limit: fmtCurrency(5) })}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.05fr)_minmax(380px,0.95fr)] gap-6">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <h3 className="font-black text-lg">{t('pools.poolMap')}</h3>
+                                        <p className="text-sm text-muted-foreground font-mono">{t('pools.poolMapDesc')}</p>
+                                    </div>
+                                    <button onClick={fetchPools} disabled={poolLoading} className="p-2 rounded-lg border-2 border-foreground/20 hover:border-primary hover:bg-primary/10 transition-colors disabled:opacity-50" title="Refresh pools">
+                                        <RefreshCw className={`w-4 h-4 ${poolLoading ? 'animate-spin' : ''}`} />
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {poolLoading && pools.length === 0 && (
+                                        <div className="col-span-full bg-white border-2 border-dashed border-foreground/20 rounded-2xl p-10 text-center">
+                                            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
+                                            <p className="font-black">{t('pools.loadingBalances')}</p>
+                                            <p className="text-xs text-muted-foreground font-mono mt-1">{t('pools.loadingBalancesDesc')}</p>
+                                        </div>
+                                    )}
+                                    {pools.map(pool => {
+                                        const poolIdStr = String(pool.id);
+                                        const isSource = sourcePoolId === poolIdStr && (poolAction === 'withdraw' || poolAction === 'expense' || poolAction === 'transfer');
+                                        const isDestination = destinationPoolId === poolIdStr && (poolAction === 'add' || poolAction === 'transfer');
+                                        const isSelected = isSource || isDestination;
+                                        return (
+                                            <button
+                                                key={pool.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    const id = poolIdStr;
+                                                    if (poolAction === 'add') {
+                                                        setDestinationPoolId(prev => prev === id ? '' : id);
+                                                    } else if (poolAction === 'transfer') {
+                                                        if (!sourcePoolId || sourcePoolId === id) {
+                                                            setSourcePoolId(prev => prev === id ? '' : id);
+                                                        } else {
+                                                            setDestinationPoolId(prev => prev === id ? '' : id);
+                                                        }
+                                                    } else {
+                                                        setSourcePoolId(prev => prev === id ? '' : id);
+                                                    }
+                                                }}
+                                                className={`text-left bg-white border-2 rounded-2xl p-5 transition-all duration-200 ${
+                                                    isSource
+                                                        ? 'border-red-500 ring-4 ring-red-200 scale-[1.03] shadow-[5px_5px_0px_rgba(239,68,68,0.35)] z-10 relative'
+                                                        : isDestination
+                                                            ? 'border-green-500 ring-4 ring-green-200 scale-[1.03] shadow-[5px_5px_0px_rgba(34,197,94,0.35)] z-10 relative'
+                                                            : 'shadow-[3px_3px_0px_rgba(60,50,30,0.8)] hover:-translate-y-0.5'
+                                                } ${
+                                                    !isSelected && (pool.feeder_id === null ? 'border-primary' : 'border-foreground')
+                                                }`}
+                                            >
+                                                {isSelected && (
+                                                    <span className={`absolute -top-2.5 -right-2.5 text-[10px] font-black px-2 py-0.5 rounded-full border-2 uppercase tracking-wider ${
+                                                        isSource ? 'bg-red-500 text-white border-red-700' : 'bg-green-500 text-white border-green-700'
+                                                    }`}>
+                                                        {isSource ? t('pools.sourceBadge') : t('pools.toBadge')}
+                                                    </span>
+                                                )}
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <div className={`p-2 rounded-xl border-2 border-foreground ${pool.feeder_id === null ? 'bg-primary' : Number(pool.balance || 0) < 5 ? 'bg-red-500' : 'bg-accent'}`}>
+                                                            <DollarSign className="w-4 h-4 text-white" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="font-black text-sm truncate">{pool.feeder_name}</p>
+                                                            <span className="text-[10px] font-bold text-muted-foreground uppercase">{pool.feeder_id === null ? t('pools.global') : t('pools.feederLabel', { id: pool.feeder_id })}</span>
+                                                        </div>
+                                                    </div>
+                                                    <span className={`text-[10px] font-black px-2 py-1 rounded-lg border uppercase ${Number(pool.balance || 0) < 5 ? 'bg-red-100 text-red-700 border-red-200' : 'bg-green-100 text-green-700 border-green-200'}`}>
+                                                        {Number(pool.balance || 0) < 5 ? t('pools.low') : t('pools.funded')}
+                                                    </span>
+                                                </div>
+                                                <p className="text-3xl font-black text-foreground">{fmtCurrency(Number(pool.balance || 0))}</p>
+                                                <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden border border-foreground/10">
+                                                    <div className={`h-full ${Number(pool.balance || 0) < 5 ? 'bg-red-500' : pool.feeder_id === null ? 'bg-primary' : 'bg-accent'}`} style={{ width: `${Math.min(100, Math.max(6, (Number(pool.balance || 0) / Math.max(1, totalPoolBalance)) * 100))}%` }} />
+                                                </div>
+                                                <p className="text-[10px] text-muted-foreground font-mono mt-2">{pool.last_updated ? new Date(pool.last_updated).toLocaleString(locale) : '-'}</p>
+                                            </button>
+                                        );
+                                    })}
+                                    {!poolLoading && pools.length === 0 && (
+                                        <div className="col-span-full bg-white border-2 border-dashed border-foreground/30 rounded-2xl p-10 text-center">
+                                            <DollarSign className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                                            <p className="font-black">{t('pools.noPoolsTitle')}</p>
+                                            <p className="text-xs text-muted-foreground font-mono mt-1">{t('pools.noPoolsDescMap')}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <ShieldCheck className="w-5 h-5 text-primary" />
+                                    <h3 className="font-black text-lg">{t('pools.operationBuilder')}</h3>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 mb-5">
+                                    {(Object.keys(poolActionMeta) as PoolAction[]).map(action => {
+                                        const meta = poolActionMeta[action];
+                                        const Icon = meta.icon;
+                                        return (
+                                            <button key={action} type="button" onClick={() => {
+                                                setPoolAction(action);
+                                                // Clear stale selections when switching mode
+                                                setSourcePoolId('');
+                                                setDestinationPoolId('');
+                                                setSplitAmounts({});
+                                            }} className={`p-3 rounded-xl border-2 text-left transition-all ${poolAction === action ? 'border-foreground bg-muted shadow-[2px_2px_0px_rgba(60,50,30,0.8)]' : 'border-foreground/15 hover:border-primary'}`}>
+                                                <span className={`w-8 h-8 rounded-lg border-2 border-foreground ${meta.tone} flex items-center justify-center mb-2`}>
+                                                    <Icon className="w-4 h-4 text-white" />
+                                                </span>
+                                                <span className="block font-black text-sm">{meta.label}</span>
+                                                <span className="block text-[10px] text-muted-foreground font-mono mt-1">{meta.description}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="space-y-4">
+                                    <input type="number" step="0.01" min="0.01" value={poolAmount} onChange={e => setPoolAmount(e.target.value)} placeholder={t('pools.amountPlaceholder')} className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm" />
+                                    <select value={poolReason} onChange={e => { setPoolReason(e.target.value); if (e.target.value !== 'custom') setCustomReason(''); }} className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm">
+                                        {reasonOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                    </select>
+                                    {poolReason === 'custom' && (
+                                        <input
+                                            type="text"
+                                            value={customReason}
+                                            onChange={e => setCustomReason(e.target.value)}
+                                            placeholder={t('pools.customReasonPlaceholder')}
+                                            className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                                        />
+                                    )}
+
+                                    {(poolAction === 'withdraw' || poolAction === 'expense') && (
+                                        <div className="flex rounded-xl border-2 border-foreground overflow-hidden">
+                                            {(['single', 'split'] as const).map(mode => (
+                                                <button key={mode} type="button" onClick={() => setSplitMode(mode)} className={`flex-1 px-3 py-2 text-xs font-black uppercase ${splitMode === mode ? 'bg-foreground text-white' : 'bg-white hover:bg-muted'}`}>
+                                                    {mode === 'single' ? t('pools.onePool') : t('pools.split')}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {(poolAction === 'transfer' || ((poolAction === 'withdraw' || poolAction === 'expense') && splitMode === 'single')) && (
+                                        <select value={sourcePoolId || String(globalPool?.id || '')} onChange={e => setSourcePoolId(e.target.value)} className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm">
+                                            {pools.map(pool => <option key={pool.id} value={String(pool.id)}>{t('pools.fromPool', { name: pool.feeder_name, amount: fmtCurrency(Number(pool.balance || 0)) })}</option>)}
+                                        </select>
+                                    )}
+
+                                    {(poolAction === 'add' || poolAction === 'transfer') && (
+                                        <select value={destinationPoolId || String(globalPool?.id || '')} onChange={e => setDestinationPoolId(e.target.value)} className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm">
+                                            {pools.map(pool => <option key={pool.id} value={String(pool.id)}>{t('pools.toPool', { name: pool.feeder_name, amount: fmtCurrency(Number(pool.balance || 0)) })}</option>)}
+                                        </select>
+                                    )}
+
+                                    {(poolAction === 'withdraw' || poolAction === 'expense') && splitMode === 'split' && (
+                                        <div className="rounded-xl border-2 border-foreground/15 p-3 bg-muted/20">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <SlidersHorizontal className="w-4 h-4 text-primary" />
+                                                <p className="text-xs font-black uppercase">{t('pools.splitSources')}</p>
+                                                <span className={`ml-auto text-xs font-mono ${splitMismatch ? 'text-red-600' : 'text-green-700'}`}>{fmtCurrency(splitTotal)} / {fmtCurrency(activePoolAmount)}</span>
+                                            </div>
+                                            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                                {pools.map(pool => (
+                                                    <div key={pool.id} className="grid grid-cols-[minmax(0,1fr)_110px] gap-2 items-center">
+                                                        <span className="text-xs font-bold truncate">{pool.feeder_name}</span>
+                                                        <input type="number" step="0.01" min="0" value={splitAmounts[String(pool.id)] || ''} onChange={e => setSplitAmounts(prev => ({ ...prev, [String(pool.id)]: e.target.value }))} placeholder="0.00" className="px-2 py-1.5 border-2 border-foreground/20 rounded-lg bg-white font-mono text-xs" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="rounded-xl border-2 border-foreground/15 bg-background p-4">
+                                        <p className="text-xs font-black uppercase tracking-wider mb-3">{t('pools.preview')}</p>
+                                        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center mb-4">
+                                            <div className="space-y-1">
+                                                {(operationSources.length > 0 ? operationSources : poolAction === 'add' ? [{ pool: { id: 'admin', feeder_name: t('pools.adminFunds'), balance: 0 } as DonationPool, amount: activePoolAmount }] : []).map(entry => (
+                                                    <div key={`source-${entry.pool.id}`} className="rounded-lg border border-red-200 bg-red-50 px-2 py-1.5">
+                                                        <p className="text-[10px] font-black uppercase text-red-700 truncate">{t('pools.fromBadgePreview', { name: entry.pool.feeder_name })}</p>
+                                                        <p className="text-xs font-mono">{fmtCurrency(entry.amount || 0)}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className={`w-10 h-10 rounded-full border-2 border-foreground ${poolActionMeta[poolAction].tone} flex items-center justify-center shadow-[2px_2px_0px_rgba(60,50,30,0.8)]`}>
+                                                {React.createElement(poolActionMeta[poolAction].icon, { className: 'w-4 h-4 text-white' })}
+                                            </div>
+                                            <div className="space-y-1">
+                                                {(operationDestinations.length > 0 ? operationDestinations : (poolAction === 'withdraw' || poolAction === 'expense') ? [{ pool: { id: 'outside', feeder_name: poolReason === 'custom' ? (customReason.trim() || t('pools.customFallback')) : (reasonOptions.find(option => option.value === poolReason)?.label || t('pools.externalUse')), balance: 0 } as DonationPool, amount: activePoolAmount }] : []).map(entry => (
+                                                    <div key={`destination-${entry.pool.id}`} className="rounded-lg border border-green-200 bg-green-50 px-2 py-1.5 text-right">
+                                                        <p className="text-[10px] font-black uppercase text-green-700 truncate">{t('pools.toBadgePreview', { name: entry.pool.feeder_name })}</p>
+                                                        <p className="text-xs font-mono">{fmtCurrency(entry.amount || 0)}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {[...operationSources, ...operationDestinations].map((entry, index) => {
+                                                const current = Number(entry.pool.balance || 0);
+                                                const isDestination = operationDestinations.some(dest => dest.pool.id === entry.pool.id && index >= operationSources.length);
+                                                const next = isDestination ? current + entry.amount : current - entry.amount;
+                                                return (
+                                                    <div key={`${entry.pool.id}-${index}`} className="flex items-center justify-between gap-3 text-sm">
+                                                        <span className="font-bold truncate">{entry.pool.feeder_name}</span>
+                                                        <span className={`font-mono whitespace-nowrap ${next < 0 ? 'text-red-600' : 'text-foreground'}`}>{fmtCurrency(current)} -&gt; {fmtCurrency(next)}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                            {operationSources.length === 0 && operationDestinations.length === 0 && (
+                                                <p className="text-xs text-muted-foreground font-mono">{t('pools.previewPlaceholder')}</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {(hasInsufficientFunds || splitMismatch || transferSamePool) && (
+                                        <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm font-mono text-red-700">
+                                            {hasInsufficientFunds ? t('pools.insufficientFunds') : splitMismatch ? t('pools.splitMismatch') : t('pools.transferSame')}
+                                        </div>
+                                    )}
+
+                                    <button onClick={handlePoolAction} disabled={poolLoading || !canSubmitPoolOperation} className={`w-full px-5 py-3 border-2 border-foreground rounded-xl font-black text-sm text-white shadow-[3px_3px_0px_rgba(60,50,30,0.8)] hover:-translate-y-0.5 transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${poolActionMeta[poolAction].tone}`}>
+                                        {poolLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : React.createElement(poolActionMeta[poolAction].icon, { className: 'w-4 h-4' })}
+                                        {t('pools.confirmAction', { action: poolActionMeta[poolAction].label })}
+                                    </button>
+
+                                    {poolMessage && (
+                                        <div className={`p-3 rounded-xl border text-sm font-mono ${poolMessage.startsWith('Failed') ? 'bg-red-50 border-red-300 text-red-700' : 'bg-green-50 border-green-300 text-green-700'}`}>
+                                            {poolMessage}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Pool Balances */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="hidden">
                             {pools.map(pool => (
                                 <div key={pool.id} className={`bg-white border-2 border-foreground rounded-2xl p-5 shadow-[3px_3px_0px_rgba(60,50,30,0.8)] ${pool.feeder_id === null ? 'ring-2 ring-primary' : ''}`}>
                                     <div className="flex items-center justify-between mb-3">
@@ -1128,7 +1523,7 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Admin Actions */}
-                        <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                        <div className="hidden">
                             <h3 className="font-black text-lg mb-1">{t('pools.actionsTitle')}</h3>
                             <p className="text-sm text-muted-foreground font-mono mb-5">{t('pools.actionsSubtitle')}</p>
 
@@ -1141,7 +1536,7 @@ export default function AdminDashboard() {
                                         onChange={e => setPoolAction(e.target.value as PoolAction)}
                                         className="w-full px-4 py-2.5 border-2 border-foreground rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                                     >
-                                        <option value="deduct">{t('pools.deduct')}</option>
+                                        <option value="withdraw">{t('pools.deduct')}</option>
                                         <option value="add">{t('pools.add')}</option>
                                     </select>
                                 </div>
@@ -1161,7 +1556,7 @@ export default function AdminDashboard() {
                                 </div>
 
                                 {/* Reason */}
-                                {poolAction === 'deduct' && (
+                                {poolAction === 'withdraw' && (
                                     <div className="flex-1">
                                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">{t('pools.reasonLabel')}</label>
                                         <input
@@ -1180,11 +1575,11 @@ export default function AdminDashboard() {
                                         onClick={handlePoolAction}
                                         disabled={poolLoading || !poolAmount}
                                         className={`px-6 py-2.5 border-2 border-foreground rounded-xl font-bold text-sm text-white shadow-[3px_3px_0px_rgba(60,50,30,0.8)] hover:-translate-y-0.5 transition-all disabled:opacity-50 flex items-center gap-2 ${
-                                            poolAction === 'deduct' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
+                                            poolAction === 'withdraw' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
                                         }`}
                                     >
-                                        {poolLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : poolAction === 'deduct' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                                        {poolAction === 'deduct' ? t('pools.withdraw') : t('pools.addFunds')}
+                                        {poolLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : poolAction === 'withdraw' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                                        {poolAction === 'withdraw' ? t('pools.withdraw') : t('pools.addFunds')}
                                     </button>
                                 </div>
                             </div>
@@ -1195,6 +1590,43 @@ export default function AdminDashboard() {
                                     poolMessage.startsWith('✅') ? 'bg-green-50 border-green-300 text-green-700' : 'bg-red-50 border-red-300 text-red-700'
                                 }`}>
                                     {poolMessage}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Recent Money Events */}
+                        <div className="bg-white border-2 border-foreground rounded-2xl p-6 shadow-[3px_3px_0px_rgba(60,50,30,0.8)]">
+                            <div className="flex items-center justify-between gap-3 mb-5">
+                                <div>
+                                    <h3 className="font-black text-lg">{t('pools.recentMovements')}</h3>
+                                    <p className="text-sm text-muted-foreground font-mono">{t('pools.recentMovementsDesc')}</p>
+                                </div>
+                                <button
+                                    onClick={fetchPools}
+                                    disabled={poolLoading}
+                                    className="p-2 rounded-lg border-2 border-foreground/20 hover:border-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                                    title="Refresh movements"
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${poolLoading ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
+                            {poolEvents.length > 0 ? (
+                                <div className="space-y-2">
+                                    {poolEvents.slice(0, 10).map((event) => (
+                                        <div key={event.id} className="flex items-center justify-between gap-3 p-3 rounded-xl border border-foreground/10 bg-muted/20">
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-sm truncate">{event.reason_en || event.reason.replaceAll('_', ' ')}</p>
+                                                <p className="text-xs text-muted-foreground font-mono truncate">
+                                                    {t.has(`pools.eventTypes.${event.event_type}`) ? t(`pools.eventTypes.${event.event_type}`) : event.event_type.replaceAll('_', ' ')} - {event.created_at ? new Date(event.created_at).toLocaleString(locale) : '-'}
+                                                </p>
+                                            </div>
+                                            <span className="font-black text-sm whitespace-nowrap">{fmtCurrency(Number(event.amount_eur || 0))}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-8 text-center border-2 border-dashed border-foreground/10 rounded-xl text-sm text-muted-foreground font-mono">
+                                    {t('pools.noMovements')}
                                 </div>
                             )}
                         </div>

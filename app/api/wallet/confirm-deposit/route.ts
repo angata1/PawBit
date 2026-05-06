@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { logMoneyEvent } from '@/lib/money-events';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
@@ -62,10 +63,30 @@ export async function POST(request: Request) {
             p_deposit_key: depositKey,
             p_email: user.email ?? null,
             p_name: user.user_metadata?.full_name || 'User',
-        })) as unknown as RpcResult<{ new_balance?: number | null }>;
+        })) as unknown as RpcResult<{ credited?: boolean | null; new_balance?: number | null }>;
 
         if (depositError) {
             throw new Error(depositError.message);
+        }
+
+        if (depositResult?.credited !== false) {
+            const { data: donationRow } = await supabase
+                .from('donations')
+                .select('id')
+                .eq('user_auth_id', user.id)
+                .eq('type', depositKey)
+                .maybeSingle();
+
+            await logMoneyEvent({
+                event_type: 'wallet_deposit',
+                reason: 'wallet_deposit',
+                reason_en: 'Wallet deposit',
+                amount_eur: amountToAdd,
+                actor_auth_id: user.id,
+                user_auth_id: user.id,
+                donation_id: donationRow?.id ?? null,
+                idempotency_key: depositKey,
+            });
         }
 
         return NextResponse.json({

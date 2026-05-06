@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { logMoneyEvent, logMoneyEventAllocations } from '@/lib/money-events';
 import { NextResponse } from 'next/server';
 import * as crypto from 'crypto';
 
@@ -97,6 +98,39 @@ export async function POST(request: Request) {
 
     const mealId = feedResult?.meal_id ?? null;
     const newBalance = Number(feedResult?.new_balance ?? 0);
+    const numericMealId = mealId === null ? null : Number(mealId);
+
+    const { data: donationRow } = await supabase
+        .from('donations')
+        .select('id')
+        .eq('user_auth_id', user.id)
+        .eq('type', 'live_feed')
+        .eq('amount_eur', -feedAmount)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    const eventId = await logMoneyEvent({
+        event_type: 'live_feeding',
+        reason: 'live_feeding',
+        reason_en: 'Live feeding',
+        amount_eur: feedAmount,
+        actor_auth_id: user.id,
+        user_auth_id: user.id,
+        feeder_id: Number(feederId),
+        meal_id: Number.isFinite(numericMealId) ? numericMealId : null,
+        donation_id: donationRow?.id ?? null,
+        idempotency_key: Number.isFinite(numericMealId) ? `live_feeding:${numericMealId}` : null,
+    });
+
+    if (eventId) {
+        await logMoneyEventAllocations([{
+            event_id: eventId,
+            user_auth_id: user.id,
+            donation_id: donationRow?.id ?? null,
+            amount_eur: feedAmount,
+        }]);
+    }
 
     // c. Broadcast "dispense" command to the Raspberry Pi via Realtime
     //    The Pi simulator listens on channel `feeder_commands_{feederId}`
