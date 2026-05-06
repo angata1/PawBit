@@ -751,5 +751,31 @@
         "p1": "If you have questions about how we use cookies, please reach out:"
       }
     }
+  },
+  "VideoPlayer": {
+    "connecting": "Connecting to live camera...",
+    "preparingDvr": "Preparing local replay buffer...",
+    "dvrNotSupported": "Local replay is not supported in this browser.",
+    "dvrActive": "Local replay buffer active.",
+    "dvrError": "Local replay stopped because this browser could not record the stream.",
+    "dvrUnavailable": "Local replay is not available for this stream.",
+    "clipNotSupported": "Clip recording is not supported in this browser.",
+    "startStreamFirst": "Start the livestream before recording a clip.",
+    "clipReady": "Clip ready to preview.",
+    "recordingClip": "Recording clip...",
+    "clipError": "Could not start clip recording.",
+    "clipSaved": "Clip saved to your device.",
+    "waitingForSignal": "Waiting for camera signal...",
+    "signalEnded": "Camera signal ended",
+    "unavailable": "Live video is unavailable",
+    "delayed": "DELAYED",
+    "live": "LIVE",
+    "watching": "{count} watching",
+    "backToLive": "Back to Live",
+    "stopClip": "Stop clip",
+    "startClip": "Start clip",
+    "fullscreen": "Fullscreen",
+    "saveToDevice": "Save to device",
+    "discard": "Discard"
   }
 }

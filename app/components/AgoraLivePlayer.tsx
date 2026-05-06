@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Loader2, Maximize2, Pause, Play, RotateCcw, Square, Trash2, Users, Video, WifiOff } from "lucide-react";
 import type { IAgoraRTCClient, IAgoraRTCRemoteUser } from "agora-rtc-sdk-ng";
+import { useTranslations } from "next-intl";
 
 type AgoraLivePlayerProps = {
     feederId: string;
@@ -35,6 +36,7 @@ type DvrChunk = {
 };
 
 export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlayerProps) {
+    const t = useTranslations("VideoPlayer");
     const playerRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLDivElement>(null);
     const delayedVideoRef = useRef<HTMLVideoElement>(null);
@@ -56,13 +58,13 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
     const backToLiveRef = useRef<() => void>(() => undefined);
     const controlsHideTimerRef = useRef<number | null>(null);
     const [state, setState] = useState<PlayerState>("connecting");
-    const [message, setMessage] = useState("Connecting to live camera...");
+    const [message, setMessage] = useState(t("connecting"));
     const [viewerCount, setViewerCount] = useState(0);
     const [isRecordingClip, setIsRecordingClip] = useState(false);
     const [clipPreviewUrl, setClipPreviewUrl] = useState("");
     const [clipStatus, setClipStatus] = useState("");
     const [dvrSupported, setDvrSupported] = useState(true);
-    const [dvrStatus, setDvrStatus] = useState("Preparing local replay buffer...");
+    const [dvrStatus, setDvrStatus] = useState(t("preparingDvr"));
     const [isWatchingDelayed, setIsWatchingDelayed] = useState(false);
     const [isDelayedPlaying, setIsDelayedPlaying] = useState(false);
     const [dvrBufferStartSeconds, setDvrBufferStartSeconds] = useState(0);
@@ -192,7 +194,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
         const mimeType = getWebmMimeType();
         if (mimeType === null) {
             setDvrSupported(false);
-            setDvrStatus("Local replay is not supported in this browser.");
+            setDvrStatus(t("dvrNotSupported"));
             return;
         }
 
@@ -208,7 +210,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
             setDvrBufferStartSeconds(0);
             setDvrBufferedEndSeconds(0);
             setDvrPlayheadSeconds(0);
-            setDvrStatus("Local replay buffer active.");
+            setDvrStatus(t("dvrActive"));
 
             recorder.ondataavailable = (event) => {
                 if (event.data.size <= 0) return;
@@ -233,7 +235,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
             recorder.onerror = (event) => {
                 console.error(event);
                 setDvrSupported(false);
-                setDvrStatus("Local replay stopped because this browser could not record the stream.");
+                setDvrStatus(t("dvrError"));
             };
 
             dvrRecorderRef.current = recorder;
@@ -241,7 +243,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
         } catch (error) {
             console.error(error);
             setDvrSupported(false);
-            setDvrStatus("Local replay is not available for this stream.");
+            setDvrStatus(t("dvrUnavailable"));
         }
     };
 
@@ -318,13 +320,13 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
         clearClipPreview();
 
         if (!window.MediaRecorder) {
-            setClipStatus("Clip recording is not supported in this browser.");
+            setClipStatus(t("clipNotSupported"));
             return;
         }
 
         const stream = getRemoteMediaStream();
         if (!stream) {
-            setClipStatus("Start the livestream before recording a clip.");
+            setClipStatus(t("startStreamFirst"));
             return;
         }
 
@@ -355,16 +357,16 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                 recorderRef.current = null;
                 setIsRecordingClip(false);
                 setClipPreviewUrl(nextUrl);
-                setClipStatus("Clip ready to preview.");
+                setClipStatus(t("clipReady"));
             };
 
             recorder.start();
             setIsRecordingClip(true);
-            setClipStatus("Recording clip...");
+            setClipStatus(t("recordingClip"));
             clipTimerRef.current = window.setTimeout(stopClipRecording, MAX_CLIP_DURATION_MS);
         } catch (error) {
             console.error(error);
-            setClipStatus("Could not start clip recording.");
+            setClipStatus(t("clipError"));
             setIsRecordingClip(false);
         }
     };
@@ -375,7 +377,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
         link.href = clipPreviewUrl;
         link.download = `pawbit-${feederId}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.webm`;
         link.click();
-        setClipStatus("Clip saved to your device.");
+        setClipStatus(t("clipSaved"));
     };
 
     const toggleFullscreen = () => {
@@ -462,7 +464,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
             let joined = false;
             try {
                 setState("connecting");
-                setMessage("Connecting to live camera...");
+                setMessage(t("connecting"));
 
                 const buildTokenUrl = (viewerUid: number) =>
                     `/api/agora/token?feederId=${encodeURIComponent(feederId)}&channel=${encodeURIComponent(channelName)}&uid=${encodeURIComponent(String(viewerUid))}`;
@@ -523,7 +525,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                     backToLiveRef.current();
                     if (!cancelled) {
                         setState("waiting");
-                        setMessage("Waiting for camera signal...");
+                        setMessage(t("waitingForSignal"));
                     }
                 });
 
@@ -532,7 +534,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                     backToLiveRef.current();
                     if (!cancelled) {
                         setState("waiting");
-                        setMessage("Camera signal ended");
+                        setMessage(t("signalEnded"));
                     }
                 });
 
@@ -567,13 +569,13 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
 
                 if (!cancelled && client.remoteUsers.length === 0) {
                     setState("waiting");
-                    setMessage("Waiting for camera signal...");
+                    setMessage(t("waitingForSignal"));
                 }
             } catch (error) {
                 console.error(error);
                 if (!cancelled) {
                     setState("error");
-                    setMessage("Live video is unavailable");
+                    setMessage(t("unavailable"));
                 }
             }
         };
@@ -634,14 +636,14 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
             <div className={`absolute left-4 top-4 z-20 rounded-full px-3 py-1 text-xs font-black tracking-wider text-white backdrop-blur ${
                 isWatchingDelayed ? "bg-amber-600" : "bg-red-600"
             }`}>
-                {isWatchingDelayed ? "DELAYED" : "LIVE"}
+                {isWatchingDelayed ? t("delayed") : t("live")}
             </div>
             <div className={`absolute right-4 top-4 z-20 rounded-full bg-black/70 px-3 py-1 text-xs font-mono text-white backdrop-blur transition-opacity duration-300 ${
                 showControls ? "opacity-100" : "opacity-0"
             }`}>
                 <span className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-primary" />
-                    {viewerCount} watching
+                    {t("watching", { count: viewerCount })}
                 </span>
             </div>
             <div className={`absolute bottom-20 left-4 right-4 z-20 rounded-2xl border-2 border-white/20 bg-black/75 p-3 text-white backdrop-blur transition-all duration-300 ${
@@ -664,7 +666,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                             className="inline-flex items-center gap-2 rounded-xl border-2 border-white/30 bg-white/10 px-3 py-2 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <RotateCcw className="h-4 w-4" />
-                            Back to Live
+                            {t("backToLive")}
                         </button>
                     </div>
                     <span className="text-[11px] font-mono text-white/70">
@@ -698,7 +700,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                     }`}
                 >
                     {isRecordingClip ? <Square className="h-4 w-4 fill-current" /> : <Video className="h-4 w-4" />}
-                    {isRecordingClip ? "Stop clip" : "Start clip"}
+                    {isRecordingClip ? t("stopClip") : t("startClip")}
                 </button>
                 <button
                     type="button"
@@ -706,7 +708,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                     className="inline-flex items-center gap-2 rounded-xl border-2 border-white/30 bg-black/70 px-3 py-2 text-xs font-black uppercase tracking-wider text-white backdrop-blur transition-colors hover:bg-white/15"
                 >
                     <Maximize2 className="h-4 w-4" />
-                    Fullscreen
+                    {t("fullscreen")}
                 </button>
             </div>
             {(clipPreviewUrl || clipStatus) && (
@@ -725,7 +727,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                                 className="inline-flex items-center justify-center gap-1 rounded-lg bg-primary px-2 py-2 text-[11px] font-black uppercase text-white"
                             >
                                 <Download className="h-3.5 w-3.5" />
-                                Save to device
+                                {t("saveToDevice")}
                             </button>
                             <button
                                 type="button"
@@ -733,7 +735,7 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                                 className="inline-flex items-center justify-center gap-1 rounded-lg bg-white/10 px-2 py-2 text-[11px] font-black uppercase text-white"
                             >
                                 <Trash2 className="h-3.5 w-3.5" />
-                                Discard
+                                {t("discard")}
                             </button>
                         </div>
                     )}
