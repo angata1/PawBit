@@ -21,7 +21,7 @@ type TokenResponse = {
     viewerCount: number;
 };
 
-const VIEWER_COUNT_SYNC_INTERVAL_MS = 10_000;
+const VIEWER_COUNT_SYNC_INTERVAL_MS = 30_000;
 const MAX_CLIP_DURATION_MS = 30_000;
 const DVR_CHUNK_INTERVAL_MS = 1_000;
 const MAX_DVR_BUFFER_MS = 10 * 60 * 1_000;
@@ -420,6 +420,13 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
             }
         };
 
+        const stopViewerCountPolling = () => {
+            if (viewerPollIntervalId !== null) {
+                window.clearInterval(viewerPollIntervalId);
+                viewerPollIntervalId = null;
+            }
+        };
+
         const syncAgoraViewerCount = async () => {
             try {
                 const response = await fetch(`/api/agora/viewers?channel=${encodeURIComponent(channelName)}`, {
@@ -430,10 +437,14 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                     throw new Error(`Agora viewer query failed with status ${response.status}`);
                 }
 
-                const data = (await response.json()) as { viewerCount?: number };
+                const data = (await response.json()) as { viewerCount?: number; warning?: string };
                 updateViewerCount(Number(data.viewerCount ?? 0));
+                if (data.warning) {
+                    stopViewerCountPolling();
+                }
             } catch (error) {
                 console.error(error);
+                stopViewerCountPolling();
             }
         };
 
