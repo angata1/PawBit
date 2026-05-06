@@ -4,8 +4,15 @@ import { RtcRole, RtcTokenBuilder } from "agora-token";
 
 const TOKEN_TTL_SECONDS = 60 * 60;
 
-function getViewerUid() {
+function getRandomViewerUid() {
     return Math.floor(Math.random() * 2_000_000_000) + 1;
+}
+
+function normalizeViewerUid(value: string | null) {
+    if (!value) return null;
+    const uid = Number(value);
+    if (!Number.isInteger(uid) || uid <= 0 || uid > 2_147_483_647) return null;
+    return uid;
 }
 
 export async function GET(request: Request) {
@@ -19,6 +26,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const feederId = searchParams.get("feederId");
     const channel = searchParams.get("channel");
+    const requestedUid = normalizeViewerUid(searchParams.get("uid"));
 
     if (!feederId || !channel) {
         return NextResponse.json({ error: "Missing feederId or channel" }, { status: 400 });
@@ -45,7 +53,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Stream is not active" }, { status: 404 });
     }
 
-    const uid = getViewerUid();
+    const uid = requestedUid ?? getRandomViewerUid();
     const token = RtcTokenBuilder.buildTokenWithUid(
         appId,
         appCertificate,

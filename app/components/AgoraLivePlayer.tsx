@@ -31,6 +31,21 @@ type DvrChunk = {
     durationMs: number;
 };
 
+function getStableViewerUid(channelName: string) {
+    const storageKey = `pawbit-agora-viewer-uid:${channelName}`;
+    const existing = window.sessionStorage.getItem(storageKey);
+    if (existing) {
+        const uid = Number(existing);
+        if (Number.isInteger(uid) && uid > 0 && uid <= 2_147_483_647) {
+            return uid;
+        }
+    }
+
+    const uid = Math.floor(Math.random() * 2_000_000_000) + 1;
+    window.sessionStorage.setItem(storageKey, String(uid));
+    return uid;
+}
+
 export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlayerProps) {
     const playerRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLDivElement>(null);
@@ -419,9 +434,10 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
             try {
                 setState("connecting");
                 setMessage("Connecting to live camera...");
+                const viewerUid = getStableViewerUid(channelName);
 
                 const tokenResponse = await fetch(
-                    `/api/agora/token?feederId=${encodeURIComponent(feederId)}&channel=${encodeURIComponent(channelName)}`
+                    `/api/agora/token?feederId=${encodeURIComponent(feederId)}&channel=${encodeURIComponent(channelName)}&uid=${viewerUid}`
                 );
 
                 if (!tokenResponse.ok) {

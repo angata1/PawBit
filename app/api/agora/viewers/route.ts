@@ -56,12 +56,12 @@ export async function GET(request: Request) {
     const data = (await response.json()) as AgoraChannelUsersResponse;
     const audience = Array.isArray(data.data?.audience) ? data.data.audience : [];
     const broadcasters = Array.isArray(data.data?.broadcasters) ? data.data.broadcasters : [];
-    const audienceTotal = Number(data.data?.audience_total ?? audience.length);
+    const uniqueAudienceCount = new Set(audience.map((uid) => String(uid))).size;
 
     return NextResponse.json({
         channel,
         channelExists: Boolean(data.data?.channel_exist),
-        viewerCount: Math.max(0, audienceTotal),
+        viewerCount: Math.max(0, uniqueAudienceCount),
         broadcasterCount: broadcasters.length,
     });
 }
