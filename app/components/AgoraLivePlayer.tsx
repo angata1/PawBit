@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Download, Expand, Loader2, Maximize2, Minimize2, Pause, Play, RotateCcw, Square, Trash2, Users, Video, WifiOff } from "lucide-react";
+import { Download, Loader2, Maximize2, Pause, Play, RotateCcw, Square, Trash2, Users, Video, WifiOff } from "lucide-react";
 import type { IAgoraRTCClient, IAgoraRTCRemoteUser } from "agora-rtc-sdk-ng";
 
 type AgoraLivePlayerProps = {
@@ -61,7 +61,6 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
     const [isRecordingClip, setIsRecordingClip] = useState(false);
     const [clipPreviewUrl, setClipPreviewUrl] = useState("");
     const [clipStatus, setClipStatus] = useState("");
-    const [isTheaterMode, setIsTheaterMode] = useState(false);
     const [dvrSupported, setDvrSupported] = useState(true);
     const [dvrStatus, setDvrStatus] = useState("Preparing local replay buffer...");
     const [isWatchingDelayed, setIsWatchingDelayed] = useState(false);
@@ -616,13 +615,9 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
             onTouchStart={revealControls}
             onFocusCapture={revealControls}
             onBlurCapture={scheduleControlsHide}
-            className={`relative overflow-hidden bg-black ${
-                isTheaterMode
-                    ? "fixed inset-0 z-[100] flex h-screen w-screen items-center justify-center bg-black"
-                    : "h-full w-full"
-            }`}
+            className="relative h-full w-full overflow-hidden bg-black"
         >
-            <div className={`relative h-full w-full ${isTheaterMode ? "max-h-screen max-w-screen" : ""}`}>
+            <div className="relative h-full w-full">
             <div
                 ref={videoRef}
                 className="absolute inset-0 h-full w-full [&_video]:!h-full [&_video]:!w-full [&_video]:!object-cover"
@@ -704,14 +699,6 @@ export default function AgoraLivePlayer({ feederId, channelName }: AgoraLivePlay
                 >
                     {isRecordingClip ? <Square className="h-4 w-4 fill-current" /> : <Video className="h-4 w-4" />}
                     {isRecordingClip ? "Stop clip" : "Start clip"}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setIsTheaterMode((value) => !value)}
-                    className="inline-flex items-center gap-2 rounded-xl border-2 border-white/30 bg-black/70 px-3 py-2 text-xs font-black uppercase tracking-wider text-white backdrop-blur transition-colors hover:bg-white/15"
-                >
-                    {isTheaterMode ? <Minimize2 className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-                    {isTheaterMode ? "Normal" : "Theater"}
                 </button>
                 <button
                     type="button"
