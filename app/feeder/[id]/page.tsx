@@ -43,7 +43,7 @@ type PendingDonationState = {
     paymentIntentId?: string;
 };
 
-type MobileTab = 'overview' | 'donate' | 'activity' | 'chat';
+type MobileTab = 'overview' | 'activity' | 'chat';
 
 const PENDING_DONATION_KEY = 'pawbit:pending-donation-ready';
 
@@ -210,27 +210,35 @@ export default function FeederDetails() {
         setLoading(false);
     }, [id]);
 
+    const refreshCurrentUser = useCallback(async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            setCurrentUser(null);
+            return null;
+        }
+
+        const { data: publicUser } = await supabase
+            .from('users')
+            .select('balance')
+            .eq('auth_id', user.id)
+            .maybeSingle();
+
+        const nextUser: User = {
+            id: user.id,
+            name: user.user_metadata?.full_name || t('communityMember'),
+            isAnonymous: user.user_metadata?.is_anonymous || false,
+            balance: Number(publicUser?.balance || 0),
+            totalDonated: 0
+        };
+
+        setCurrentUser(nextUser);
+        return nextUser;
+    }, [t]);
+
     useEffect(() => {
         const supabase = createClient();
-        const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data: publicUser } = await supabase
-                    .from('users')
-                    .select('balance')
-                    .eq('auth_id', user.id)
-                    .maybeSingle();
-
-                setCurrentUser({
-                    id: user.id,
-                    name: user.user_metadata?.full_name || t('communityMember'),
-                    isAnonymous: user.user_metadata?.is_anonymous || false,
-                    balance: publicUser?.balance || 0,
-                    totalDonated: 0
-                });
-            }
-        };
-        getUser();
+        void refreshCurrentUser();
         fetchData();
 
         const mealsChannel = supabase
@@ -268,7 +276,7 @@ export default function FeederDetails() {
             supabase.removeChannel(feedersChannel);
             supabase.removeChannel(livestreamsChannel);
         };
-    }, [fetchData, t, id]);
+    }, [fetchData, refreshCurrentUser, id]);
 
     useEffect(() => {
         setActiveMobileTab('overview');
@@ -319,7 +327,10 @@ export default function FeederDetails() {
 
             if (!res.ok) {
                 if (data.error === 'Insufficient funds') {
-                    setIsModalOpen(true);
+                    const refreshedUser = await refreshCurrentUser();
+                    if (!refreshedUser || (refreshedUser.balance || 0) < amount) {
+                        setIsModalOpen(true);
+                    }
                 } else {
                     alert(data.error);
                 }
@@ -337,7 +348,7 @@ export default function FeederDetails() {
             setIsAnimating(false);
             return false;
         }
-    }, [id]);
+    }, [id, refreshCurrentUser]);
 
     useEffect(() => {
         if (!currentUser) return;
@@ -375,7 +386,8 @@ export default function FeederDetails() {
     }, [currentUser, id, performDonation]);
 
     const handleDonate = async (amount: number, mode = donationMode) => {
-        if (!currentUser) {
+        const latestUser = await refreshCurrentUser();
+        if (!latestUser) {
             router.push('/login');
             return;
         }
@@ -383,7 +395,7 @@ export default function FeederDetails() {
         const donationAmount = Number(amount);
         if (!Number.isFinite(donationAmount) || donationAmount <= 0) return;
 
-        if ((currentUser.balance || 0) < donationAmount) {
+        if ((latestUser.balance || 0) < donationAmount) {
             setDonationAmount(donationAmount);
             setPendingDonationMode(mode);
             setIsModalOpen(true);
@@ -416,7 +428,6 @@ export default function FeederDetails() {
             : t('modes.global_pool');
     const mobileTabs = [
         { key: 'overview' as const, label: t('tabs.overview'), icon: Video },
-        { key: 'donate' as const, label: t('tabs.donate'), icon: Heart },
         { key: 'activity' as const, label: t('tabs.activity'), icon: Activity },
         { key: 'chat' as const, label: t('tabs.chat'), icon: MessageSquare },
     ];
@@ -462,7 +473,7 @@ export default function FeederDetails() {
                 {/* ── Main 2-col layout ── */}
                 <div className="lg:hidden space-y-4 mb-6">
                     <div className="sticky top-3 z-30">
-                        <div className="grid grid-cols-4 gap-2 rounded-2xl border-2 border-foreground bg-white p-2 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                        <div className="grid grid-cols-3 gap-2 rounded-2xl border-2 border-foreground bg-white p-2 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
                             {mobileTabs.map((tab) => {
                                 const active = activeMobileTab === tab.key;
                                 const Icon = tab.icon;
@@ -563,7 +574,7 @@ export default function FeederDetails() {
                         </div>
                     )}
 
-                    {activeMobileTab === 'donate' && (
+                    {activeMobileTab === 'overview' && (
                         <div className="space-y-4">
                             {id !== 'all' ? (
                                 <Card className={`relative overflow-hidden transition-all duration-500 border-2 border-foreground shadow-[4px_4px_0px_rgba(0,0,0,1)] ${isAnimating ? 'ring-4 ring-accent scale-[1.01]' : ''}`}>

@@ -9,7 +9,7 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import DonationModal from "@/components/DonationModal";
-import { User as UserIcon, Shield, Key, Loader2, PlayCircle, MapPin, TrendingDown, TrendingUp, ArrowDownRight, ArrowUpRight, Receipt } from "lucide-react";
+import { User as UserIcon, Shield, Key, Loader2, PlayCircle, MapPin, TrendingDown, TrendingUp, ArrowDownRight, ArrowUpRight, Receipt, Wallet, Plus } from "lucide-react";
 
 type MessageState = { type: "success" | "error"; text: string } | null;
 
@@ -80,9 +80,17 @@ function unwrapMoneyEvent(value: MoneyEventAllocationRow["money_events"]): Money
     return Array.isArray(value) ? (value[0] || null) : value;
 }
 
-function formatMoneyEventLabel(event: MoneyEventRow, t: any): string {
-    if (t.has(`eventTypes.${event.event_type}`)) return t(`eventTypes.${event.event_type}`);
-    return event.reason_en || event.reason.replaceAll("_", " ");
+function formatMoneyEventLabel(event: MoneyEventRow, t: ReturnType<typeof useTranslations>): string {
+    const typeLabel = t.has(`eventTypes.${event.event_type}`)
+        ? t(`eventTypes.${event.event_type}`)
+        : event.event_type.replaceAll("_", " ");
+    const reasonLabel = (event.reason_en || event.reason || "").replaceAll("_", " ").trim();
+
+    if (!reasonLabel || reasonLabel.toLowerCase() === typeLabel.toLowerCase()) {
+        return typeLabel;
+    }
+
+    return `${typeLabel} - ${reasonLabel}`;
 }
 
 function getYouTubeEmbedUrl(url: string): string {
@@ -113,6 +121,7 @@ export default function Profile() {
     const [txPage, setTxPage] = useState(0);
     const [hasMoreTx, setHasMoreTx] = useState(true);
     const [loadingTx, setLoadingTx] = useState(false);
+    const [showTransactions, setShowTransactions] = useState(false);
     const [contributedVideos, setContributedVideos] = useState<UserVideo[]>([]);
     const [usageEvents, setUsageEvents] = useState<UsageEvent[]>([]);
     const [loading, setLoading] = useState(true);
@@ -142,18 +151,6 @@ export default function Profile() {
 
             if (publicUser) {
                 authUser.user_metadata.balance = publicUser.balance;
-            }
-
-            const { data: userTransactions } = await supabase
-                .from("donations")
-                .select("id, amount_eur, type, created_at")
-                .eq("user_auth_id", authUser.id)
-                .order("created_at", { ascending: false })
-                .range(0, 4);
-
-            if (userTransactions) {
-                setTransactions(userTransactions as TransactionRow[]);
-                if (userTransactions.length < 5) setHasMoreTx(false);
             }
 
             const { data: contributionRows } = await supabase
@@ -289,7 +286,7 @@ export default function Profile() {
     const loadMoreTransactions = async () => {
         if (!user || loadingTx) return;
         setLoadingTx(true);
-        const nextPage = txPage + 1;
+        const nextPage = transactions.length === 0 ? 0 : txPage + 1;
         const { data: newTx } = await supabase
             .from("donations")
             .select("id, amount_eur, type, created_at")
@@ -298,11 +295,18 @@ export default function Profile() {
             .range(nextPage * 5, (nextPage + 1) * 5 - 1);
 
         if (newTx) {
-            setTransactions((prev) => [...prev, ...(newTx as TransactionRow[])]);
+            setTransactions((prev) => nextPage === 0 ? (newTx as TransactionRow[]) : [...prev, ...(newTx as TransactionRow[])]);
             setTxPage(nextPage);
             if (newTx.length < 5) setHasMoreTx(false);
         }
         setLoadingTx(false);
+    };
+
+    const openTransactions = () => {
+        setShowTransactions(true);
+        if (transactions.length === 0) {
+            void loadMoreTransactions();
+        }
     };
 
     const handleUpdateProfile = async (updates: { password?: string; data?: { is_anonymous: boolean } }) => {
@@ -363,6 +367,7 @@ export default function Profile() {
         },
         { in: 0, out: 0 }
     );
+    const walletBalance = Number(user.user_metadata?.balance || 0);
 
     return (
         <div className="min-h-screen pt-12 px-4 pb-12 bg-background container mx-auto max-w-7xl">
@@ -451,19 +456,39 @@ export default function Profile() {
                 </div>
 
                 <div className="space-y-8">
-                    <Card className="bg-white">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-bold flex items-center gap-2">
-                                <span className="p-2 bg-yellow-100 rounded-lg text-yellow-700">{t("wallet")}</span>
-                                {t("balance")}
-                            </h2>
+                    <Card className="overflow-hidden bg-white p-0">
+                        <div className="border-b-2 border-foreground/10 bg-gradient-to-br from-primary/10 via-white to-accent/10 p-5 sm:p-6">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="min-w-0">
+                                    <div className="mb-3 inline-flex items-center gap-2 rounded-lg border border-foreground/10 bg-white/80 px-3 py-1 text-xs font-black uppercase tracking-wider text-muted-foreground">
+                                        <Wallet className="h-4 w-4 text-primary" />
+                                        {t("wallet")}
+                                    </div>
+                                    <h2 className="text-2xl font-black leading-tight text-foreground">{t("balance")}</h2>
+                                </div>
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-foreground bg-primary text-primary-foreground neu-shadow">
+                                    <Wallet className="h-6 w-6" />
+                                </div>
+                            </div>
+
+                            <div className="mt-6 rounded-2xl border-2 border-foreground bg-white p-5 neu-shadow">
+                                <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
+                                    <span className="max-w-full break-all text-4xl font-black leading-none text-primary sm:text-5xl">
+                                        {walletBalance.toFixed(2)}
+                                    </span>
+                                    <span className="pb-1 text-base font-black uppercase tracking-wider text-muted-foreground sm:text-lg">EUR</span>
+                                </div>
+                                <p className="mt-3 text-sm font-medium text-muted-foreground">{t("availableToFeed")}</p>
+                            </div>
                         </div>
-                        <div className="text-center py-6">
-                            <span className="text-4xl md:text-5xl font-black text-primary block mb-2 break-all px-2">
-                                {Number(user.user_metadata?.balance || 0).toFixed(2)} <span className="text-lg md:text-xl text-muted-foreground">EUR</span>
-                            </span>
-                            <p className="text-sm text-muted-foreground mb-6">{t("availableToFeed")}</p>
-                            <Button className="w-full" size="lg" onClick={() => setIsDepositModalOpen(true)}>
+
+                        <div className="p-5 sm:p-6">
+                            <Button
+                                className="w-full"
+                                icon={<Plus className="h-5 w-5" />}
+                                size="lg"
+                                onClick={() => setIsDepositModalOpen(true)}
+                            >
                                 {t("addFunds")}
                             </Button>
                         </div>
@@ -471,6 +496,7 @@ export default function Profile() {
 
 
 
+                    {false && (
                     <Card className="bg-white">
                         <h2 className="text-xl font-bold mb-4">{t("transactionHistory")}</h2>
                         <div className="space-y-3">
@@ -514,6 +540,7 @@ export default function Profile() {
                             )}
                         </div>
                     </Card>
+                    )}
                 </div>
 
                 <Card className="bg-white lg:col-span-2">
@@ -612,7 +639,6 @@ export default function Profile() {
 
                     {usageEvents.length > 0 ? (
                         <div className="space-y-0 relative">
-                            <div className="absolute left-[19px] top-4 bottom-4 w-px bg-gradient-to-b from-foreground/20 via-foreground/10 to-transparent hidden sm:block" />
                             {usageEvents.slice(0, 10).map((event, idx) => (
                                 <div
                                     key={event.id}
@@ -647,6 +673,61 @@ export default function Profile() {
                         <div className="text-center py-12 bg-gray-50/50 rounded-xl border-2 border-dashed border-gray-200">
                             <Receipt className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                             <p className="text-sm text-muted-foreground font-medium">{t("noUsage")}</p>
+                        </div>
+                    )}
+                </Card>
+
+                <Card className="bg-white lg:col-span-2">
+                    <h2 className="text-xl font-bold mb-4">{t("transactionHistory")}</h2>
+                    {!showTransactions ? (
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={openTransactions}
+                            disabled={loadingTx}
+                        >
+                            {loadingTx ? t("loading") : t("loadMore")}
+                        </Button>
+                    ) : (
+                        <div className="space-y-3">
+                            {transactions.length > 0 ? (
+                                <>
+                                    {transactions.map((tx) => (
+                                        <div key={tx.id} className="flex items-center justify-between gap-2 p-3 bg-muted/20 rounded-lg border-2 border-foreground/10">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center border ${tx.amount_eur > 0 ? "bg-green-100 border-green-300 text-green-700" : "bg-red-100 border-red-300 text-red-700"}`}>
+                                                    {tx.amount_eur > 0 ? "↓" : "↑"}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-sm capitalize truncate">{
+                                                        tx.type.replace("deposit:", t("txTypes.deposit") + " ")
+                                                            .replace("feeding", t("txTypes.feeding"))
+                                                            .replace("live_feed", t("txTypes.live_feed"))
+                                                    }</p>
+                                                    <p className="text-xs text-muted-foreground truncate">{new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString()}</p>
+                                                </div>
+                                            </div>
+                                            <span className={`font-bold whitespace-nowrap shrink-0 ${tx.amount_eur > 0 ? "text-green-600" : "text-foreground"}`}>
+                                                {tx.amount_eur > 0 ? "+" : ""}{tx.amount_eur} EUR
+                                            </span>
+                                        </div>
+                                    ))}
+                                    {hasMoreTx && (
+                                        <Button
+                                            variant="outline"
+                                            className="w-full mt-4"
+                                            onClick={loadMoreTransactions}
+                                            disabled={loadingTx}
+                                        >
+                                            {loadingTx ? t("loading") : t("loadMore")}
+                                        </Button>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="text-sm text-muted-foreground text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                    {loadingTx ? t("loading") : t("noTransactions")}
+                                </div>
+                            )}
                         </div>
                     )}
                 </Card>

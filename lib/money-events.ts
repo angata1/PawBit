@@ -38,8 +38,10 @@ export async function logMoneyEvent(
     }
 
     const { data, error } = await supabase
-        .from('money_events')
-        .insert(event)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('money_events' as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(event as any)
         .select('id')
         .maybeSingle();
 
@@ -66,8 +68,10 @@ export async function logMoneyEventAllocations(
     }
 
     const { error } = await supabase
-        .from('money_event_allocations')
-        .insert(allocations);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('money_event_allocations' as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(allocations as any);
 
     if (error) {
         console.warn('Money event allocation logging failed:', error.message);
