@@ -3,15 +3,17 @@ import { NextResponse } from "next/server";
 import { RtcRole, RtcTokenBuilder } from "agora-token";
 
 const TOKEN_TTL_SECONDS = 60 * 60;
+const VIEWER_UID_MIN = 1_000_000_000;
+const VIEWER_UID_MAX = 2_147_483_647;
 
 function getRandomViewerUid() {
-    return Math.floor(Math.random() * 2_000_000_000) + 1;
+    return Math.floor(Math.random() * (VIEWER_UID_MAX - VIEWER_UID_MIN + 1)) + VIEWER_UID_MIN;
 }
 
 function normalizeViewerUid(value: string | null) {
     if (!value) return null;
     const uid = Number(value);
-    if (!Number.isInteger(uid) || uid <= 0 || uid > 2_147_483_647) return null;
+    if (!Number.isInteger(uid) || uid < VIEWER_UID_MIN || uid > VIEWER_UID_MAX) return null;
     return uid;
 }
 

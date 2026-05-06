@@ -32,7 +32,13 @@ export async function GET(request: Request) {
 
     const credentials = getAgoraCredentials();
     if (!credentials) {
-        return NextResponse.json({ error: "Agora REST credentials are not configured" }, { status: 500 });
+        return NextResponse.json({
+            channel,
+            channelExists: false,
+            viewerCount: 0,
+            broadcasterCount: 0,
+            warning: "Agora REST credentials are not configured",
+        });
     }
 
     const basicAuth = Buffer.from(`${credentials.customerId}:${credentials.customerSecret}`).toString("base64");
