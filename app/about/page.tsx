@@ -142,14 +142,14 @@ export default function AboutPage() {
                     </div>
 
                     <div className="about-hero-img w-full">
-                        <div className="relative mx-auto aspect-[5/4] max-w-[34rem] overflow-hidden rounded-lg border border-foreground/10 bg-card shadow-xl shadow-foreground/10">
+                        <div className="mx-auto max-w-[34rem] overflow-hidden rounded-lg border border-foreground/10 bg-card shadow-xl shadow-foreground/10">
                             <Image
-                                src="/about-hero-v2.png"
+                                src="/about-hero-v2.jpg"
                                 alt="Students setting up a smart feeder for stray cats"
-                                fill
+                                width={1200}
+                                height={960}
                                 priority
-                                sizes="(min-width: 1024px) 520px, 92vw"
-                            className="object-cover"
+                                className="w-full h-auto block"
                             />
                         </div>
                     </div>
@@ -207,13 +207,13 @@ export default function AboutPage() {
             <section className="about-section px-4 py-16 md:py-24">
                 <div className="container mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[0.52fr_0.48fr]">
                     <div className="about-reveal order-2 lg:order-1">
-                        <div className="relative aspect-square overflow-hidden rounded-lg border border-foreground/10 bg-card shadow-xl shadow-foreground/10">
+                        <div className="mx-auto max-w-[34rem] overflow-hidden rounded-lg border border-foreground/10 bg-card shadow-xl shadow-foreground/10">
                             <Image
                                 src="/about-tech-v2.png"
                                 alt="Smart feeder technology with sensors and controller board"
-                                fill
-                                sizes="(min-width: 1024px) 520px, 92vw"
-                                className="object-cover"
+                                width={1000}
+                                height={1000}
+                                className="w-full h-auto block"
                             />
                         </div>
                     </div>
