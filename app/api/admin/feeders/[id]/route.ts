@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -34,6 +35,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         }
     }
 
+    if (Object.keys(updatePayload).length === 0) {
+        return NextResponse.json({ error: 'No feeder fields were provided' }, { status: 400 });
+    }
+
     if (updatePayload.dispense_price_eur !== undefined) {
         const price = Number(updatePayload.dispense_price_eur);
         if (!Number.isFinite(price) || price <= 0) {
@@ -42,7 +47,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         updatePayload.dispense_price_eur = price;
     }
 
-    const { data, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let adminSupabase: any;
+    try {
+        adminSupabase = createAdminClient();
+    } catch (error) {
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Supabase admin client is not configured' },
+            { status: 500 }
+        );
+    }
+
+    const { data, error } = await adminSupabase
         .from('feeders')
         .update(updatePayload)
         .eq('id', id)

@@ -488,8 +488,10 @@ export default function AdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
             });
-            if (!res.ok) throw new Error('Failed to update');
             const updated = await res.json();
+            if (!res.ok) {
+                throw new Error(updated.error || 'Failed to update');
+            }
             setData(prev => prev ? {
                 ...prev,
                 feeders: prev.feeders.map(f => f.id === feeder.id ? updated.feeder : f)
